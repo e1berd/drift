@@ -26,8 +26,10 @@ RUN --mount=type=cache,id=drift-gomod,target=/go/pkg/mod \
     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/drift ./cmd/server
 
 FROM docker.io/library/alpine:3.24
-RUN adduser -D -H -u 10001 drift
+RUN adduser -D -H -u 10001 drift \
+    && install -d -o drift -g drift /workspace
 COPY --from=app /out/drift /usr/local/bin/drift
+ENV DRIFT_WORKSPACE_ROOT=/workspace
 USER drift
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/drift"]

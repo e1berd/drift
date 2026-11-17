@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 )
 
 // Config holds the process settings read from the environment.
@@ -20,9 +21,13 @@ type Config struct {
 // Load reads the configuration from environment variables, falling back to local development defaults.
 func Load() (*Config, error) {
 	cfg := &Config{
-		Addr:          env("DRIFT_ADDR", ":8080"),
-		WorkspaceRoot: os.ExpandEnv(env("DRIFT_WORKSPACE_ROOT", "$HOME/work")),
+		Addr: env("DRIFT_ADDR", ":8080"),
 	}
+	root, err := filepath.Abs(os.ExpandEnv(env("DRIFT_WORKSPACE_ROOT", "workspace")))
+	if err != nil {
+		return nil, fmt.Errorf("DRIFT_WORKSPACE_ROOT: %w", err)
+	}
+	cfg.WorkspaceRoot = root
 
 	urls := []struct {
 		dst      **url.URL

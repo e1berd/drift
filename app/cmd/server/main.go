@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -39,6 +40,10 @@ func run() error {
 	cfg, err := config.Load()
 	if err != nil {
 		return err
+	}
+
+	if err := os.MkdirAll(cfg.WorkspaceRoot, 0o755); err != nil {
+		return fmt.Errorf("create workspace root: %w", err)
 	}
 
 	pool, err := database.Connect(ctx, cfg.DatabaseURL)
@@ -87,15 +92,6 @@ func run() error {
 
 	e.Any("/*", echo.WrapHandler(fe), authHandler.RequireSession)
 
-	warnIfWorkspaceMissing(log, cfg.WorkspaceRoot)
 	log.Info("listening", "addr", cfg.Addr, "public_url", cfg.PublicURL.String(), "workspace_root", cfg.WorkspaceRoot)
 	return echo.StartConfig{Address: cfg.Addr, HideBanner: true}.Start(ctx, e)
-}
-
-func warnIfWorkspaceMissing(log *slog.Logger, root string) {
-	info, err := os.Stat(root)
-	if err == nil && info.IsDir() {
-		return
-	}
-	log.Warn("workspace root is not a readable directory, projects cannot be created", "workspace_root", root, "error", err)
 }

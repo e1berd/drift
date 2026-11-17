@@ -1,6 +1,9 @@
 
 version: '3'
 
+env:
+  DRIFT_WORKSPACE_ROOT: '{{.DRIFT_WORKSPACE_ROOT | default (print .ROOT_DIR "/workspace")}}'
+
 tasks:
   dev:
     desc: Запустить Go API с hot reload

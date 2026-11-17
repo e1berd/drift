@@ -1,3 +1,5 @@
 .env
 /bin/
+/workspace/
+/data/
 /app/internal/frontend/dist/
