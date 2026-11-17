@@ -24,7 +24,13 @@ tasks:
       - task --list
 
   dev:
-    desc: Запустить Vite и Go (с hot reload) вместе, открывать http://localhost:8080
+    desc: Hot reload — Postgres и Kratos в контейнерах, Vite и Go (air) на хосте, открывать http://localhost:8080
+    cmds:
+      - task: up
+      - task: dev:watch
+
+  dev:watch:
+    internal: true
     deps: [web:dev, app:dev]
 
   build:
@@ -62,10 +68,12 @@ tasks:
   up:
     desc: Запустить инфраструктуру для разработки (Postgres + Kratos, без drift)
     cmds:
+      # контейнер drift из `task stack` занимает :8080 — освобождаем порт для dev-сервера
+      - '{{.COMPOSE}} stop drift'
       - '{{.COMPOSE}} up -d postgres kratos'
 
   stack:
-    desc: Собрать образ и запустить всё в контейнерах, открывать http://localhost:8080
+    desc: Production-сборка целиком в контейнерах (без hot reload, изменения — только пересборкой), открывать http://localhost:8080
     cmds:
       - '{{.COMPOSE}} up -d --build'
 
