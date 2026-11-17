@@ -10,5 +10,9 @@ export type ProjectInput = {
    * @type string
    */
   name: string;
+  /**
+   * @description Folder relative to the workspace root. A missing folder is created.
+   * @type string
+   */
   path: string;
 };

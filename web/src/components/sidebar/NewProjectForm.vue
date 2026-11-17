@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, useTemplateRef } from 'vue'
+import { onMounted, ref, useTemplateRef, watch } from 'vue'
 import { Button } from '@ui-sdk/vue/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@ui-sdk/vue/field'
 import { Input } from '@ui-sdk/vue/input'
@@ -23,9 +23,13 @@ function submit() {
     create.mutate({ body: { name: name.value, path: path.value } })
 }
 
-function suggestPath() {
-    if (!pathTouched.value) path.value = name.value.trim().toLowerCase().replaceAll(/\s+/g, '-')
+function folderNameFor(projectName: string) {
+    return projectName.trim().toLowerCase().replaceAll(/\s+/g, '-')
 }
+
+watch(name, (projectName) => {
+    if (!pathTouched.value) path.value = folderNameFor(projectName)
+})
 
 onMounted(() => form.value?.querySelector('input')?.focus())
 </script>
@@ -39,7 +43,7 @@ onMounted(() => form.value?.querySelector('input')?.focus())
     >
         <Field>
             <FieldLabel>{{ t('project.name') }}</FieldLabel>
-            <Input v-model="name" required maxlength="120" @input="suggestPath" />
+            <Input v-model="name" required maxlength="120" />
         </Field>
         <Field :invalid="!!create.error.value">
             <FieldLabel>{{ t('project.path') }}</FieldLabel>

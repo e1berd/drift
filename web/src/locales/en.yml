@@ -38,7 +38,7 @@ nav:
 project:
   name: 'Project name'
   path: 'Folder in the workspace'
-  pathHint: 'Relative to the server workspace, e.g. evixdesk/evxhd-backend'
+  pathHint: 'Relative to the server workspace. A missing folder is created'
   create: 'Create'
   cancel: 'Cancel'
   rename: 'Rename'

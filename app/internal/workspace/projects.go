@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"path"
@@ -53,6 +54,20 @@ func cleanName(s string, max int) (string, bool) {
 	return s, n > 0 && n <= max
 }
 
+func ensureProjectFolder(root *os.Root, rel string) error {
+	if err := root.MkdirAll(rel, 0o755); err != nil {
+		return err
+	}
+	info, err := root.Stat(rel)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		return errors.New("not a folder")
+	}
+	return nil
+}
+
 func (h *Handler) createProject(c *echo.Context) error {
 	var in projectInput
 	if err := c.Bind(&in); err != nil {
@@ -71,9 +86,8 @@ func (h *Handler) createProject(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusServiceUnavailable, "workspace root is not available")
 	}
 	defer root.Close()
-	info, err := root.Stat(rel)
-	if err != nil || !info.IsDir() {
-		return badRequest("folder " + rel + " does not exist in the workspace root")
+	if err := ensureProjectFolder(root, rel); err != nil {
+		return badRequest("cannot use " + rel + " as a project folder: " + err.Error())
 	}
 
 	p, err := h.q.CreateProject(c.Request().Context(), db.CreateProjectParams{OwnerID: identity.From(c), Name: name, Path: rel})
