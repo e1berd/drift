@@ -8,7 +8,9 @@ services:
     build:
       context: .
       dockerfile: Containerfile
+      network: host
     image: localhost/drift:latest
+    pull_policy: build
     mem_limit: 128m
     depends_on:
       postgres:
