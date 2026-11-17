@@ -2,26 +2,70 @@ package main
 
 import (
 	"context"
-	"log"
-	"net/url"
+	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/e1berd/drift/app/internal/auth"
+	"github.com/e1berd/drift/app/internal/config"
 	"github.com/e1berd/drift/app/internal/database"
+	"github.com/e1berd/drift/app/internal/frontend"
+	"github.com/e1berd/drift/app/internal/health"
+	"github.com/e1berd/drift/app/internal/kratos"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
 
 func main() {
-	ctx := context.Background()
+	if err := run(); err != nil {
+		slog.Error("drift stopped", "err", err)
+		os.Exit(1)
+	}
+}
 
-	dsn, err := url.Parse(os.ExpandEnv(os.Getenv("DATABASE_URL")))
+func run() error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal("invalid DATABASE_URL: ", err)
+		return err
 	}
 
-	pool, err := database.Connect(ctx, dsn)
-
+	pool, err := database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal("database connection failed: ", err)
+		return err
 	}
-
 	defer pool.Close()
+
+	fe, err := frontend.New(cfg.ViteDevURL)
+	if err != nil {
+		return err
+	}
+
+	kc := kratos.New(cfg.KratosPublicURL, cfg.KratosAdminURL)
+	authHandler, err := auth.New(kc, fe, cfg.PublicURL, log)
+	if err != nil {
+		return err
+	}
+
+	e := echo.New()
+	e.Logger = log
+	e.Use(middleware.Recover())
+	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
+		XSSProtection:      "0",
+		ContentTypeNosniff: "nosniff",
+		XFrameOptions:      "DENY",
+		ReferrerPolicy:     "same-origin",
+	}))
+
+	health.New(pool).Register(e)
+	authHandler.Register(e)
+	e.Any("/*", echo.WrapHandler(fe), authHandler.RequireSession)
+
+	log.Info("listening", "addr", cfg.Addr, "public_url", cfg.PublicURL.String())
+	return echo.StartConfig{Address: cfg.Addr, HideBanner: true}.Start(ctx, e)
 }

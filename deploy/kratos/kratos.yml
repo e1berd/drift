@@ -1,0 +1,73 @@
+version: v26.2.0
+
+serve:
+  public:
+    base_url: http://localhost:8080/.ory/kratos/public/
+  admin:
+    base_url: http://localhost:4434/
+
+selfservice:
+  default_browser_return_url: http://localhost:8080/
+  allowed_return_urls:
+    - http://localhost:8080
+
+  methods:
+    password:
+      enabled: true
+      config:
+        min_password_length: 8
+        identifier_similarity_check_enabled: true
+    passkey:
+      enabled: true
+      config:
+        rp:
+          display_name: Drift
+          id: localhost
+          origins:
+            - http://localhost:8080
+
+  flows:
+    error:
+      ui_url: http://localhost:8080/error
+
+    login:
+      ui_url: http://localhost:8080/login
+      lifespan: 10m
+
+    registration:
+      enabled: false
+      ui_url: http://localhost:8080/setup
+
+    settings:
+      ui_url: http://localhost:8080/settings
+      privileged_session_max_age: 15m
+      required_aal: highest_available
+
+    logout:
+      after:
+        default_browser_return_url: http://localhost:8080/login
+
+    recovery:
+      enabled: false
+
+    verification:
+      enabled: false
+
+session:
+  lifespan: 24h
+  cookie:
+    name: drift_session
+    same_site: Lax
+
+log:
+  level: info
+  format: text
+
+ciphers:
+  algorithm: xchacha20-poly1305
+
+identity:
+  default_schema_id: default
+  schemas:
+    - id: default
+      url: file:///etc/config/kratos/identity.schema.json

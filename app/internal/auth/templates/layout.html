@@ -1,0 +1,31 @@
+{{define "layout"}}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="htmx-config" content='{"includeIndicatorStyles":false,"allowEval":false}'>
+  <title>{{.Title}} · Drift</title>
+  <link rel="icon" href="/favicon.ico">
+  {{.Assets}}
+</head>
+<body class="min-h-dvh bg-(--ui-background) text-(--ui-foreground) antialiased">
+  <main class="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 px-4 py-12">
+    <header class="flex flex-col gap-1">
+      <p class="text-sm font-semibold tracking-widest text-(--ui-muted-foreground) uppercase">Drift</p>
+      <h1 class="text-2xl font-semibold">{{.Title}}</h1>
+      {{with .Lead}}<p class="text-sm text-(--ui-muted-foreground)">{{.}}</p>{{end}}
+    </header>
+    {{template "content" .}}
+  </main>
+</body>
+</html>{{end}}
+
+{{define "messages"}}
+{{- if .}}
+<ul class="flex flex-col gap-2" role="alert">
+  {{- range .}}
+  <li class="rounded-(--ui-radius) border px-3 py-2 text-sm {{if eq .Type "error"}}border-(--ui-destructive) text-(--ui-destructive){{else}}border-(--ui-border) text-(--ui-muted-foreground){{end}}">{{.Text}}</li>
+  {{- end}}
+</ul>
+{{- end}}
+{{end}}

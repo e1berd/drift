@@ -3,10 +3,10 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go build -o ./tmp/drift ./cmd/server"
+cmd = "go build -tags dev -o ./tmp/drift ./cmd/server"
 entrypoint = "./tmp/drift"
-include_ext = ["go"]
-exclude_dir = ["tmp", "vendor"]
+include_ext = ["go", "html"]
+exclude_dir = ["tmp", "vendor", "internal/frontend/dist"]
 delay = 500
 
 [log]

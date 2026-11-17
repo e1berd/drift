@@ -6,11 +6,11 @@ dotenv:
 
 includes:
   app:
-    taskfile: ./app/Taskfile.yml
+    taskfile: ./app/taskfile.yml
     dir: ./app
 
   web:
-    taskfile: ./web/Taskfile.yml
+    taskfile: ./web/taskfile.yml
     dir: ./web
 
 tasks:
@@ -18,6 +18,27 @@ tasks:
     desc: Показать доступные команды
     cmds:
       - task --list
+
+  dev:
+    desc: Запустить Vite и Go (с hot reload) вместе, открывать http://localhost:8080
+    deps: [web:dev, app:dev]
+
+  build:
+    desc: Собрать единый бинарник bin/drift (Vue и шаблоны внутри)
+    cmds:
+      - task: web:build
+      - task: app:build
+
+  test:
+    desc: Запустить Go- и Vue-тесты
+    cmds:
+      - task: app:test
+      - task: web:test
+
+  kratos:logs:
+    desc: Логи Ory Kratos
+    cmds:
+      - docker compose logs -f kratos
 
   db:up:
     desc: Запустить PostgreSQL

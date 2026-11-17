@@ -17,6 +17,11 @@ tasks:
     cmds:
       - pnpm build
 
+  test:
+    desc: Запустить unit-тесты Vue
+    cmds:
+      - pnpm vitest run
+
   preview:
     desc: Предпросмотр production сборки
     cmds:

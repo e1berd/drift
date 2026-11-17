@@ -1,10 +1,9 @@
-
-
 services:
   postgres:
+    image: postgres:17-alpine
+    mem_limit: 512m
     ports:
       - "127.0.0.1:5432:5432"
-    image: postgres:17-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -19,3 +18,57 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+
+  kratos-db:
+    image: postgres:17-alpine
+    mem_limit: 64m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+    entrypoint: ["sh", "-c"]
+    command:
+      - >-
+        psql -tAc "SELECT 1 FROM pg_database WHERE datname = 'kratos'" | grep -q 1
+        || psql -c "CREATE DATABASE kratos"
+    restart: "no"
+
+  kratos-migrate:
+    image: oryd/kratos:v26.2.0
+    mem_limit: 256m
+    depends_on:
+      kratos-db:
+        condition: service_completed_successfully
+    environment:
+      DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/kratos?sslmode=disable
+      SQA_OPT_OUT: "true"
+    volumes:
+      - ./deploy/kratos:/etc/config/kratos:ro
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    restart: "no"
+
+  kratos:
+    image: oryd/kratos:v26.2.0
+    mem_limit: 256m
+    depends_on:
+      kratos-migrate:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:4433:4433"
+      - "127.0.0.1:4434:4434"
+    environment:
+      DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/kratos?sslmode=disable&max_conns=10&max_idle_conns=2
+      SECRETS_COOKIE: ${KRATOS_SECRETS_COOKIE}
+      SECRETS_CIPHER: ${KRATOS_SECRETS_CIPHER}
+      SQA_OPT_OUT: "true"
+    volumes:
+      - ./deploy/kratos:/etc/config/kratos:ro
+    command: serve -c /etc/config/kratos/kratos.yml --dev
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

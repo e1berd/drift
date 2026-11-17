@@ -1,0 +1,54 @@
+{{define "content"}}{{template "setup-form" .}}{{end}}
+
+{{define "setup-form"}}
+<form id="setup-form" class="flex flex-col gap-4"
+      hx-post="/setup" hx-target="this" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]">
+  {{template "messages" .Messages}}
+
+  <ui-field>
+    <ui-field-label>Имя</ui-field-label>
+    <ui-input>
+      <input name="name" value="{{.Name}}" autocomplete="name" maxlength="200">
+    </ui-input>
+  </ui-field>
+
+  <ui-field>
+    <ui-field-label>Email</ui-field-label>
+    <ui-input>
+      <input name="email" type="email" value="{{.Email}}" autocomplete="username" required autofocus>
+    </ui-input>
+    <ui-field-error match="valueMissing">Введите email</ui-field-error>
+    <ui-field-error match="typeMismatch">Неверный формат email</ui-field-error>
+  </ui-field>
+
+  <ui-field>
+    <ui-field-label>Пароль</ui-field-label>
+    <ui-password-input name="password" required>
+      <input id="setup-password" autocomplete="new-password" minlength="8" maxlength="72">
+      <ui-password-input-toggle><button aria-label="Показать пароль"></button></ui-password-input-toggle>
+    </ui-password-input>
+    <ui-field-description>Не короче 8 символов.</ui-field-description>
+    <ui-field-error match="valueMissing">Введите пароль</ui-field-error>
+    <ui-field-error match="tooShort">Не короче 8 символов</ui-field-error>
+  </ui-field>
+
+  <ui-field>
+    <ui-field-label>Повторите пароль</ui-field-label>
+    <ui-password-input name="password_confirm" required>
+      <input autocomplete="new-password"
+             _="on input from closest <form/>
+                  if my value is #setup-password.value
+                    call me.setCustomValidity('')
+                  else
+                    call me.setCustomValidity('Пароли не совпадают')
+                  end">
+      <ui-password-input-toggle><button aria-label="Показать пароль"></button></ui-password-input-toggle>
+    </ui-password-input>
+    <ui-field-error match="customError">Пароли не совпадают</ui-field-error>
+  </ui-field>
+
+  <ui-button>
+    <button type="submit" data-variant="solid" class="w-full">Создать суперпользователя</button>
+  </ui-button>
+</form>
+{{end}}
