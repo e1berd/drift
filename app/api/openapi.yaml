@@ -17,6 +17,22 @@ tags:
   - name: files
   - name: events
 paths:
+  /folders:
+    get:
+      operationId: listFolders
+      tags: [files]
+      description: >-
+        Subfolders of one folder of the workspace root, used to pick a project path.
+        Standard List method (AIP-132) without paging: one folder level per call.
+      parameters:
+        - $ref: '#/components/parameters/FilePath'
+      responses:
+        '200':
+          description: Visible subfolders, sorted by name.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreeResponse' }
+        default: { $ref: '#/components/responses/Error' }
   /projects:
     get:
       operationId: listProjects

@@ -43,6 +43,7 @@ func New(pool *pgxpool.Pool, hub *events.Hub, root string, log *slog.Logger) *Ha
 
 // Register mounts the routes on a group that already requires a signed-in identity.
 func (h *Handler) Register(g *echo.Group) {
+	g.GET("/folders", h.listFolders)
 	g.GET("/projects", h.listProjects)
 	g.POST("/projects", h.createProject)
 	g.PATCH("/projects/:project", h.renameProject)

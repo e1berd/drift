@@ -6,6 +6,7 @@ import { Input } from '@ui-sdk/vue/input'
 import { useI18n } from 'vue-i18n'
 
 import { useCreateProject } from '@/gen'
+import FolderPicker from '@/components/sidebar/FolderPicker.vue'
 import { errorMessage } from '@/shared/errors'
 
 const emit = defineEmits<{ done: [] }>()
@@ -42,7 +43,10 @@ onMounted(() => form.value?.querySelector('input')?.focus())
         </Field>
         <Field :invalid="!!create.error.value">
             <FieldLabel>{{ t('project.path') }}</FieldLabel>
-            <Input v-model="path" required @input="pathTouched = true" />
+            <div class="flex gap-2">
+                <Input v-model="path" class="min-w-0 flex-1" required @input="pathTouched = true" />
+                <FolderPicker v-model="path" @update:model-value="pathTouched = true" />
+            </div>
             <FieldDescription>{{ t('project.pathHint') }}</FieldDescription>
             <FieldError v-if="create.error.value" match>{{
                 errorMessage(create.error.value)

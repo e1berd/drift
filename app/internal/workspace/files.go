@@ -84,16 +84,24 @@ func (h *Handler) listTree(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+	out, err := readEntries(fsys, dir, func(fs.DirEntry) bool { return true })
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, out)
+}
+
+func readEntries(fsys fs.FS, dir string, keep func(fs.DirEntry) bool) (treeResponse, error) {
 	items, err := fs.ReadDir(fsys, dir)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return echo.NewHTTPError(http.StatusNotFound, "not found")
+			return treeResponse{}, echo.NewHTTPError(http.StatusNotFound, "not found")
 		}
-		return badRequest("not a folder")
+		return treeResponse{}, badRequest("not a folder")
 	}
 	out := treeResponse{Path: dir, Entries: make([]Entry, 0, min(len(items), maxTreeEntries))}
 	for _, it := range items {
-		if it.IsDir() && hiddenDirs[it.Name()] {
+		if it.IsDir() && hiddenDirs[it.Name()] || !keep(it) {
 			continue
 		}
 		if len(out.Entries) == maxTreeEntries {
@@ -115,7 +123,7 @@ func (h *Handler) listTree(c *echo.Context) error {
 		}
 		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
 	})
-	return c.JSON(http.StatusOK, out)
+	return out, nil
 }
 
 func (h *Handler) readFile(c *echo.Context) error {
