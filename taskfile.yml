@@ -4,6 +4,10 @@ version: '3'
 dotenv:
   - .env
 
+vars:
+  # Переопределить: task up COMPOSE='docker compose'
+  COMPOSE: '{{.COMPOSE | default "podman compose"}}'
+
 includes:
   app:
     taskfile: ./app/taskfile.yml
@@ -38,34 +42,39 @@ tasks:
   kratos:logs:
     desc: Логи Ory Kratos
     cmds:
-      - docker compose logs -f kratos
+      - '{{.COMPOSE}} logs -f kratos'
 
   db:up:
     desc: Запустить PostgreSQL
     cmds:
-      - docker compose up -d postgres
+      - '{{.COMPOSE}} up -d postgres'
 
   db:down:
     desc: Остановить PostgreSQL
     cmds:
-      - docker compose stop postgres
+      - '{{.COMPOSE}} stop postgres'
 
   db:logs:
     desc: Логи PostgreSQL
     cmds:
-      - docker compose logs -f postgres
+      - '{{.COMPOSE}} logs -f postgres'
 
   up:
     desc: Запустить инфраструктуру для разработки (Postgres + Kratos, без drift)
     cmds:
-      - docker compose up -d postgres kratos
+      - '{{.COMPOSE}} up -d postgres kratos'
 
   stack:
     desc: Собрать образ и запустить всё в контейнерах, открывать http://localhost:8080
     cmds:
-      - docker compose up -d --build
+      - '{{.COMPOSE}} up -d --build'
 
   down:
     desc: Остановить инфраструктуру
     cmds:
-      - docker compose down
+      - '{{.COMPOSE}} down'
+
+  logs:
+    desc: Логи всех контейнеров
+    cmds:
+      - '{{.COMPOSE}} logs -f'
