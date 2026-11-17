@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, useTemplateRef } from 'vue'
 import { Button } from '@ui-sdk/vue/button'
-import { Field, FieldError, FieldLabel } from '@ui-sdk/vue/field'
+import { Field, FieldDescription, FieldError, FieldLabel } from '@ui-sdk/vue/field'
 import { Input } from '@ui-sdk/vue/input'
 import { useI18n } from 'vue-i18n'
 
@@ -43,6 +43,7 @@ onMounted(() => form.value?.querySelector('input')?.focus())
         <Field :invalid="!!create.error.value">
             <FieldLabel>{{ t('project.path') }}</FieldLabel>
             <Input v-model="path" required @input="pathTouched = true" />
+            <FieldDescription>{{ t('project.pathHint') }}</FieldDescription>
             <FieldError v-if="create.error.value" match>{{
                 errorMessage(create.error.value)
             }}</FieldError>

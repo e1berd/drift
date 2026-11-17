@@ -38,6 +38,7 @@ nav:
 project:
   name: 'Название проекта'
   path: 'Папка в рабочем каталоге'
+  pathHint: 'Путь относительно рабочего каталога сервера, например evixdesk/evxhd-backend'
   create: 'Создать'
   cancel: 'Отмена'
   rename: 'Переименовать'

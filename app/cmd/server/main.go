@@ -87,6 +87,15 @@ func run() error {
 
 	e.Any("/*", echo.WrapHandler(fe), authHandler.RequireSession)
 
+	warnIfWorkspaceMissing(log, cfg.WorkspaceRoot)
 	log.Info("listening", "addr", cfg.Addr, "public_url", cfg.PublicURL.String(), "workspace_root", cfg.WorkspaceRoot)
 	return echo.StartConfig{Address: cfg.Addr, HideBanner: true}.Start(ctx, e)
+}
+
+func warnIfWorkspaceMissing(log *slog.Logger, root string) {
+	info, err := os.Stat(root)
+	if err == nil && info.IsDir() {
+		return
+	}
+	log.Warn("workspace root is not a readable directory, projects cannot be created", "workspace_root", root, "error", err)
 }
