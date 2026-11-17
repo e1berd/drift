@@ -1,0 +1,17 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: oxfmt
+      root: web/
+      glob: '*.{ts,vue,css,json,yaml,yml,html}'
+      exclude:
+        - 'web/src/gen/**'
+        - 'web/pnpm-lock.yaml'
+      run: npx --no oxfmt {staged_files}
+      stage_fixed: true
+    - name: oxlint
+      root: web/
+      glob: '*.{ts,vue}'
+      exclude:
+        - 'web/src/gen/**'
+      run: npx --no oxlint {staged_files}

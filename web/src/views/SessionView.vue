@@ -82,7 +82,7 @@ function send({ text, files }: { text: string; files: File[] }) {
     <Tabs v-model:value="tab" class="flex min-h-0 flex-1 flex-col">
         <TopBar>
             <template #start>
-                <span class="text-faint">{{ project?.name }}</span>
+                <span class="shrink-0 whitespace-nowrap text-faint">{{ project?.name }}</span>
                 <span class="text-line-strong">/</span>
                 <span class="truncate font-medium">{{ session.data.value?.title }}</span>
             </template>

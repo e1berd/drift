@@ -43,9 +43,11 @@ export function kratosURL(path: string | URL): URL {
     return new URL(path.startsWith('http') ? path : `${KRATOS_PUBLIC}${path}`, location.origin)
 }
 
-async function readJSON<T>(response: Response): Promise<T & { redirect_browser_to?: string }> {
+type KratosBody<T> = T & { redirect_browser_to?: string }
+
+async function readJSON<T>(response: Response): Promise<KratosBody<T>> {
     const isJSON = response.headers.get('Content-Type')?.includes('json') ?? false
-    return isJSON ? response.json() : ({} as T)
+    return isJSON ? response.json() : ({} as KratosBody<T>)
 }
 
 function isRedirectStatus(status: number): boolean {

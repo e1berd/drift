@@ -58,6 +58,8 @@ JSON API под `/api` требует сессию Kratos (идентичнос�
 
 `/api/events` — одно соединение на вкладку, без брокера: события пользователя рассылаются из памяти процесса, последние 256 хранятся для переподключения по `Last-Event-ID`. Если пропущено больше или процесс перезапускался, приходит `resync`, и клиент перезапрашивает данные. Каждое изменение несёт `origin` — id устройства из заголовка `X-Drift-Device`, чтобы вкладка не применяла собственное эхо.
 
+Контракт описан в `app/api/openapi.yaml`. Фронтенд не пишет запросы руками: Kubb (`web/kubb.config.ts`) генерирует из спеки типы, функции запросов и Vue Query хуки (query, mutation, infinite по `page_token`) в `web/src/gen`, транспорт — `web/src/shared/http/client.ts` на `URL`/`Request`/`Response`. После правки спеки: `pnpm generate` в `web/`.
+
 Миграции из `app/db/migrations` применяются при старте бинарника (таблица `schema_migrations` совместима с `migrate` из taskfile). SQL-запросы — `app/db/queries`, код генерирует `task app:sqlc`.
 
 ## Запуск целиком в контейнерах
@@ -84,6 +86,10 @@ task build                  # vite build → go build → bin/drift
 ```
 
 Бинарнику нужны только переменные окружения из `.env.example` и запущенный Kratos.
+
+### Проверки
+
+Правила кода — в `CLAUDE.md` (из [dotconfig](https://github.com/e1berd/dotconfig)). Перед коммитом lefthook форматирует и линтует изменённые файлы `web/`. Вручную из `web/`: `pnpm format:check`, `pnpm lint`, `pnpm types:check`, `pnpm vitest run`.
 
 ## Продакшен
 
