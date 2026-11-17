@@ -56,9 +56,14 @@ tasks:
       - docker compose logs -f postgres
 
   up:
-    desc: Запустить инфраструктуру
+    desc: Запустить инфраструктуру для разработки (Postgres + Kratos, без drift)
     cmds:
-      - docker compose up -d
+      - docker compose up -d postgres kratos
+
+  stack:
+    desc: Собрать образ и запустить всё в контейнерах, открывать http://localhost:8080
+    cmds:
+      - docker compose up -d --build
 
   down:
     desc: Остановить инфраструктуру

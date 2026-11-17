@@ -30,11 +30,19 @@ drift ──► Kratos admin :4434   проверка «есть ли польз
 
 `web/` переносить не нужно: `go:embed` не видит родительские каталоги, поэтому Vite сам пишет сборку внутрь Go-модуля (`build.outDir`).
 
-## Запуск
+## Запуск целиком в контейнерах
+
+```sh
+podman compose up -d --build   # или task stack
+```
+
+Открывать http://localhost:8080. `.env` не обязателен: без него берутся значения по умолчанию из `compose.yml` (для локального запуска). `Containerfile` собирает Vite, потом Go-бинарник с встроенным фронтендом, и кладёт его в alpine; фронт и бэк живут в одном контейнере `drift`.
+
+## Разработка
 
 ```sh
 cp .env.example .env        # смените пароли и секреты Kratos
-task up                     # Postgres + Kratos (БД kratos создаётся и мигрируется автоматически)
+task up                     # только Postgres + Kratos (БД kratos создаётся и мигрируется автоматически)
 task web:install
 task dev                    # Vite :5173 + Go (air, тег dev) :8080 → открывать http://localhost:8080
 ```

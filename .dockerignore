@@ -1,0 +1,10 @@
+.git
+.env
+bin
+web/node_modules
+web/dist
+web/coverage
+web/test-results
+web/playwright-report
+app/tmp
+app/internal/frontend/dist

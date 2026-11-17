@@ -1,35 +1,63 @@
+x-db: &db
+  POSTGRES_USER: ${POSTGRES_USER:-drift}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-drift}
+  POSTGRES_DB: ${POSTGRES_DB:-drift}
+
 services:
+  drift:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: localhost/drift:latest
+    mem_limit: 128m
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kratos:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      DRIFT_ADDR: :8080
+      DRIFT_PUBLIC_URL: http://localhost:8080
+      DATABASE_URL: postgres://${POSTGRES_USER:-drift}:${POSTGRES_PASSWORD:-drift}@postgres:5432/${POSTGRES_DB:-drift}?sslmode=disable
+      KRATOS_PUBLIC_URL: http://kratos:4433
+      KRATOS_ADMIN_URL: http://kratos:4434
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/readyz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
   postgres:
-    image: postgres:17-alpine
+    image: docker.io/library/postgres:17-alpine
     mem_limit: 512m
     ports:
       - "127.0.0.1:5432:5432"
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      POSTGRES_HOST: ${POSTGRES_HOST}
+    environment: *db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 20s
+    restart: unless-stopped
 
   kratos-db:
-    image: postgres:17-alpine
+    image: docker.io/library/postgres:17-alpine
     mem_limit: 64m
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       PGHOST: postgres
-      PGUSER: ${POSTGRES_USER}
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER:-drift}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-drift}
+      PGDATABASE: ${POSTGRES_DB:-drift}
     entrypoint: ["sh", "-c"]
     command:
       - >-
@@ -38,21 +66,21 @@ services:
     restart: "no"
 
   kratos-migrate:
-    image: oryd/kratos:v26.2.0
+    image: docker.io/oryd/kratos:v26.2.0
     mem_limit: 256m
     depends_on:
       kratos-db:
         condition: service_completed_successfully
     environment:
-      DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/kratos?sslmode=disable
+      DSN: postgres://${POSTGRES_USER:-drift}:${POSTGRES_PASSWORD:-drift}@postgres:5432/kratos?sslmode=disable
       SQA_OPT_OUT: "true"
     volumes:
-      - ./deploy/kratos:/etc/config/kratos:ro
+      - ./deploy/kratos:/etc/config/kratos:ro,z
     command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
     restart: "no"
 
   kratos:
-    image: oryd/kratos:v26.2.0
+    image: docker.io/oryd/kratos:v26.2.0
     mem_limit: 256m
     depends_on:
       kratos-migrate:
@@ -61,13 +89,19 @@ services:
       - "127.0.0.1:4433:4433"
       - "127.0.0.1:4434:4434"
     environment:
-      DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/kratos?sslmode=disable&max_conns=10&max_idle_conns=2
-      SECRETS_COOKIE: ${KRATOS_SECRETS_COOKIE}
-      SECRETS_CIPHER: ${KRATOS_SECRETS_CIPHER}
+      DSN: postgres://${POSTGRES_USER:-drift}:${POSTGRES_PASSWORD:-drift}@postgres:5432/kratos?sslmode=disable&max_conns=10&max_idle_conns=2
+      SECRETS_COOKIE: ${KRATOS_SECRETS_COOKIE:-change-me-at-least-32-characters-long}
+      SECRETS_CIPHER: ${KRATOS_SECRETS_CIPHER:-change-me-exactly-32-characters!}
       SQA_OPT_OUT: "true"
     volumes:
-      - ./deploy/kratos:/etc/config/kratos:ro
+      - ./deploy/kratos:/etc/config/kratos:ro,z
     command: serve -c /etc/config/kratos/kratos.yml --dev
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:4434/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     restart: unless-stopped
 
 volumes:
