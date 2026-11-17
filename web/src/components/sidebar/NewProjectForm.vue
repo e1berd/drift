@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref, useTemplateRef } from 'vue'
+import { Button } from '@ui-sdk/vue/button'
+import { Field, FieldError, FieldLabel } from '@ui-sdk/vue/field'
+import { Input } from '@ui-sdk/vue/input'
+import { useI18n } from 'vue-i18n'
 
 import { useCreateProject } from '@/gen'
 import { errorMessage } from '@/shared/errors'
-import { useI18n } from 'vue-i18n'
 
 const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
@@ -11,7 +14,7 @@ const { t } = useI18n()
 const name = ref('')
 const path = ref('')
 const pathTouched = ref(false)
-const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
+const form = useTemplateRef<HTMLFormElement>('form')
 
 const create = useCreateProject({ mutation: { onSuccess: () => emit('done') } })
 
@@ -19,48 +22,40 @@ function submit() {
     create.mutate({ body: { name: name.value, path: path.value } })
 }
 
-function onName() {
+function suggestPath() {
     if (!pathTouched.value) path.value = name.value.trim().toLowerCase().replaceAll(/\s+/g, '-')
 }
 
-onMounted(() => nameInput.value?.focus())
+onMounted(() => form.value?.querySelector('input')?.focus())
 </script>
 
 <template>
     <form
-        class="flex flex-col gap-2 rounded-[10px] bg-surface-2 p-2.5"
+        ref="form"
+        class="flex flex-col gap-2 pb-2"
         @submit.prevent="submit"
         @keydown.esc="emit('done')"
     >
-        <label class="flex flex-col gap-1 text-[12px] text-muted">
-            {{ t('project.name') }}
-            <input
-                ref="nameInput"
-                v-model="name"
-                class="field"
-                required
-                maxlength="120"
-                @input="onName"
-            />
-        </label>
-        <label class="flex flex-col gap-1 text-[12px] text-muted">
-            {{ t('project.path') }}
-            <input v-model="path" class="field font-mono" required @input="pathTouched = true" />
-        </label>
-        <p v-if="create.error.value" class="text-[12px] text-danger">
-            {{ errorMessage(create.error.value) }}
-        </p>
-        <div class="flex justify-end gap-1.5">
-            <button type="button" class="btn h-7" @click="emit('done')">
-                {{ t('project.cancel') }}
-            </button>
-            <button
+        <Field>
+            <FieldLabel>{{ t('project.name') }}</FieldLabel>
+            <Input v-model="name" required maxlength="120" @input="suggestPath" />
+        </Field>
+        <Field :invalid="!!create.error.value">
+            <FieldLabel>{{ t('project.path') }}</FieldLabel>
+            <Input v-model="path" required @input="pathTouched = true" />
+            <FieldError v-if="create.error.value" match>{{
+                errorMessage(create.error.value)
+            }}</FieldError>
+        </Field>
+        <div class="flex justify-end gap-2">
+            <Button type="button" @click="emit('done')">{{ t('project.cancel') }}</Button>
+            <Button
                 type="submit"
-                class="btn primary h-7"
+                data-variant="solid"
                 :disabled="!name.trim() || !path.trim() || create.isPending.value"
             >
                 {{ t('project.create') }}
-            </button>
+            </Button>
         </div>
     </form>
 </template>

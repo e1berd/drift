@@ -32,21 +32,19 @@ useInfiniteSentinel(top, () => {
 </script>
 
 <template>
-    <ScrollArea stick-to-end class="relative min-h-0 flex-1">
-        <ScrollAreaViewport role="log" :aria-label="t('tabs.chat')" class="h-full w-full">
+    <ScrollArea stick-to-end class="relative min-h-0 flex-1 rounded-none border-0">
+        <ScrollAreaViewport role="log" :aria-label="t('tabs.chat')">
             <ScrollAreaContent>
-                <div
-                    class="mx-auto flex max-w-[780px] flex-col gap-3.5 px-6 pt-7 pb-7 max-md:px-3.5"
-                >
+                <div class="mx-auto flex max-w-[780px] flex-col gap-4 py-6">
                     <div ref="top" class="h-px" />
-                    <p v-if="loadingOlder" class="self-center text-[12px] text-faint">
+                    <p v-if="loadingOlder" class="self-center text-muted">
                         {{ t('chat.olderLoading') }}
                     </p>
-                    <div v-auto-animate class="flex flex-col gap-3.5">
+                    <div v-auto-animate class="flex flex-col gap-4">
                         <MessageItem
-                            v-for="m in messages"
-                            :key="m.id"
-                            :message="m"
+                            v-for="message in messages"
+                            :key="message.id"
+                            :message="message"
                             :agent="agent"
                         />
                     </div>
@@ -54,59 +52,18 @@ useInfiniteSentinel(top, () => {
                 </div>
             </ScrollAreaContent>
         </ScrollAreaViewport>
-        <ScrollAreaScrollbar orientation="vertical" class="chat-scrollbar">
-            <ScrollAreaThumb class="chat-thumb" />
-        </ScrollAreaScrollbar>
-        <ScrollAreaScrollToEnd class="chat-to-end" :aria-label="t('chat.jumpToEnd')">
-            <PhArrowDown :size="16" />
+        <ScrollAreaScrollbar orientation="vertical"><ScrollAreaThumb /></ScrollAreaScrollbar>
+        <ScrollAreaScrollToEnd :aria-label="t('chat.jumpToEnd')" class="jump-to-end">
+            <PhArrowDown />
         </ScrollAreaScrollToEnd>
     </ScrollArea>
 </template>
 
-<style>
-.chat-scrollbar {
-    display: flex;
-    flex-direction: column;
-    width: 8px;
-    padding: 2px;
-    opacity: 0;
-    transition: opacity var(--dur-2);
-
-    &[data-visible],
-    &:hover {
-        opacity: 1;
-    }
-}
-
-.chat-thumb {
-    border-radius: 4px;
-    background: var(--border-strong);
-}
-
-.chat-to-end {
+<style scoped>
+.jump-to-end {
     position: absolute;
-    bottom: 14px;
+    bottom: 12px;
     left: 50%;
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border: 1px solid var(--border-strong);
-    border-radius: 50%;
-    background: var(--surface);
-    box-shadow: var(--shadow);
-    color: var(--ui-foreground);
-    opacity: 0;
-    pointer-events: none;
-    translate: -50% 8px;
-    transition:
-        opacity var(--dur-2) var(--ease-out),
-        translate var(--dur-3) var(--ease-out);
-
-    &[data-visible] {
-        opacity: 1;
-        pointer-events: auto;
-        translate: -50% 0;
-    }
+    translate: -50% 0;
 }
 </style>

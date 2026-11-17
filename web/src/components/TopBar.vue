@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { PhSidebarSimple } from '@phosphor-icons/vue'
+import { Button } from '@ui-sdk/vue/button'
 import { usePreference } from '@ui-sdk/vue/preferences'
+import { useI18n } from 'vue-i18n'
 
 import { useShell } from '@/composables/useShell'
-import { useI18n } from 'vue-i18n'
 import { sidebarSide } from '@/shared/preferences'
 
 const { t } = useI18n()
@@ -16,34 +17,30 @@ const label = computed(() => (sidebarOpen.value ? t('nav.toggle.hide') : t('nav.
 
 <template>
     <header class="topbar">
-        <div class="flex min-w-0 items-center gap-2 text-[13px]">
-            <button
+        <div class="flex min-w-0 items-center gap-2">
+            <Button
                 v-if="left"
-                class="icon-btn"
-                :data-pressed="sidebarOpen || undefined"
                 :aria-label="label"
-                :title="label"
                 :aria-expanded="sidebarOpen"
+                :title="label"
                 @click="toggleSidebar"
             >
-                <PhSidebarSimple :size="18" />
-            </button>
+                <PhSidebarSimple />
+            </Button>
             <div class="crumb"><slot name="start" /></div>
         </div>
         <div class="flex justify-center"><slot name="center" /></div>
-        <div class="flex min-w-0 items-center justify-end gap-1.5">
+        <div class="flex min-w-0 items-center justify-end gap-2">
             <slot name="end" />
-            <button
+            <Button
                 v-if="!left"
-                class="icon-btn"
-                :data-pressed="sidebarOpen || undefined"
                 :aria-label="label"
-                :title="label"
                 :aria-expanded="sidebarOpen"
+                :title="label"
                 @click="toggleSidebar"
             >
-                <PhSidebarSimple :size="18" class="-scale-x-100" />
-            </button>
+                <PhSidebarSimple class="-scale-x-100" />
+            </Button>
         </div>
     </header>
 </template>
@@ -58,6 +55,10 @@ const label = computed(() => (sidebarOpen.value ? t('nav.toggle.hide') : t('nav.
     flex: none;
     padding: 0 10px;
     border-bottom: 1px solid var(--ui-border);
+
+    @media (max-width: 760px) {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
 }
 
 .crumb {
@@ -65,15 +66,9 @@ const label = computed(() => (sidebarOpen.value ? t('nav.toggle.hide') : t('nav.
     min-width: 0;
     align-items: center;
     gap: 8px;
-    padding-inline-start: 10px;
-}
+    padding-inline-start: 6px;
 
-@media (max-width: 760px) {
-    .topbar {
-        grid-template-columns: auto minmax(0, 1fr) auto;
-    }
-
-    .crumb {
+    @media (max-width: 760px) {
         display: none;
     }
 }

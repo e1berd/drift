@@ -20,12 +20,13 @@ const fromOther = computed(() => drafts.fromOther(props.draftKey))
 <template>
     <RouterLink
         :to="{ name: 'new', query: { project: projectId } }"
-        class="draft motion-enter"
+        class="nav-row motion-enter no-underline"
+        data-draft
         :title="text"
         @click="closeOnNarrow"
     >
         <span class="truncate italic">{{ text }}</span>
-        <span class="tag" :class="{ typing }">
+        <span class="status-tag">
             <PhDeviceMobile v-if="fromOther" :size="11" />
             <PhPencilSimple v-else :size="11" />
             {{ typing ? t('session.typing') : t('session.draft') }}
@@ -33,26 +34,3 @@ const fromOther = computed(() => drafts.fromOther(props.draftKey))
         </span>
     </RouterLink>
 </template>
-
-<style scoped>
-.draft {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
-    height: 34px;
-    padding: 0 8px 0 10px;
-    border: 1px dashed var(--border-strong);
-    border-radius: 7px;
-    color: var(--ui-muted-foreground);
-    font-size: 13px;
-    transition:
-        background var(--dur-1),
-        color var(--dur-1);
-
-    &:hover {
-        background: var(--surface-2);
-        color: var(--ui-foreground);
-    }
-}
-</style>

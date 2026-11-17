@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
-import { PhCaretRight, PhFolderSimple, PhPencilSimple, PhTrash } from '@phosphor-icons/vue'
+import { PhFolderSimple, PhPencilSimple, PhTrash } from '@phosphor-icons/vue'
+import { Button } from '@ui-sdk/vue/button'
+import { Input } from '@ui-sdk/vue/input'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@ui-sdk/vue/collapsible'
 import { toast } from '@ui-sdk/vue/toast'
 import { useRoute, useRouter } from 'vue-router'
@@ -54,7 +56,7 @@ const hidden = computed(
 
 const mode = ref<'view' | 'rename' | 'confirm'>('view')
 const name = ref('')
-const renameInput = useTemplateRef<HTMLInputElement>('renameInput')
+const renameRow = useTemplateRef<HTMLElement>('renameRow')
 
 const showError = (error: unknown) => toast.error(errorMessage(error))
 const rename = useUpdateProject({ mutation: { onError: showError } })
@@ -72,7 +74,7 @@ async function startRename() {
     name.value = props.project.name
     mode.value = 'rename'
     await nextTick()
-    renameInput.value?.select()
+    renameRow.value?.querySelector('input')?.select()
 }
 
 function commitRename() {
@@ -90,101 +92,91 @@ useInfiniteSentinel(sentinel, () => {
 
 watch(
     () => props.filter,
-    (f) => {
-        if (f && !open.value && props.project.name.toLowerCase().includes(f)) open.value = true
+    (value) => {
+        if (value && !open.value && props.project.name.toLowerCase().includes(value))
+            open.value = true
     },
 )
 </script>
 
 <template>
-    <Collapsible v-show="!hidden" v-model:open="open" class="project">
-        <div v-if="mode === 'confirm'" class="confirm motion-fade">
-            <span class="min-w-0 flex-1">{{
+    <Collapsible v-show="!hidden" v-model:open="open">
+        <div v-if="mode === 'confirm'" class="motion-fade flex flex-col gap-2 p-2">
+            <span>{{
                 t('project.confirmDelete', { name: project.name, count: project.sessionCount })
             }}</span>
-            <button class="btn h-[26px] border-0 bg-transparent px-2" @click="mode = 'view'">
-                {{ t('project.cancel') }}
-            </button>
-            <button
-                class="btn danger h-[26px] px-2"
-                :disabled="remove.isPending.value"
-                @click="remove.mutate({ path: { projectId: project.id } })"
-            >
-                {{ t('project.delete') }}
-            </button>
+            <div class="flex justify-end gap-2">
+                <Button @click="mode = 'view'">{{ t('project.cancel') }}</Button>
+                <Button
+                    data-variant="destructive"
+                    :disabled="remove.isPending.value"
+                    @click="remove.mutate({ path: { projectId: project.id } })"
+                >
+                    {{ t('project.delete') }}
+                </Button>
+            </div>
         </div>
 
-        <div v-else-if="mode === 'rename'" class="flex h-[34px] items-center pr-1.5 pl-[30px]">
-            <label class="sr-only" :for="`rename-${project.id}`">{{ t('project.name') }}</label>
-            <input
-                :id="`rename-${project.id}`"
-                ref="renameInput"
+        <div v-else-if="mode === 'rename'" ref="renameRow" class="p-1">
+            <Input
                 v-model="name"
-                class="field h-7"
                 maxlength="120"
+                :aria-label="t('project.name')"
                 @keydown.enter.prevent="commitRename"
                 @keydown.esc.prevent="mode = 'view'"
                 @blur="commitRename"
             />
         </div>
 
-        <div v-else class="row">
-            <CollapsibleTrigger class="row-btn">
-                <PhCaretRight :size="14" class="chev" />
-                <PhFolderSimple :size="15" class="text-muted" />
-                <span class="min-w-0 flex-1 truncate">{{ project.name }}</span>
-                <span class="count">{{ project.sessionCount }}</span>
+        <div v-else class="project-row">
+            <CollapsibleTrigger class="min-w-0 flex-1">
+                <span class="flex min-w-0 flex-1 items-center gap-2">
+                    <PhFolderSimple class="shrink-0" />
+                    <span class="truncate">{{ project.name }}</span>
+                    <span class="ml-auto text-muted tabular-nums">{{ project.sessionCount }}</span>
+                </span>
             </CollapsibleTrigger>
-            <div class="actions">
-                <button
-                    class="icon-btn small"
+            <div class="project-actions">
+                <Button
                     :aria-label="t('project.rename')"
                     :title="t('project.rename')"
                     @click="startRename"
                 >
-                    <PhPencilSimple :size="14" />
-                </button>
-                <button
-                    class="icon-btn small"
+                    <PhPencilSimple />
+                </Button>
+                <Button
                     :aria-label="t('project.delete')"
                     :title="t('project.delete')"
                     @click="mode = 'confirm'"
                 >
-                    <PhTrash :size="14" />
-                </button>
+                    <PhTrash />
+                </Button>
             </div>
         </div>
 
-        <CollapsiblePanel class="panel">
-            <div v-auto-animate class="sessions">
+        <CollapsiblePanel>
+            <div v-auto-animate class="flex flex-col gap-px py-1 pl-4">
                 <DraftItem
                     v-if="showDraft"
                     :key="newKey"
                     :draft-key="newKey"
                     :project-id="project.id"
                 />
-                <SessionItem v-for="s in visible" :key="s.id" :session="s" />
+                <SessionItem v-for="session in visible" :key="session.id" :session="session" />
                 <template v-if="isPending">
-                    <div
-                        v-for="i in 3"
-                        :key="`sk${i}`"
-                        class="skeleton my-px h-[30px]"
-                        :style="{ opacity: 1 - i * 0.25 }"
-                    />
+                    <div v-for="row in 3" :key="`skeleton-${row}`" class="skeleton my-px h-8" />
                 </template>
                 <p
                     v-else-if="!sessions.length && !showDraft"
                     key="empty"
-                    class="px-2.5 pt-1.5 pb-2 text-[12.5px] text-faint"
+                    class="px-2 py-1 text-muted"
                 >
                     {{ t('nav.noSessions') }}
                 </p>
-                <template v-if="isFetchingNextPage">
-                    <div v-for="i in 2" :key="`nx${i}`" class="skeleton my-px h-[30px]" />
-                </template>
-                <button v-else-if="hasNextPage" key="more" class="more" @click="fetchNextPage()">
+                <div v-if="isFetchingNextPage" key="next" class="skeleton my-px h-8" />
+                <Button v-else-if="hasNextPage" key="more" @click="fetchNextPage()">
                     {{ t('nav.showMore') }}
-                </button>
+                </Button>
                 <div ref="sentinel" key="sentinel" class="h-px" />
             </div>
         </CollapsiblePanel>
@@ -192,127 +184,20 @@ watch(
 </template>
 
 <style scoped>
-.row {
-    position: relative;
+.project-row {
     display: flex;
     align-items: center;
-    border-radius: 8px;
-    transition: background var(--dur-1);
-
-    &:hover {
-        background: var(--surface-2);
-    }
+    gap: 4px;
 }
 
-.row-btn {
+.project-actions {
     display: flex;
-    min-width: 0;
-    flex: 1;
-    align-items: center;
-    gap: 8px;
-    height: 34px;
-    padding: 0 8px;
-    border: 0;
-    border-radius: 8px;
-    background: none;
-    color: inherit;
-    font-size: 13px;
-    font-weight: 500;
-    text-align: left;
-    cursor: pointer;
-}
-
-.chev {
-    color: var(--faint);
-    transition: transform var(--dur-3) var(--ease-out);
-}
-
-.row-btn[data-open] .chev {
-    transform: rotate(90deg);
-}
-
-.count {
-    color: var(--faint);
-    font-size: 11.5px;
-    font-variant-numeric: tabular-nums;
-    transition: opacity var(--dur-1);
-}
-
-.actions {
-    position: absolute;
-    top: 3px;
-    right: 4px;
-    display: flex;
-    gap: 1px;
+    gap: 2px;
     opacity: 0;
     transition: opacity var(--dur-1);
 }
 
-.row:is(:hover, :focus-within) .actions {
+.project-row:is(:hover, :focus-within) .project-actions {
     opacity: 1;
-}
-
-.row:is(:hover, :focus-within) .count {
-    opacity: 0;
-}
-
-.confirm {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 34px;
-    padding: 4px 4px 4px 10px;
-    border-radius: 8px;
-    background: var(--del-bg);
-    font-size: 12.5px;
-}
-
-.panel {
-    height: var(--collapsible-panel-height);
-    overflow: hidden;
-    transition: height var(--dur-3) var(--ease-out);
-
-    &:is([data-starting-style], [data-ending-style]) {
-        height: 0;
-    }
-
-    &[data-ending-style] {
-        transition-timing-function: var(--ease-in-out);
-    }
-}
-
-.sessions {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    padding: 2px 0 6px 20px;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: 2px;
-        bottom: 8px;
-        left: 15px;
-        width: 1px;
-        background: var(--ui-border);
-    }
-}
-
-.more {
-    height: 28px;
-    padding: 0 10px;
-    border: 0;
-    border-radius: 7px;
-    background: none;
-    color: var(--faint);
-    font-size: 12.5px;
-    text-align: left;
-    cursor: pointer;
-
-    &:hover {
-        background: var(--surface-2);
-        color: var(--ui-foreground);
-    }
 }
 </style>

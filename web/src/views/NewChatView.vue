@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { PhCaretDown, PhCheck, PhFolderSimple } from '@phosphor-icons/vue'
+import {
+    SegmentedControl,
+    SegmentedControlIndicator,
+    SegmentedControlItem,
+} from '@ui-sdk/vue/segmented-control'
 import {
     Select,
     SelectContent,
     SelectItem,
+    SelectItemIndicator,
     SelectItemText,
     SelectTrigger,
     SelectValue,
@@ -41,7 +46,15 @@ const projectId = computed({
         if (id) void router.replace({ name: 'new', query: { project: id } })
     },
 })
-const projectItems = computed(() => projects.value.map((p) => ({ value: p.id, label: p.name })))
+const projectItems = computed(() =>
+    projects.value.map((project) => ({ value: project.id, label: project.name })),
+)
+const agentValue = computed({
+    get: () => agent.value,
+    set: (value: string | null) => {
+        if (value && agents.isConnected(value as AgentId)) agent.value = value as AgentId
+    },
+})
 
 watch(agents.connected, (list) => {
     const first = list.at(0)
@@ -75,45 +88,25 @@ function send({ text, files }: { text: string; files: File[] }) {
     <section
         class="motion-fade flex min-h-0 flex-1 items-center justify-center overflow-auto p-6 max-md:p-3"
     >
-        <div class="flex w-full max-w-[720px] flex-col gap-[18px]">
-            <div class="flex flex-col items-center gap-2.5 text-center">
-                <span class="grid h-11 w-11 place-items-center rounded-xl bg-accent-soft"
-                    ><BrandMark :size="24"
-                /></span>
-                <h1 class="m-0 text-[28px] leading-tight font-semibold tracking-tight">
-                    {{ t('empty.title') }}
-                </h1>
-                <p class="m-0 max-w-[460px] leading-normal text-muted">{{ t('empty.lead') }}</p>
-            </div>
+        <div class="flex w-full max-w-[720px] flex-col items-center gap-5">
+            <BrandMark :size="32" />
+            <h1 class="m-0 text-2xl font-semibold">{{ t('empty.title') }}</h1>
+            <p class="m-0 text-center text-muted">{{ t('empty.lead') }}</p>
 
-            <div
-                class="flex flex-wrap justify-center gap-2"
-                role="group"
-                :aria-label="t('composer.model')"
-            >
-                <button
-                    v-for="a in agents.all"
-                    :key="a.id"
-                    type="button"
-                    class="agent"
-                    :data-on="agent === a.id || undefined"
-                    :disabled="!agents.isConnected(a.id)"
-                    :aria-pressed="agent === a.id"
-                    @click="agent = a.id"
+            <SegmentedControl v-model:value="agentValue" :aria-label="t('composer.model')">
+                <SegmentedControlIndicator />
+                <SegmentedControlItem
+                    v-for="item in agents.all"
+                    :key="item.id"
+                    :value="item.id"
+                    :disabled="!agents.isConnected(item.id)"
+                    :title="agents.isConnected(item.id) ? undefined : t('empty.notConnected')"
                 >
-                    <AgentLogo :agent="a.id" decorative />
-                    {{ a.name }}
-                    <small
-                        v-if="!agents.isConnected(a.id)"
-                        class="text-[11.5px] font-normal text-faint"
-                        >{{ t('empty.notConnected') }}</small
-                    >
-                </button>
-            </div>
+                    <AgentLogo :agent="item.id" decorative />{{ item.name }}
+                </SegmentedControlItem>
+            </SegmentedControl>
 
-            <p v-if="!projects.length" class="m-0 text-center text-[13px] text-faint">
-                {{ t('empty.noProject') }}
-            </p>
+            <p v-if="!projects.length" class="m-0 text-muted">{{ t('empty.noProject') }}</p>
             <PromptComposer
                 v-else
                 :draft-key="draftKey(undefined, projectId)"
@@ -124,73 +117,29 @@ function send({ text, files }: { text: string; files: File[] }) {
             >
                 <template #start>
                     <Select v-model:value="projectId" :items="projectItems">
-                        <SelectTrigger class="chip" :aria-label="t('composer.project')">
-                            <PhFolderSimple :size="15" />
-                            <SelectValue />
-                            <PhCaretDown :size="13" />
-                        </SelectTrigger>
-                        <SelectContent class="popup w-[240px]" side="top" align="start">
-                            <div class="popup-label">{{ t('composer.project') }}</div>
+                        <SelectTrigger :aria-label="t('composer.project')"
+                            ><SelectValue
+                        /></SelectTrigger>
+                        <SelectContent side="top" align="start">
                             <SelectItem
-                                v-for="p in projects"
-                                :key="p.id"
-                                :value="p.id"
-                                class="option"
+                                v-for="project in projects"
+                                :key="project.id"
+                                :value="project.id"
                             >
-                                <PhCheck :size="15" class="check" />
-                                <b><SelectItemText>{{ p.name }}</SelectItemText></b>
-                                <span />
+                                <SelectItemText>{{ project.name }}</SelectItemText>
+                                <SelectItemIndicator />
                             </SelectItem>
                         </SelectContent>
                     </Select>
                 </template>
             </PromptComposer>
 
-            <p class="m-0 text-center text-[12.5px] text-faint">
+            <p class="m-0 text-muted">
                 {{ t('empty.connectHint') }}
-                <RouterLink to="/settings" class="text-accent underline-offset-4 hover:underline">{{
+                <RouterLink to="/settings" class="underline underline-offset-4">{{
                     t('nav.settings').toLowerCase()
                 }}</RouterLink>
             </p>
         </div>
     </section>
 </template>
-
-<style scoped>
-.agent {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 38px;
-    padding: 0 14px 0 10px;
-    border: 1px solid var(--border-strong);
-    border-radius: 999px;
-    background: var(--surface);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition:
-        border-color var(--dur-2),
-        background var(--dur-2),
-        transform var(--dur-1);
-
-    &:hover {
-        border-color: var(--faint);
-    }
-
-    &:active {
-        transform: scale(0.97);
-    }
-
-    &[data-on] {
-        border-color: var(--accent);
-        background: var(--accent-soft);
-    }
-
-    &:disabled {
-        border-style: dashed;
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-}
-</style>

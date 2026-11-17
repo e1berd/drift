@@ -147,7 +147,7 @@ onMounted(load)
                 class="flex items-center justify-between gap-4 px-3 py-2 text-sm"
             >
                 <span>{{ p.label }}</span>
-                <Button class="btn danger h-7" @click="removePasskey(p.id)">{{
+                <Button data-variant="destructive" @click="removePasskey(p.id)">{{
                     t('actions.delete')
                 }}</Button>
             </li>
@@ -155,7 +155,7 @@ onMounted(load)
         <p v-else-if="flow" class="text-sm text-(--ui-muted-foreground)">{{ t('empty') }}</p>
 
         <div>
-            <Button v-if="canAdd" class="btn primary" @click="addPasskey">{{ t('add') }}</Button>
+            <Button v-if="canAdd" data-variant="solid" @click="addPasskey">{{ t('add') }}</Button>
             <p v-else-if="!passkeysSupported()" class="text-sm text-(--ui-muted-foreground)">
                 {{ t('passkeys.unsupported') }}
             </p>

@@ -34,20 +34,20 @@ const draftTitle = computed(() => {
 <template>
     <RouterLink
         :to="{ name: 'session', params: { sessionId: session.id } }"
-        class="sess"
+        class="nav-row no-underline"
         :class="{ 'motion-flash': freshSessions.has(session.id) }"
         :data-active="active || undefined"
         :aria-current="active ? 'page' : undefined"
         @click="closeOnNarrow"
     >
         <span class="truncate">{{ session.title }}</span>
-        <span class="flex items-center gap-1 text-[11.5px] text-faint">
+        <span class="status-tag">
             <RunSpinner v-if="running" :size="14" />
-            <span v-else-if="typing" class="tag typing">
+            <span v-else-if="typing" class="status-tag">
                 <PhDeviceMobile :size="11" />{{ t('session.typing')
                 }}<span class="typing-dots"><i /><i /><i /></span>
             </span>
-            <span v-else-if="hasDraft" class="tag" :title="draftTitle"
+            <span v-else-if="hasDraft" class="status-tag" :title="draftTitle"
                 ><PhPencilSimple :size="11" />{{ t('session.draft') }}</span
             >
             <time v-else :datetime="session.updateTime">{{
@@ -57,30 +57,3 @@ const draftTitle = computed(() => {
         <AgentLogo :agent="session.agent" />
     </RouterLink>
 </template>
-
-<style scoped>
-.sess {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto 16px;
-    align-items: center;
-    gap: 8px;
-    height: 32px;
-    padding: 0 8px 0 10px;
-    border-radius: 7px;
-    color: var(--ui-muted-foreground);
-    font-size: 13px;
-    transition:
-        background var(--dur-1),
-        color var(--dur-1);
-
-    &:hover {
-        background: var(--surface-2);
-        color: var(--ui-foreground);
-    }
-
-    &[data-active] {
-        background: var(--accent-soft);
-        color: var(--ui-foreground);
-    }
-}
-</style>

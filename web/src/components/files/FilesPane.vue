@@ -35,9 +35,9 @@ const lineCount = computed(() => file.data.value?.content.split('\n').length ?? 
             class="flex min-h-0 flex-col border-r border-line max-md:max-h-[220px] max-md:border-r-0 max-md:border-b"
         >
             <div class="col-h">
-                <PhFolderSimple :size="15" class="text-accent" />
+                <PhFolderSimple class="text-fg" />
                 <b class="font-medium text-fg">{{ project.name }}</b>
-                <span class="truncate font-mono text-[11.5px]">{{ project.path }}</span>
+                <span class="truncate font-mono">{{ project.path }}</span>
             </div>
             <FileTree v-model="selected" :project-id="project.id" />
         </aside>
@@ -50,7 +50,7 @@ const lineCount = computed(() => file.data.value?.content.split('\n').length ?? 
                     {{ t('files.lines', { count: lineCount }) }} · {{ t('files.readOnly') }}
                 </span>
             </div>
-            <div v-if="!selected" class="grid flex-1 place-items-center text-[13px] text-faint">
+            <div v-if="!selected" class="grid flex-1 place-items-center text-muted">
                 {{ t('files.pick') }}
             </div>
             <div v-else-if="file.isPending.value" class="flex flex-col gap-1.5 p-4">
@@ -63,12 +63,12 @@ const lineCount = computed(() => file.data.value?.content.split('\n').length ?? 
             </div>
             <div
                 v-else-if="file.data.value?.binary"
-                class="grid flex-1 place-items-center text-[13px] text-faint"
+                class="grid flex-1 place-items-center text-muted"
             >
                 {{ t('files.binary') }}
             </div>
             <template v-else-if="file.data.value">
-                <p v-if="file.data.value.truncated" class="m-0 px-4 pt-2 text-[12px] text-faint">
+                <p v-if="file.data.value.truncated" class="m-0 px-4 pt-2 text-muted">
                     {{ t('files.truncated') }}
                 </p>
                 <CodeView :path="file.data.value.path" :content="file.data.value.content" />

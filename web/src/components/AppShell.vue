@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useQueryClient } from '@tanstack/vue-query'
+import { Drawer, DrawerBackdrop, DrawerContent, DrawerTitle } from '@ui-sdk/vue/drawer'
 import { Preferences, usePreference } from '@ui-sdk/vue/preferences'
 import {
     Resizable,
@@ -12,6 +12,7 @@ import {
 
 import AppSidebar from '@/components/sidebar/AppSidebar.vue'
 import AppToasts from '@/components/AppToasts.vue'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 import { provideShell } from '@/composables/useShell'
 import { startEventStream } from '@/composables/useEventStream'
 import { loadDrafts } from '@/composables/useDrafts'
@@ -64,35 +65,28 @@ onMounted(() => {
 
 <template>
     <Preferences :preferences="shellPreferences">
-        <div class="shell h-dvh" :data-side="side.value">
-            <div v-if="narrow" class="relative h-full">
+        <div class="shell h-dvh">
+            <template v-if="narrow">
                 <main class="flex h-full min-w-0 flex-col"><slot /></main>
-                <button
-                    v-if="drawerOpen"
-                    class="drawer-scrim"
-                    :aria-label="t('nav.toggle.hide')"
-                    tabindex="-1"
-                    @click="drawerOpen = false"
-                />
-                <aside
-                    class="drawer"
-                    :data-open="drawerOpen || undefined"
-                    :inert="!drawerOpen || undefined"
-                >
-                    <AppSidebar />
-                </aside>
-            </div>
+                <Drawer v-model:open="drawerOpen" :side="side.value === 'left' ? 'left' : 'right'">
+                    <DrawerBackdrop />
+                    <DrawerContent class="sidebar-drawer">
+                        <DrawerTitle class="sr-only">{{ t('nav.projects') }}</DrawerTitle>
+                        <AppSidebar />
+                    </DrawerContent>
+                </Drawer>
+            </template>
 
             <Resizable
                 v-else
                 :key="side.value"
                 auto-save-id="drift-shell"
                 :controller="shell"
-                class="h-full"
+                class="shell-panels"
                 @layout-change="syncCollapsed"
             >
-                <template v-for="(id, i) in order" :key="id">
-                    <ResizableHandle v-if="i === 1" class="handle" :aria-label="t('nav.resize')" />
+                <template v-for="(id, index) in order" :key="id">
+                    <ResizableHandle v-if="index === 1" :aria-label="t('nav.resize')" />
                     <ResizablePanel
                         v-if="id === 'sidebar'"
                         id="sidebar"
@@ -115,7 +109,14 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.shell-panels {
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+}
+
 .shell :deep([data-slot='resizable-panel']) {
+    padding: 0;
     transition: flex-basis var(--dur-4) var(--ease-out);
 }
 
@@ -125,109 +126,20 @@ onMounted(() => {
 
 .sidebar-panel {
     overflow: hidden;
-    background: var(--surface);
 }
 
 .sidebar-inner {
     height: 100%;
     min-width: 240px;
-    transition:
-        opacity var(--dur-3) var(--ease-out),
-        transform var(--dur-4) var(--ease-out);
+    transition: opacity var(--dur-3) var(--ease-out);
 }
 
 .sidebar-panel[data-collapsed] .sidebar-inner {
     opacity: 0;
-    transform: translateX(var(--sidebar-shift));
-    transition:
-        opacity var(--dur-2) var(--ease-in),
-        transform var(--dur-3) var(--ease-in);
 }
 
-.shell[data-side='right'] {
-    --sidebar-shift: 20px;
-    --sidebar-edge: inset 1px 0 0 var(--ui-border);
-}
-
-.shell[data-side='left'] {
-    --sidebar-shift: -20px;
-    --sidebar-edge: inset -1px 0 0 var(--ui-border);
-}
-
-.sidebar-panel:not([data-collapsed]) {
-    box-shadow: var(--sidebar-edge);
-}
-
-.handle {
-    position: relative;
-    z-index: 3;
-    width: 0;
-    cursor: col-resize;
-    outline: none;
-
-    &::before {
-        content: '';
-        position: absolute;
-        inset-block: 0;
-        left: -4px;
-        width: 8px;
-    }
-
-    &::after {
-        content: '';
-        position: absolute;
-        inset-block: 0;
-        left: -1px;
-        width: 2px;
-        background: var(--accent);
-        opacity: 0;
-        transition: opacity var(--dur-2);
-    }
-
-    &[data-hovering]::after,
-    &[data-dragging]::after,
-    &:focus-visible::after {
-        opacity: 1;
-    }
-}
-
-.drawer-scrim {
-    position: absolute;
-    inset: 0;
-    z-index: 60;
-    border: 0;
-    background: rgb(0 0 0 / 0.4);
-    animation: drift-fade var(--dur-3) var(--ease-out) both;
-}
-
-.drawer {
-    position: absolute;
-    inset-block: 0;
-    z-index: 70;
+.sidebar-drawer {
     width: min(88vw, 340px);
-    background: var(--surface);
-    box-shadow: var(--shadow);
-    visibility: hidden;
-    transition:
-        transform var(--dur-3) var(--ease-in),
-        visibility 0s linear var(--dur-3);
-}
-
-.shell[data-side='right'] .drawer {
-    right: 0;
-    transform: translateX(100%);
-}
-
-.shell[data-side='left'] .drawer {
-    left: 0;
-    transform: translateX(-100%);
-}
-
-.drawer[data-open] {
-    transform: none;
-    visibility: visible;
-    transition:
-        transform var(--dur-4) var(--ease-out),
-        visibility 0s;
+    padding: 0;
 }
 </style>

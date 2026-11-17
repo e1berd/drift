@@ -8,7 +8,7 @@ withDefaults(defineProps<{ size?: number }>(), { size: 20 })
         :height="size"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="var(--accent)"
+        stroke="var(--ui-primary)"
         stroke-width="2"
         stroke-linecap="round"
         aria-hidden="true"

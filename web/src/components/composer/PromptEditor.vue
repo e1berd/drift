@@ -17,6 +17,7 @@ const emit = defineEmits<{
     submit: []
     historyBack: []
     escape: []
+    files: [files: File[]]
 }>()
 
 function toDoc(text: string): JSONContent {
@@ -27,6 +28,13 @@ function toDoc(text: string): JSONContent {
             content: line ? [{ type: 'text', text: line }] : [],
         })),
     }
+}
+
+function emitFiles(list: FileList | null | undefined): boolean {
+    const files = [...(list ?? [])]
+    if (!files.length) return false
+    emit('files', files)
+    return true
 }
 
 const Keys = Extension.create({
@@ -73,6 +81,8 @@ const editor = useEditor({
         Keys,
     ],
     editorProps: {
+        handlePaste: (_view, event) => emitFiles(event.clipboardData?.files),
+        handleDrop: (_view, event) => emitFiles(event.dataTransfer?.files),
         attributes: {
             class: 'prompt',
             'aria-label': props.label,
@@ -112,10 +122,7 @@ onBeforeUnmount(() => editor.value?.destroy())
     min-height: 56px;
     max-height: 240px;
     overflow-y: auto;
-    padding: 14px 16px 4px;
-    color: var(--ui-foreground);
-    font-size: 14.5px;
-    line-height: 1.55;
+    padding: 12px 12px 4px;
     outline: none;
     white-space: pre-wrap;
     word-break: break-word;
@@ -129,7 +136,7 @@ onBeforeUnmount(() => editor.value?.destroy())
     content: attr(data-placeholder);
     float: left;
     height: 0;
-    color: var(--faint);
+    color: var(--ui-muted-foreground);
     pointer-events: none;
 }
 </style>

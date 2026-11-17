@@ -1,49 +1,13 @@
 :root {
-    color-scheme: light dark;
-    --ui-font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-    --ui-font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
-    --ui-radius: 0.5rem;
-
-    --ui-background: light-dark(#f6f6f3, #0e0f11);
-    --ui-foreground: light-dark(#16171a, #ecedef);
-    --ui-muted: light-dark(#f1f1ed, #1c1d22);
-    --ui-muted-foreground: light-dark(#575a62, #a3a5ad);
-    --ui-border: light-dark(#e3e3dd, #26282e);
-    --ui-input: light-dark(#d2d2cb, #33363d);
-    --ui-primary: var(--accent);
-    --ui-primary-foreground: var(--accent-ink);
-    --ui-destructive: light-dark(#c5343a, #f2777a);
-    --ui-ring: var(--accent-soft);
-    --ui-ring-border: var(--accent);
-
-    --surface: light-dark(#ffffff, #15161a);
-    --surface-2: light-dark(#f1f1ed, #1c1d22);
-    --surface-3: light-dark(#e7e7e2, #25272d);
-    --border-strong: light-dark(#d2d2cb, #33363d);
-    --faint: light-dark(#686b73, #8b8e97);
-    --accent: light-dark(#3e4ed6, #9aa5ff);
-    --accent-ink: light-dark(#ffffff, #0e0f11);
-    --accent-soft: light-dark(rgb(62 78 214 / 0.09), rgb(154 165 255 / 0.13));
-    --ok: light-dark(#1d8549, #5fcb8e);
-    --plan: light-dark(#0d7a75, #4fc1bc);
-    --auto: light-dark(#9a6200, #e8b04b);
-    --add-bg: light-dark(rgb(29 133 73 / 0.09), rgb(95 203 142 / 0.11));
-    --add-fg: light-dark(#1d6b3e, #8fe0b0);
-    --del-bg: light-dark(rgb(197 52 58 / 0.08), rgb(242 119 122 / 0.11));
-    --del-fg: light-dark(#a62b30, #f7a3a5);
-    --term: light-dark(#121316, #0a0b0d);
-    --shadow:
-        0 16px 40px light-dark(rgb(20 20 30 / 0.13), rgb(0 0 0 / 0.5)),
-        0 2px 8px light-dark(rgb(20 20 30 / 0.06), rgb(0 0 0 / 0.35));
-    --ui-shadow: var(--shadow);
-
     --topbar-h: 52px;
+    --add-bg: color-mix(in oklab, oklch(0.62 0.15 150) 14%, transparent);
+    --del-bg: color-mix(in oklab, var(--ui-destructive) 12%, transparent);
 }
 
-[data-color-scheme='light'] {
+:root[data-color-scheme='light'] {
     color-scheme: light;
 }
 
-[data-color-scheme='dark'] {
+:root[data-color-scheme='dark'] {
     color-scheme: dark;
 }
