@@ -6,49 +6,49 @@
   {{template "messages" .Messages}}
 
   <ui-field>
-    <ui-field-label>Имя</ui-field-label>
+    <ui-field-label>{{.L.T "setup.name"}}</ui-field-label>
     <ui-input>
-      <input name="name" value="{{.Name}}" autocomplete="name" maxlength="200">
+      <input name="name" value="{{.Name}}" autocomplete="name" maxlength="{{.MaxNameLength}}">
     </ui-input>
   </ui-field>
 
   <ui-field>
-    <ui-field-label>Email</ui-field-label>
+    <ui-field-label>{{.L.T "common.email"}}</ui-field-label>
     <ui-input>
       <input name="email" type="email" value="{{.Email}}" autocomplete="username" required autofocus>
     </ui-input>
-    <ui-field-error match="valueMissing">Введите email</ui-field-error>
-    <ui-field-error match="typeMismatch">Неверный формат email</ui-field-error>
+    <ui-field-error match="valueMissing">{{.L.T "common.email_required"}}</ui-field-error>
+    <ui-field-error match="typeMismatch">{{.L.T "common.email_invalid"}}</ui-field-error>
   </ui-field>
 
   <ui-field>
-    <ui-field-label>Пароль</ui-field-label>
+    <ui-field-label>{{.L.T "common.password"}}</ui-field-label>
     <ui-password-input name="password" required>
-      <input id="setup-password" autocomplete="new-password" minlength="8" maxlength="72">
-      <ui-password-input-toggle><button aria-label="Показать пароль"></button></ui-password-input-toggle>
+      <input id="setup-password" autocomplete="new-password" minlength="{{.MinPasswordLength}}" maxlength="{{.MaxPasswordBytes}}">
+      <ui-password-input-toggle><button aria-label="{{.L.T "common.show_password"}}"></button></ui-password-input-toggle>
     </ui-password-input>
-    <ui-field-description>Не короче 8 символов.</ui-field-description>
-    <ui-field-error match="valueMissing">Введите пароль</ui-field-error>
-    <ui-field-error match="tooShort">Не короче 8 символов</ui-field-error>
+    <ui-field-description>{{.L.T "setup.password_hint" "min" .MinPasswordLength}}</ui-field-description>
+    <ui-field-error match="valueMissing">{{.L.T "common.password_required"}}</ui-field-error>
+    <ui-field-error match="tooShort">{{.L.T "setup.password_too_short_field" "min" .MinPasswordLength}}</ui-field-error>
   </ui-field>
 
   <ui-field>
-    <ui-field-label>Повторите пароль</ui-field-label>
+    <ui-field-label>{{.L.T "setup.password_confirm"}}</ui-field-label>
     <ui-password-input name="password_confirm" required>
-      <input autocomplete="new-password"
+      <input autocomplete="new-password" data-mismatch="{{.L.T "common.passwords_mismatch"}}"
              _="on input from closest <form/>
                   if my value is #setup-password.value
                     call me.setCustomValidity('')
                   else
-                    call me.setCustomValidity('Пароли не совпадают')
+                    call me.setCustomValidity(my @data-mismatch)
                   end">
-      <ui-password-input-toggle><button aria-label="Показать пароль"></button></ui-password-input-toggle>
+      <ui-password-input-toggle><button aria-label="{{.L.T "common.show_password"}}"></button></ui-password-input-toggle>
     </ui-password-input>
-    <ui-field-error match="customError">Пароли не совпадают</ui-field-error>
+    <ui-field-error match="customError">{{.L.T "common.passwords_mismatch"}}</ui-field-error>
   </ui-field>
 
   <ui-button>
-    <button type="submit" data-variant="solid" class="w-full">Создать суперпользователя</button>
+    <button type="submit" data-variant="solid" class="w-full">{{.L.T "setup.submit"}}</button>
   </ui-button>
 </form>
 {{end}}

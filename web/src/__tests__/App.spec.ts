@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
 import App from '../App.vue'
+import { setupI18n } from '../i18n'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -21,10 +22,11 @@ describe('App', () => {
     router.push('/')
     await router.isReady()
 
-    const wrapper = mount(App, { global: { plugins: [router] } })
+    const wrapper = mount(App, { global: { plugins: [router, setupI18n('en')] } })
     await flushPromises()
 
     expect(wrapper.text()).toContain('root@example.com')
+    expect(wrapper.text()).toContain('Sign out')
     expect(fetch).toHaveBeenCalledWith('/.ory/kratos/public/sessions/whoami', expect.anything())
   })
 })

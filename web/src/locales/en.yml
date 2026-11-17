@@ -1,0 +1,19 @@
+# Shared SPA translations. Keep strings used by one component in its <i18n lang="yaml"> block.
+# Server-rendered pages (/login, /setup) are translated in app/internal/i18n/locales.
+
+language:
+  ru: Русский
+  en: English
+
+theme:
+  system: System
+  light: Light
+  dark: Dark
+
+passkeys:
+  title: Passkeys
+  unsupported: This browser does not support passkeys.
+
+actions:
+  sign_out: Sign out
+  delete: Delete

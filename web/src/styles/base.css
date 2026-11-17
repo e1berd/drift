@@ -4,3 +4,16 @@
 @import '@ui-sdk/core/web.css' layer(components);
 
 @source '../../../app/internal/auth/templates';
+
+/*
+ * Color scheme from the theme switcher (src/shared/preferences.ts): the server renders
+ * data-color-scheme on <html> from the `color-scheme` cookie, the client keeps it current.
+ * "system" keeps ui-sdk's `color-scheme: light dark`.
+ */
+:root[data-color-scheme='light'] {
+  color-scheme: light;
+}
+
+:root[data-color-scheme='dark'] {
+  color-scheme: dark;
+}

@@ -1,0 +1,60 @@
+# Server-side translations: /login, /setup, /error pages and Kratos messages.
+# {name} placeholders are filled by i18n.Printer.T("key", "name", value).
+
+common:
+  email: Email
+  password: Password
+  show_password: Show password
+  email_required: Enter your email
+  email_invalid: Invalid email format
+  password_required: Enter your password
+  passwords_mismatch: Passwords do not match
+
+preferences:
+  label: Display settings
+  language: Language
+  theme: Theme
+
+language:
+  ru: Русский
+  en: English
+
+theme:
+  system: System
+  light: Light
+  dark: Dark
+
+login:
+  title: Sign in
+  refresh_title: Confirm sign-in
+  refresh_lead: Sign in again to continue.
+  submit: Sign in
+  or: or
+  passkey: Sign in with a passkey (fingerprint, Face ID)
+  passkey_unsupported: This browser does not support passkeys.
+
+error:
+  title: Sign-in error
+  generic: Something went wrong. Try signing in again.
+  retry: Sign in again
+
+setup:
+  title: First run
+  lead: Create the superuser. Registration closes after that.
+  name: Name
+  password_hint: At least {min} characters.
+  password_too_short_field: At least {min} characters
+  password_confirm: Repeat password
+  submit: Create superuser
+  name_too_long: Name is longer than {max} characters
+  password_too_short: Password is shorter than {min} characters
+  password_too_long: Password is longer than {max} bytes
+  rejected: "Kratos rejected the data: {reason}"
+
+# Kratos messages by ID (https://www.ory.sh/docs/kratos/concepts/ui-messages).
+# Unknown IDs are shown as Kratos sent them (in English).
+kratos:
+  "1010003": Please confirm this action by verifying that it is you.
+  "4000006": The provided credentials are invalid, check for spelling mistakes in your password or email.
+  "4000010": Account not active yet. Did you forget to verify your email address?
+  "4010001": The login flow expired, please try again.

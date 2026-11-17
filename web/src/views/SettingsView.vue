@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@ui-sdk/vue/button'
 
 import {
@@ -12,6 +13,7 @@ import {
 } from '@/shared/kratos'
 import { attestationJSON, creationOptions, passkeysSupported } from '@/shared/webauthn'
 
+const { t } = useI18n()
 const route = useRoute()
 
 const flow = ref<KratosFlow | null>(null)
@@ -105,10 +107,8 @@ onMounted(load)
 <template>
   <section class="flex max-w-lg flex-col gap-6">
     <header class="flex flex-col gap-1">
-      <h1 class="text-2xl font-semibold">Ключи доступа</h1>
-      <p class="text-sm text-(--ui-muted-foreground)">
-        Вход по отпечатку пальца, Face ID или аппаратному ключу вместо пароля.
-      </p>
+      <h1 class="text-2xl font-semibold">{{ t('passkeys.title') }}</h1>
+      <p class="text-sm text-(--ui-muted-foreground)">{{ t('lead') }}</p>
     </header>
 
     <ul v-if="messages.length" class="flex flex-col gap-2" role="status">
@@ -136,16 +136,29 @@ onMounted(load)
         class="flex items-center justify-between gap-4 px-3 py-2 text-sm"
       >
         <span>{{ p.label }}</span>
-        <Button data-variant="destructive" @click="removePasskey(p.id)">Удалить</Button>
+        <Button data-variant="destructive" @click="removePasskey(p.id)">{{
+          t('actions.delete')
+        }}</Button>
       </li>
     </ul>
-    <p v-else-if="flow" class="text-sm text-(--ui-muted-foreground)">Ключей пока нет.</p>
+    <p v-else-if="flow" class="text-sm text-(--ui-muted-foreground)">{{ t('empty') }}</p>
 
     <div>
-      <Button v-if="canAdd" data-variant="solid" @click="addPasskey">Добавить ключ доступа</Button>
+      <Button v-if="canAdd" data-variant="solid" @click="addPasskey">{{ t('add') }}</Button>
       <p v-else-if="!passkeysSupported()" class="text-sm text-(--ui-muted-foreground)">
-        Этот браузер не поддерживает ключи доступа.
+        {{ t('passkeys.unsupported') }}
       </p>
     </div>
   </section>
 </template>
+
+<i18n lang="yaml">
+ru:
+  lead: Вход по отпечатку пальца, Face ID или аппаратному ключу вместо пароля.
+  empty: Ключей пока нет.
+  add: Добавить ключ доступа
+en:
+  lead: Sign in with a fingerprint, Face ID or a hardware key instead of a password.
+  empty: No passkeys yet.
+  add: Add a passkey
+</i18n>

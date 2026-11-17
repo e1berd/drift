@@ -122,7 +122,8 @@ function submitPasskey(form: HTMLFormElement, credential: PublicKeyCredential) {
 /** Asks the authenticator for a passkey and submits the Kratos login form with it. */
 export async function passkeyLogin(form: HTMLFormElement): Promise<void> {
   if (!passkeysSupported()) {
-    alert('Этот браузер не поддерживает ключи доступа.')
+    // The server puts the translated message on the form (login.html).
+    alert(form.dataset.passkeyUnsupported ?? 'Passkeys are not supported in this browser.')
     return
   }
   conditional?.abort()

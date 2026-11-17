@@ -2,10 +2,11 @@
 {{if .Error}}
 <div class="flex flex-col gap-4">
   <p role="alert" class="rounded-(--ui-radius) border border-(--ui-destructive) px-3 py-2 text-sm text-(--ui-destructive)">{{.Error}}</p>
-  <a href="/login" class="text-sm underline underline-offset-4">Войти заново</a>
+  <a href="/login" class="text-sm underline underline-offset-4">{{.L.T "error.retry"}}</a>
 </div>
 {{else}}
-<form id="login-form" class="flex flex-col gap-4" action="{{.Action}}" method="post">
+<form id="login-form" class="flex flex-col gap-4" action="{{.Action}}" method="post"
+      data-passkey-unsupported="{{.L.T "login.passkey_unsupported"}}">
   <input type="hidden" name="csrf_token" value="{{.CSRF}}">
   {{template "messages" .Messages}}
 
@@ -15,38 +16,38 @@
   {{end}}
 
   <ui-field>
-    <ui-field-label>Email</ui-field-label>
+    <ui-field-label>{{.L.T "common.email"}}</ui-field-label>
     <ui-input>
       <input name="identifier" type="email" value="{{.Identifier}}" required {{if .Refresh}}readonly{{else}}autofocus{{end}}
              autocomplete="username{{if .Passkey}} webauthn{{end}}">
     </ui-input>
-    <ui-field-error match="valueMissing">Введите email</ui-field-error>
+    <ui-field-error match="valueMissing">{{.L.T "common.email_required"}}</ui-field-error>
   </ui-field>
 
   {{if .Password}}
   <ui-field>
-    <ui-field-label>Пароль</ui-field-label>
+    <ui-field-label>{{.L.T "common.password"}}</ui-field-label>
     <ui-password-input name="password" required>
       <input autocomplete="current-password">
-      <ui-password-input-toggle><button aria-label="Показать пароль"></button></ui-password-input-toggle>
+      <ui-password-input-toggle><button aria-label="{{.L.T "common.show_password"}}"></button></ui-password-input-toggle>
     </ui-password-input>
-    <ui-field-error match="valueMissing">Введите пароль</ui-field-error>
+    <ui-field-error match="valueMissing">{{.L.T "common.password_required"}}</ui-field-error>
   </ui-field>
 
   <ui-button>
-    <button type="submit" name="method" value="password" data-variant="solid" class="w-full">Войти</button>
+    <button type="submit" name="method" value="password" data-variant="solid" class="w-full">{{.L.T "login.submit"}}</button>
   </ui-button>
   {{end}}
 
   {{if .Passkey}}
   <div class="flex items-center gap-3 text-xs text-(--ui-muted-foreground)" aria-hidden="true">
-    <span class="h-px flex-1 bg-(--ui-border)"></span>или<span class="h-px flex-1 bg-(--ui-border)"></span>
+    <span class="h-px flex-1 bg-(--ui-border)"></span>{{.L.T "login.or"}}<span class="h-px flex-1 bg-(--ui-border)"></span>
   </div>
   <ui-button>
     <button type="button" class="w-full"
             _="init call drift.passkeyAutofill(closest <form/>)
                on click call drift.passkeyLogin(closest <form/>)">
-      Войти по ключу доступа (отпечаток, Face ID)
+      {{.L.T "login.passkey"}}
     </button>
   </ui-button>
   {{end}}

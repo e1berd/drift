@@ -1,0 +1,19 @@
+# Общие переводы SPA. Строки одного компонента храните в его блоке <i18n lang="yaml">.
+# Серверные страницы (/login, /setup) переводятся в app/internal/i18n/locales.
+
+language:
+  ru: Русский
+  en: English
+
+theme:
+  system: Системная
+  light: Светлая
+  dark: Тёмная
+
+passkeys:
+  title: Ключи доступа
+  unsupported: Этот браузер не поддерживает ключи доступа.
+
+actions:
+  sign_out: Выйти
+  delete: Удалить

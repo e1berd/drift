@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import { useSession } from '@/composables/useSession'
 
+const { t } = useI18n()
 const { session, refresh } = useSession()
 
 onMounted(refresh)
@@ -18,12 +20,12 @@ onMounted(refresh)
           to="/settings"
           class="text-(--ui-muted-foreground) hover:text-(--ui-foreground)"
         >
-          Ключи доступа
+          {{ t('passkeys.title') }}
         </RouterLink>
       </nav>
       <div v-if="session" class="flex items-center gap-3 text-sm">
         <span class="text-(--ui-muted-foreground)">{{ session.identity.traits.email }}</span>
-        <a href="/logout" class="underline underline-offset-4">Выйти</a>
+        <a href="/logout" class="underline underline-offset-4">{{ t('actions.sign_out') }}</a>
       </div>
     </header>
     <main class="px-4 py-8">

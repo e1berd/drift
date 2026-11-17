@@ -1,0 +1,60 @@
+# Серверные переводы: страницы /login, /setup, /error и сообщения Kratos.
+# Плейсхолдеры {name} заполняет i18n.Printer.T("key", "name", value).
+
+common:
+  email: Email
+  password: Пароль
+  show_password: Показать пароль
+  email_required: Введите email
+  email_invalid: Неверный формат email
+  password_required: Введите пароль
+  passwords_mismatch: Пароли не совпадают
+
+preferences:
+  label: Настройки отображения
+  language: Язык
+  theme: Тема
+
+language:
+  ru: Русский
+  en: English
+
+theme:
+  system: Системная
+  light: Светлая
+  dark: Тёмная
+
+login:
+  title: Вход
+  refresh_title: Подтвердите вход
+  refresh_lead: Для этого действия нужно войти ещё раз.
+  submit: Войти
+  or: или
+  passkey: Войти по ключу доступа (отпечаток, Face ID)
+  passkey_unsupported: Этот браузер не поддерживает ключи доступа.
+
+error:
+  title: Ошибка входа
+  generic: Что-то пошло не так. Попробуйте войти ещё раз.
+  retry: Войти заново
+
+setup:
+  title: Первый запуск
+  lead: Создайте суперпользователя. После этого регистрация закрывается.
+  name: Имя
+  password_hint: Не короче {min} символов.
+  password_too_short_field: Не короче {min} символов
+  password_confirm: Повторите пароль
+  submit: Создать суперпользователя
+  name_too_long: Имя длиннее {max} символов
+  password_too_short: Пароль короче {min} символов
+  password_too_long: Пароль длиннее {max} байт
+  rejected: "Kratos отклонил данные: {reason}"
+
+# Сообщения Kratos по ID (https://www.ory.sh/docs/kratos/concepts/ui-messages).
+# Неизвестные ID показываются как прислал Kratos (по-английски).
+kratos:
+  "1010003": Подтвердите, что это вы, чтобы продолжить.
+  "4000006": Неверный email или пароль.
+  "4000010": Аккаунт ещё не активирован. Подтвердите адрес электронной почты.
+  "4010001": Время на вход истекло, попробуйте ещё раз.
