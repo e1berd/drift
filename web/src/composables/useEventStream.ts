@@ -1,0 +1,208 @@
+import { ref } from 'vue'
+
+import type { InfiniteData, QueryClient } from '@tanstack/vue-query'
+import type {
+    Draft,
+    ListMessagesResponse,
+    ListProjectsResponse,
+    ListSessionsResponse,
+    Message,
+    Project,
+    Session,
+    WireEvent,
+} from '@/gen'
+
+import {
+    getSessionQueryKey,
+    listMessagesInfiniteQueryKey,
+    listProjectsInfiniteQueryKey,
+    listSessionsInfiniteQueryKey,
+} from '@/gen'
+import { applyDraftEvent, loadDrafts } from '@/composables/useDrafts'
+import { deviceId } from '@/shared/device'
+import { API_BASE } from '@/shared/http/client'
+import { reportError } from '@/shared/errors'
+
+type Listener = (event: WireEvent) => void
+type Pages<T> = InfiniteData<T, string>
+
+const connected = ref(true)
+const freshSessions = ref(new Set<string>())
+const listeners = new Set<Listener>()
+let source: EventSource | null = null
+
+function mapPages<TPage, TItem>(
+    data: Pages<TPage> | undefined,
+    read: (page: TPage) => TItem[],
+    write: (page: TPage, items: TItem[]) => TPage,
+    change: (items: TItem[], index: number) => TItem[],
+): Pages<TPage> | undefined {
+    if (!data) return data
+    return {
+        ...data,
+        pages: data.pages.map((page, index) => write(page, change(read(page), index))),
+    }
+}
+
+function updateProjects(
+    qc: QueryClient,
+    change: (items: Project[], index: number, total: number) => Project[],
+) {
+    qc.setQueryData<Pages<ListProjectsResponse>>(listProjectsInfiniteQueryKey(), (data) =>
+        mapPages(
+            data,
+            (page) => page.projects,
+            (page, projects) => ({ ...page, projects }),
+            (items, index) => change(items, index, data?.pages.length ?? 0),
+        ),
+    )
+}
+
+function upsertProject(qc: QueryClient, project: Project) {
+    const key = listProjectsInfiniteQueryKey()
+    const known = qc
+        .getQueryData<Pages<ListProjectsResponse>>(key)
+        ?.pages.some((page) => page.projects.some((item) => item.id === project.id))
+    updateProjects(qc, (items, index, total) => {
+        if (known) return items.map((item) => (item.id === project.id ? project : item))
+        return index === total - 1 ? [...items, project] : items
+    })
+}
+
+function bumpSessionCount(qc: QueryClient, projectId: string, delta: number) {
+    updateProjects(qc, (items) =>
+        items.map((item) =>
+            item.id === projectId
+                ? { ...item, sessionCount: Math.max(0, item.sessionCount + delta) }
+                : item,
+        ),
+    )
+}
+
+function sessionsKey(projectId: string) {
+    return listSessionsInfiniteQueryKey({ path: { projectId } })
+}
+
+function updateSessions(
+    qc: QueryClient,
+    projectId: string,
+    change: (items: Session[], index: number) => Session[],
+) {
+    qc.setQueryData<Pages<ListSessionsResponse>>(sessionsKey(projectId), (data) =>
+        mapPages(
+            data,
+            (page) => page.sessions,
+            (page, sessions) => ({ ...page, sessions }),
+            change,
+        ),
+    )
+}
+
+function putSessionFirst(qc: QueryClient, session: Session) {
+    updateSessions(qc, session.projectId, (items, index) => {
+        const rest = items.filter((item) => item.id !== session.id)
+        return index === 0 ? [session, ...rest] : rest
+    })
+    qc.setQueryData(getSessionQueryKey({ path: { sessionId: session.id } }), session)
+}
+
+function isKnownSession(qc: QueryClient, session: Session): boolean {
+    return !!qc
+        .getQueryData<Pages<ListSessionsResponse>>(sessionsKey(session.projectId))
+        ?.pages.some((page) => page.sessions.some((item) => item.id === session.id))
+}
+
+function onSessionCreated(qc: QueryClient, session: Session, mine: boolean) {
+    const known = isKnownSession(qc, session)
+    putSessionFirst(qc, session)
+    if (!known) bumpSessionCount(qc, session.projectId, 1)
+    if (!mine) freshSessions.value = new Set(freshSessions.value).add(session.id)
+}
+
+function onSessionDeleted(qc: QueryClient, { id, projectId }: { id: string; projectId: string }) {
+    updateSessions(qc, projectId, (items) => items.filter((item) => item.id !== id))
+    qc.removeQueries({ queryKey: getSessionQueryKey({ path: { sessionId: id } }) })
+    bumpSessionCount(qc, projectId, -1)
+}
+
+function onProjectDeleted(qc: QueryClient, { id }: { id: string }) {
+    updateProjects(qc, (items) => items.filter((item) => item.id !== id))
+    qc.removeQueries({ queryKey: sessionsKey(id) })
+}
+
+function onMessageCreated(qc: QueryClient, message: Message) {
+    qc.setQueryData<Pages<ListMessagesResponse>>(
+        listMessagesInfiniteQueryKey({ path: { sessionId: message.sessionId } }),
+        (data) =>
+            mapPages(
+                data,
+                (page) => page.messages,
+                (page, messages) => ({ ...page, messages }),
+                (items, index) =>
+                    index === 0 && !items.some((item) => item.id === message.id)
+                        ? [message, ...items]
+                        : items,
+            ),
+    )
+}
+
+function resync(qc: QueryClient) {
+    void qc.invalidateQueries()
+    loadDrafts().catch(reportError)
+}
+
+function apply(qc: QueryClient, event: WireEvent) {
+    const mine = event.origin === deviceId()
+    switch (event.type) {
+        case 'resync':
+            return resync(qc)
+        case 'project.created':
+        case 'project.updated':
+            return upsertProject(qc, event.data as Project)
+        case 'project.deleted':
+            return onProjectDeleted(qc, event.data as { id: string })
+        case 'session.created':
+            return onSessionCreated(qc, event.data as Session, mine)
+        case 'session.updated':
+            return putSessionFirst(qc, event.data as Session)
+        case 'session.deleted':
+            return onSessionDeleted(qc, event.data as { id: string; projectId: string })
+        case 'message.created':
+            return onMessageCreated(qc, event.data as Message)
+        case 'draft.updated':
+        case 'draft.deleted':
+            return applyDraftEvent(event.type, event.data as Partial<Draft>, event.origin)
+    }
+}
+
+function parseEvent(message: MessageEvent<string>): WireEvent | null {
+    try {
+        return JSON.parse(message.data) as WireEvent
+    } catch (error) {
+        reportError(error)
+        return null
+    }
+}
+
+/** Opens the single per-tab SSE connection and folds every event into the query cache. */
+export function startEventStream(qc: QueryClient) {
+    if (source || typeof EventSource === 'undefined') return
+    source = new EventSource(new URL(`${API_BASE}/events`, location.origin))
+    source.addEventListener('open', () => (connected.value = true))
+    source.addEventListener('error', () => (connected.value = false))
+    source.addEventListener('message', (message: MessageEvent<string>) => {
+        const event = parseEvent(message)
+        if (!event) return
+        apply(qc, event)
+        for (const listener of listeners) listener(event)
+    })
+}
+
+/** Connection state plus sessions created elsewhere since this tab opened. */
+export function useEventStream() {
+    function on(listener: Listener) {
+        listeners.add(listener)
+        return () => listeners.delete(listener)
+    }
+    return { connected, freshSessions, on }
+}

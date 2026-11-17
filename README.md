@@ -30,6 +30,36 @@ drift ──► Kratos admin :4434   проверка «есть ли польз
 
 `web/` переносить не нужно: `go:embed` не видит родительские каталоги, поэтому Vite сам пишет сборку внутрь Go-модуля (`build.outDir`).
 
+## Рабочее окно
+
+SPA (`web/src`) — оболочка для работы с агентами: проекты и сессии в боковой панели, чат, файлы проекта.
+
+- **Проекты** — папки внутри `DRIFT_WORKSPACE_ROOT` (по умолчанию `$HOME/work`). Удаление проекта удаляет только записи в БД, файлы остаются.
+- **Боковая панель** — `Resizable` из ui-sdk: ширина и свёрнутое состояние сохраняются в `localStorage` (`ui-sdk-resizable:drift-shell`), сторона (слева/справа), тема и язык — через `createPreference` (`data-sidebar-side`, `data-color-scheme`, `data-locale` на `<html>`). Меняются в «Настройках».
+- **Черновики** поля ввода хранятся на сервере (ключ `session:<id>` или `new:<project id>`), сохраняются через 400 мс после последнего нажатия и сразу при уходе со страницы. Другие устройства видят текст и пометку «печатает».
+- **Файлы** — дерево `Tree` из ui-sdk с ленивой загрузкой папок и просмотр в CodeMirror 6 (только чтение, до 1 МБ).
+- **Анимации** — токены `--dur-*`/`--ease-*` в `web/src/styles/motion.css`; раскрытие блоков через `grid-template-rows: 0fr → 1fr`, списки — глобальная директива `v-auto-animate` с теми же длительностями.
+- Вкладки CLI, Git и Терминал и запуск агентов — следующий этап.
+
+### API и realtime
+
+JSON API под `/api` требует сессию Kratos (идентичность кешируется на 30 с). Имена по Google API design guide: `page_size`/`page_token` → `nextPageToken` (AIP-158), `createTime`/`updateTime` (AIP-142).
+
+| Метод | Путь |
+| --- | --- |
+| `GET`, `POST` | `/api/projects` |
+| `PATCH`, `DELETE` | `/api/projects/{id}` |
+| `GET`, `POST` | `/api/projects/{id}/sessions` (POST создаёт сессию и первое сообщение) |
+| `GET` | `/api/projects/{id}/tree?path=`, `/api/projects/{id}/file?path=` |
+| `GET`, `PATCH`, `DELETE` | `/api/sessions/{id}` |
+| `GET`, `POST` | `/api/sessions/{id}/messages` |
+| `GET` | `/api/drafts`; `PUT`, `DELETE` `/api/drafts/{key}` |
+| `GET` | `/api/events` — Server-Sent Events |
+
+`/api/events` — одно соединение на вкладку, без брокера: события пользователя рассылаются из памяти процесса, последние 256 хранятся для переподключения по `Last-Event-ID`. Если пропущено больше или процесс перезапускался, приходит `resync`, и клиент перезапрашивает данные. Каждое изменение несёт `origin` — id устройства из заголовка `X-Drift-Device`, чтобы вкладка не применяла собственное эхо.
+
+Миграции из `app/db/migrations` применяются при старте бинарника (таблица `schema_migrations` совместима с `migrate` из taskfile). SQL-запросы — `app/db/queries`, код генерирует `task app:sqlc`.
+
 ## Запуск целиком в контейнерах
 
 ```sh

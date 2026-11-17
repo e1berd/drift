@@ -1,0 +1,481 @@
+openapi: 3.1.0
+info:
+  title: Drift API
+  version: 1.0.0
+  description: >-
+    Workspace API for projects, sessions, messages, drafts and project files.
+    Follows the Google API design guide: list methods use page_size/page_token (AIP-158),
+    resources expose createTime/updateTime (AIP-142).
+servers:
+  - url: /api
+security:
+  - kratosSession: []
+tags:
+  - name: projects
+  - name: sessions
+  - name: drafts
+  - name: files
+  - name: events
+paths:
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200':
+          description: A page of projects, oldest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListProjectsResponse' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createProject
+      tags: [projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectInput' }
+      responses:
+        '201':
+          description: The created project.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{projectId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectRename' }
+      responses:
+        '200':
+          description: The renamed project.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      responses:
+        '204': { description: 'Deleted. Files on disk stay.' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{projectId}/sessions:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listSessions
+      tags: [sessions]
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200':
+          description: A page of sessions, latest activity first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListSessionsResponse' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createSession
+      tags: [sessions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessionInput' }
+      responses:
+        '201':
+          description: The created session and its first message.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreateSessionResponse' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{projectId}/tree:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: listTree
+      tags: [files]
+      parameters:
+        - $ref: '#/components/parameters/FilePath'
+      responses:
+        '200':
+          description: Entries of one folder, folders first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreeResponse' }
+        default: { $ref: '#/components/responses/Error' }
+  /projects/{projectId}/file:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      operationId: readFile
+      tags: [files]
+      parameters:
+        - $ref: '#/components/parameters/FilePath'
+      responses:
+        '200':
+          description: Text content up to 1 MiB, or a binary marker.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FileContent' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: getSession
+      tags: [sessions]
+      responses:
+        '200':
+          description: The session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      operationId: updateSession
+      tags: [sessions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessionRename' }
+      responses:
+        '200':
+          description: The renamed session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteSession
+      tags: [sessions]
+      responses:
+        '204': { description: Deleted. }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/messages:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: listMessages
+      tags: [sessions]
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200':
+          description: A page of messages, newest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListMessagesResponse' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createMessage
+      tags: [sessions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MessageInput' }
+      responses:
+        '201':
+          description: The stored user message.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        default: { $ref: '#/components/responses/Error' }
+  /drafts:
+    get:
+      operationId: listDrafts
+      tags: [drafts]
+      responses:
+        '200':
+          description: Every draft of the signed-in user.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListDraftsResponse' }
+        default: { $ref: '#/components/responses/Error' }
+  /drafts/{key}:
+    parameters:
+      - $ref: '#/components/parameters/DraftKey'
+    put:
+      operationId: updateDraft
+      tags: [drafts]
+      description: Creates or replaces the draft (AIP-134 with allow_missing). Empty text deletes it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DraftInput' }
+      responses:
+        '200':
+          description: The stored draft.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Draft' }
+        '204': { description: 'Empty text: the draft was deleted.' }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: deleteDraft
+      tags: [drafts]
+      responses:
+        '204': { description: Deleted. }
+        default: { $ref: '#/components/responses/Error' }
+  /events:
+    get:
+      operationId: streamEvents
+      tags: [events]
+      description: >-
+        Server-Sent Events for the signed-in user. Each data line is a WireEvent.
+        Reconnect with Last-Event-ID to replay missed events; a "resync" event means refetch.
+      responses:
+        '200':
+          description: Event stream.
+          content:
+            text/event-stream:
+              schema: { $ref: '#/components/schemas/WireEvent' }
+components:
+  securitySchemes:
+    kratosSession:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+  parameters:
+    PageSize:
+      name: page_size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100 }
+    PageToken:
+      name: page_token
+      in: query
+      schema: { type: string }
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DraftKey:
+      name: key
+      in: path
+      required: true
+      description: '"session:<session id>" or "new:<project id>".'
+      schema: { type: string }
+    FilePath:
+      name: path
+      in: query
+      schema: { type: string }
+  responses:
+    Error:
+      description: Error with a human-readable message.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+    Project:
+      type: object
+      required: [id, name, path, sessionCount, createTime, updateTime]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        path: { type: string }
+        sessionCount: { type: integer }
+        createTime: { type: string, format: date-time }
+        updateTime: { type: string, format: date-time }
+    ProjectInput:
+      type: object
+      required: [name, path]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        path: { type: string }
+    ProjectRename:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+    ListProjectsResponse:
+      type: object
+      required: [projects]
+      properties:
+        projects:
+          type: array
+          items: { $ref: '#/components/schemas/Project' }
+        nextPageToken: { type: string }
+    AgentId:
+      type: string
+      enum: [claude, codex, antigravity]
+    Session:
+      type: object
+      required: [id, projectId, title, agent, status, createTime, updateTime]
+      properties:
+        id: { type: string, format: uuid }
+        projectId: { type: string, format: uuid }
+        title: { type: string }
+        agent: { $ref: '#/components/schemas/AgentId' }
+        status:
+          type: string
+          enum: [idle, running]
+        createTime: { type: string, format: date-time }
+        updateTime: { type: string, format: date-time }
+    SessionInput:
+      type: object
+      required: [agent]
+      properties:
+        agent: { $ref: '#/components/schemas/AgentId' }
+        title: { type: string, maxLength: 200 }
+        text: { type: string }
+    SessionRename:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+    ListSessionsResponse:
+      type: object
+      required: [sessions]
+      properties:
+        sessions:
+          type: array
+          items: { $ref: '#/components/schemas/Session' }
+        nextPageToken: { type: string }
+    CreateSessionResponse:
+      type: object
+      required: [session]
+      properties:
+        session: { $ref: '#/components/schemas/Session' }
+        message: { $ref: '#/components/schemas/Message' }
+    Attachment:
+      type: object
+      required: [name, size, type]
+      properties:
+        name: { type: string }
+        size: { type: integer }
+        type: { type: string }
+    MessageBody:
+      type: object
+      properties:
+        text: { type: string }
+        name: { type: string }
+        input: { type: string }
+        output:
+          type: array
+          items: { type: string }
+        status:
+          type: string
+          enum: [running, done, stopped, error]
+        meta: { type: string }
+        attachments:
+          type: array
+          items: { $ref: '#/components/schemas/Attachment' }
+    Message:
+      type: object
+      required: [id, sessionId, role, kind, body, createTime]
+      properties:
+        id: { type: string, format: uuid }
+        sessionId: { type: string, format: uuid }
+        role:
+          type: string
+          enum: [user, assistant, system]
+        kind:
+          type: string
+          enum: [text, thinking, tool, note]
+        body: { $ref: '#/components/schemas/MessageBody' }
+        createTime: { type: string, format: date-time }
+    MessageInput:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string, minLength: 1 }
+    ListMessagesResponse:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          items: { $ref: '#/components/schemas/Message' }
+        nextPageToken: { type: string }
+    Draft:
+      type: object
+      required: [key, text, deviceId, updateTime]
+      properties:
+        key: { type: string }
+        text: { type: string }
+        deviceId: { type: string }
+        updateTime: { type: string, format: date-time }
+    DraftInput:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string, maxLength: 65536 }
+    ListDraftsResponse:
+      type: object
+      required: [drafts]
+      properties:
+        drafts:
+          type: array
+          items: { $ref: '#/components/schemas/Draft' }
+    TreeEntry:
+      type: object
+      required: [name, path, dir]
+      properties:
+        name: { type: string }
+        path: { type: string }
+        dir: { type: boolean }
+        size: { type: integer }
+    TreeResponse:
+      type: object
+      required: [path, entries]
+      properties:
+        path: { type: string }
+        entries:
+          type: array
+          items: { $ref: '#/components/schemas/TreeEntry' }
+        truncated: { type: boolean }
+    FileContent:
+      type: object
+      required: [path, size, content]
+      properties:
+        path: { type: string }
+        size: { type: integer }
+        content: { type: string }
+        binary: { type: boolean }
+        truncated: { type: boolean }
+    WireEvent:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum:
+            - resync
+            - project.created
+            - project.updated
+            - project.deleted
+            - session.created
+            - session.updated
+            - session.deleted
+            - message.created
+            - draft.updated
+            - draft.deleted
+        data: {}
+        origin: { type: string }

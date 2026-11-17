@@ -17,3 +17,6 @@ overrides:
 peerDependencyRules:
   allowAny:
     - 'vue'
+
+onlyBuiltDependencies:
+  - lefthook

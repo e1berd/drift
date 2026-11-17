@@ -1,4 +1,4 @@
-import '@/styles/base.css'
+import '@/styles/auth.css'
 
 import htmx from 'htmx.org'
 import 'hyperscript.org'
@@ -10,20 +10,20 @@ import '@ui-sdk/web/password-input'
 import { passkeyAutofill, passkeyLogin } from '@/shared/webauthn'
 
 htmx.config.responseHandling = [
-  { code: '204', swap: false },
-  { code: '[23]..', swap: true },
-  { code: '422', swap: true, error: false },
-  { code: '[45]..', swap: false, error: true },
+    { code: '204', swap: false },
+    { code: '[23]..', swap: true },
+    { code: '422', swap: true, error: false },
+    { code: '[45]..', swap: false, error: true },
 ]
 
 declare global {
-  interface Window {
-    htmx: typeof htmx
-    drift: {
-      passkeyLogin: typeof passkeyLogin
-      passkeyAutofill: typeof passkeyAutofill
+    interface Window {
+        htmx: typeof htmx
+        drift: {
+            passkeyLogin: typeof passkeyLogin
+            passkeyAutofill: typeof passkeyAutofill
+        }
     }
-  }
 }
 
 window.htmx = htmx

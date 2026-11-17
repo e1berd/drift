@@ -1,0 +1,16 @@
+@layer ui-sdk;
+
+@import 'tailwindcss';
+@import '@ui-sdk/core/web.css' layer(components);
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+@import './tokens.css';
+
+@source '../../../app/internal/auth/templates';
+
+body {
+    margin: 0;
+    background: var(--ui-background);
+    color: var(--ui-foreground);
+    font-family: var(--ui-font-sans);
+}

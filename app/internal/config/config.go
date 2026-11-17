@@ -14,11 +14,15 @@ type Config struct {
 	KratosPublicURL *url.URL
 	KratosAdminURL  *url.URL
 	ViteDevURL      *url.URL
+	WorkspaceRoot   string
 }
 
 // Load reads the configuration from environment variables, falling back to local development defaults.
 func Load() (*Config, error) {
-	cfg := &Config{Addr: env("DRIFT_ADDR", ":8080")}
+	cfg := &Config{
+		Addr:          env("DRIFT_ADDR", ":8080"),
+		WorkspaceRoot: os.ExpandEnv(env("DRIFT_WORKSPACE_ROOT", "$HOME/work")),
+	}
 
 	urls := []struct {
 		dst      **url.URL

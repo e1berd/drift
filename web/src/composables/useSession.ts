@@ -7,19 +7,19 @@ const loading = ref(false)
 
 /** Current Kratos session, shared across the app. */
 export function useSession() {
-  async function refresh() {
-    loading.value = true
-    try {
-      const { status, body } = await kratos<KratosSession>('/sessions/whoami')
-      if (status === 401) {
-        window.location.assign('/login')
-        return
-      }
-      session.value = status === 200 ? body : null
-    } finally {
-      loading.value = false
+    async function refresh() {
+        loading.value = true
+        try {
+            const { status, body } = await kratos<KratosSession>('/sessions/whoami')
+            if (status === 401) {
+                window.location.assign('/login')
+                return
+            }
+            session.value = status === 200 ? body : null
+        } finally {
+            loading.value = false
+        }
     }
-  }
 
-  return { session: readonly(session), loading: readonly(loading), refresh }
+    return { session: readonly(session), loading: readonly(loading), refresh }
 }
