@@ -3,7 +3,7 @@ import { Switch, SwitchThumb } from '@ui-sdk/vue/switch'
 
 import AgentLogo from '@/components/AgentLogo.vue'
 import { useAgents } from '@/composables/useAgents'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const agents = useAgents()

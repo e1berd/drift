@@ -1,0 +1,125 @@
+# Shared SPA translations. Keep strings used by one component in its <i18n lang="yaml"> block.
+# Server-rendered pages (/login, /setup) are translated in app/internal/i18n/locales.
+
+language:
+  ru: Русский
+  en: English
+
+theme:
+  system: System
+  light: Light
+  dark: Dark
+  toLight: 'Light theme'
+  toDark: 'Dark theme'
+
+passkeys:
+  title: Passkeys
+  unsupported: This browser does not support passkeys.
+
+actions:
+  sign_out: Sign out
+  delete: Delete
+
+nav:
+  newChat: 'New chat'
+  projects: 'Projects'
+  newProject: 'New project'
+  search: 'Search sessions'
+  settings: 'Settings'
+  showMore: 'Show more'
+  noSessions: 'No sessions yet'
+  noProjects: 'Create your first project: a folder in the server workspace.'
+  resize: 'Panel width'
+  toggle:
+    hide: 'Hide panel'
+    show: 'Show panel'
+  online: 'Online'
+  offline: 'Offline, reconnecting'
+project:
+  name: 'Project name'
+  path: 'Folder in the workspace'
+  create: 'Create'
+  cancel: 'Cancel'
+  rename: 'Rename'
+  delete: 'Delete'
+  confirmDelete: 'Delete “{name}” and {count} sessions? Files on disk stay.'
+session:
+  draft: 'Draft'
+  typing: 'typing'
+  fromOther: 'From another device'
+empty:
+  title: 'Where do we start?'
+  lead: 'Pick an agent and describe the task. The new session appears in the project.'
+  notConnected: 'not connected'
+  connectHint: 'Connect agents in'
+  noProject: 'Create a project in the sidebar first.'
+tabs:
+  label: 'Session views'
+  chat: 'Chat'
+  cli: 'CLI'
+  files: 'Files'
+  git: 'Git'
+  terminal: 'Terminal'
+  soon: 'Arrives together with running agents on the server.'
+composer:
+  label: 'Message'
+  placeholder:
+    new: 'Describe the task for {agent}…'
+    reply: "Reply to {agent}…  / for commands, {'@'} for files"
+  attach: 'Attach a file'
+  removeAttachment: 'Remove {name}'
+  historyBack: 'Previous message'
+  historyForward: 'Next message'
+  send: 'Send'
+  stop: 'Stop'
+  model: 'Model'
+  permissions: 'Permissions'
+  project: 'Project'
+  remoteTyping: 'Typing on another device'
+  remoteDraft: 'Draft from another device'
+  clear: 'Clear'
+models:
+  opus: 'Most capable, for hard tasks'
+  sonnet: 'Balanced speed and quality'
+  haiku: 'Fast for small edits'
+  fromConfig: 'From the agent CLI settings'
+modes:
+  default: 'Ask before edits and commands'
+  acceptEdits: 'Edit files without asking'
+  auto: 'The agent decides what is safe to run'
+  plan: 'Read and plan only, no changes'
+  bypass: 'No prompts at all. Sandboxes only'
+chat:
+  today: 'Today'
+  olderLoading: 'Loading earlier messages…'
+  thought: 'Thought for'
+  thinking: 'Thinking…'
+  running: 'running'
+  stopped: 'stopped'
+  expand: 'Expand the whole command'
+  collapse: 'Collapse the command'
+  showAll: 'Show all {count} lines'
+  jumpToEnd: 'Jump to latest'
+files:
+  label: 'Project files'
+  pick: 'Pick a file in the tree'
+  binary: 'Binary file, no preview'
+  truncated: 'Showing the first 1 MB'
+  readOnly: 'read only'
+  lines: '{count} lines'
+toast:
+  close: 'Close'
+  sessionFromOther: 'New session from another device'
+settings:
+  title: 'Settings'
+  interface: 'Interface'
+  sidebarSide: 'Sidebar'
+  sidebarLeft: 'Left'
+  sidebarRight: 'Right'
+  theme: 'Theme'
+  language: 'Language'
+  agents: 'Agents'
+  agentsLead: 'Connected agents are offered in a new chat.'
+  passkeys: 'Passkeys'
+lang:
+  switch: 'Interface language'

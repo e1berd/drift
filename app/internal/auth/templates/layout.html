@@ -1,24 +1,91 @@
 {{define "layout"}}<!doctype html>
-<html lang="ru">
+<html lang="{{.L.Lang}}" data-color-scheme="{{.Theme}}" data-upgrading>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="htmx-config" content='{"includeIndicatorStyles":false,"allowEval":false}'>
   <title>{{.Title}} · Drift</title>
   <link rel="icon" href="/favicon.ico">
+  {{/* ui-* elements get their data-slot styling hooks only when src/auth/main.ts upgrades them, so the
+       page stays transparent until then (opacity keeps autofocus working). Without JS it shows after 1.5s. */}}
+  <style>
+    :root { color-scheme: light dark }
+    :root[data-color-scheme=light] { color-scheme: light }
+    :root[data-color-scheme=dark] { color-scheme: dark }
+    @keyframes drift-reveal { to { opacity: 1 } }
+    html[data-upgrading] body { opacity: 0; animation: drift-reveal 0s 1.5s forwards }
+  </style>
   {{.Assets}}
 </head>
 <body class="min-h-dvh bg-(--ui-background) text-(--ui-foreground) antialiased">
+  {{template "preferences" .}}
   <main class="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 px-4 py-12">
-    <header class="flex flex-col gap-1">
-      <p class="text-sm font-semibold tracking-widest text-(--ui-muted-foreground) uppercase">Drift</p>
-      <h1 class="text-2xl font-semibold">{{.Title}}</h1>
-      {{with .Lead}}<p class="text-sm text-(--ui-muted-foreground)">{{.}}</p>{{end}}
-    </header>
-    {{template "content" .}}
+    <div class="max-w-3xl mx-auto pt-4">
+      <header class="flex flex-col gap-1">
+        <p class="text-sm font-semibold tracking-widest text-(--ui-muted-foreground) uppercase">Drift</p>
+        <h1 class="text-2xl font-semibold">{{.Title}}</h1>
+        {{with .Lead}}<p class="text-sm text-(--ui-muted-foreground)">{{.}}</p>{{end}}
+      </header>
+      {{template "content" .}}
+    </div>
   </main>
 </body>
 </html>{{end}}
+
+{{define "preferences"}}
+<div class="fixed top-3 right-3 flex flex-wrap justify-end gap-2" role="group" aria-label="{{.L.T "preferences.label"}}">
+  <ui-select id="language-switch" default-value="{{.L.Lang}}">
+    <ui-select-label class="sr-only">{{.L.T "preferences.language"}}</ui-select-label>
+    <ui-select-trigger>
+      <button class="min-w-0">
+        <ui-select-value-icon></ui-select-value-icon>
+        <ui-select-value></ui-select-value>
+      </button>
+    </ui-select-trigger>
+    <ui-select-content>
+      {{- range .Languages}}
+      <ui-select-item value="{{.}}" lang="{{.}}">
+        <ui-select-item-icon>{{template "icon-language"}}</ui-select-item-icon>
+        {{$.L.T (print "language." .)}}
+        <ui-select-item-indicator></ui-select-item-indicator>
+      </ui-select-item>
+      {{- end}}
+    </ui-select-content>
+  </ui-select>
+
+  <ui-select id="theme-switch" default-value="{{.Theme}}">
+    <ui-select-label class="sr-only">{{.L.T "preferences.theme"}}</ui-select-label>
+    <ui-select-trigger>
+      <button class="min-w-0">
+        <ui-select-value-icon></ui-select-value-icon>
+        <ui-select-value></ui-select-value>
+      </button>
+    </ui-select-trigger>
+    <ui-select-content>
+      <ui-select-item value="system">
+        <ui-select-item-icon>{{template "icon-system"}}</ui-select-item-icon>
+        {{.L.T "theme.system"}}
+        <ui-select-item-indicator></ui-select-item-indicator>
+      </ui-select-item>
+      <ui-select-item value="light">
+        <ui-select-item-icon>{{template "icon-light"}}</ui-select-item-icon>
+        {{.L.T "theme.light"}}
+        <ui-select-item-indicator></ui-select-item-indicator>
+      </ui-select-item>
+      <ui-select-item value="dark">
+        <ui-select-item-icon>{{template "icon-dark"}}</ui-select-item-icon>
+        {{.L.T "theme.dark"}}
+        <ui-select-item-indicator></ui-select-item-indicator>
+      </ui-select-item>
+    </ui-select-content>
+  </ui-select>
+</div>
+{{end}}
+
+{{define "icon-language"}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg>{{end}}
+{{define "icon-system"}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>{{end}}
+{{define "icon-light"}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>{{end}}
+{{define "icon-dark"}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>{{end}}
 
 {{define "messages"}}
 {{- if .}}

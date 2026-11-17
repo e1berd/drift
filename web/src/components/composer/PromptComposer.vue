@@ -16,7 +16,7 @@ import PromptEditor from '@/components/composer/PromptEditor.vue'
 import ImagePreview from '@/components/composer/ImagePreview.vue'
 import { useDraft } from '@/composables/useDrafts'
 import type { AgentId } from '@/shared/agents'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
     defineProps<{

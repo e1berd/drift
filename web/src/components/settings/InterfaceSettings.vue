@@ -8,25 +8,32 @@ import {
     SegmentedControlItem,
 } from '@ui-sdk/vue/segmented-control'
 
-import { useI18n } from '@/shared/i18n'
-import { colorScheme, locale, sidebarSide } from '@/shared/preferences'
+import { useI18n } from 'vue-i18n'
+
+import type { ColorSchemeValue } from '@ui-sdk/core'
+import type { Locale } from '@/shared/preferences'
+
+import { useLocale } from '@/composables/useLocale'
+import { colorScheme, locales, sidebarSide } from '@/shared/preferences'
 
 const { t } = useI18n()
 const side = usePreference(sidebarSide)
 const scheme = usePreference(colorScheme)
-const lang = usePreference(locale)
+const { locale, setLocale } = useLocale()
 
 const sideValue = computed({
     get: () => side.value.value,
-    set: (v: string | null) => v && sidebarSide.set(v as 'left' | 'right'),
+    set: (value: string | null) => value && sidebarSide.set(value as 'left' | 'right'),
 })
 const schemeValue = computed({
     get: () => scheme.value.value,
-    set: (v: string | null) => v && colorScheme.set(v as 'system' | 'light' | 'dark'),
+    set: (value: string | null) => value && colorScheme.set(value as ColorSchemeValue),
 })
 const langValue = computed({
-    get: () => lang.value.value,
-    set: (v: string | null) => v && locale.set(v as 'ru' | 'en'),
+    get: () => locale.value,
+    set: (value: string | null) => {
+        if (locales.includes(value as Locale)) setLocale(value as Locale)
+    },
 })
 </script>
 
@@ -61,15 +68,13 @@ const langValue = computed({
                 >
                     <SegmentedControlIndicator class="pref-seg-ind" />
                     <SegmentedControlItem value="system" class="pref-seg-item"
-                        ><PhDesktop :size="15" />{{
-                            t('settings.themeSystem')
-                        }}</SegmentedControlItem
+                        ><PhDesktop :size="15" />{{ t('theme.system') }}</SegmentedControlItem
                     >
                     <SegmentedControlItem value="light" class="pref-seg-item"
-                        ><PhSun :size="15" />{{ t('settings.themeLight') }}</SegmentedControlItem
+                        ><PhSun :size="15" />{{ t('theme.light') }}</SegmentedControlItem
                     >
                     <SegmentedControlItem value="dark" class="pref-seg-item"
-                        ><PhMoon :size="15" />{{ t('settings.themeDark') }}</SegmentedControlItem
+                        ><PhMoon :size="15" />{{ t('theme.dark') }}</SegmentedControlItem
                     >
                 </SegmentedControl>
             </div>
@@ -81,12 +86,12 @@ const langValue = computed({
                     aria-labelledby="pref-lang"
                 >
                     <SegmentedControlIndicator class="pref-seg-ind" />
-                    <SegmentedControlItem value="ru" class="pref-seg-item"
-                        >Русский</SegmentedControlItem
-                    >
-                    <SegmentedControlItem value="en" class="pref-seg-item"
-                        >English</SegmentedControlItem
-                    >
+                    <SegmentedControlItem value="ru" class="pref-seg-item">{{
+                        t('language.ru')
+                    }}</SegmentedControlItem>
+                    <SegmentedControlItem value="en" class="pref-seg-item">{{
+                        t('language.en')
+                    }}</SegmentedControlItem>
                 </SegmentedControl>
             </div>
         </div>

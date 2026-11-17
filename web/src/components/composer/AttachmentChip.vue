@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount } from 'vue'
 import { PhX } from '@phosphor-icons/vue'
 
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ file: File; removable?: boolean }>()
 const emit = defineEmits<{ remove: []; open: [url: string] }>()

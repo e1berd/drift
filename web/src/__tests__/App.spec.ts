@@ -4,6 +4,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 
 import App from '../App.vue'
+import { setupI18n } from '../i18n'
 
 function requestURL(input: RequestInfo | URL): URL {
     if (input instanceof Request) return new URL(input.url)
@@ -55,7 +56,11 @@ describe('App', () => {
 
         const wrapper = mount(App, {
             global: {
-                plugins: [router, [VueQueryPlugin, { queryClient: new QueryClient() }]],
+                plugins: [
+                    router,
+                    setupI18n('en'),
+                    [VueQueryPlugin, { queryClient: new QueryClient() }],
+                ],
                 directives: { autoAnimate: {} },
             },
         })
@@ -63,6 +68,7 @@ describe('App', () => {
 
         expect(wrapper.text()).toContain('Root')
         expect(wrapper.text()).toContain('home')
+        expect(wrapper.text()).toContain('Online')
         expect(requestedPaths()).toContain('/.ory/kratos/public/sessions/whoami')
         expect(requestedPaths()).toContain('/api/projects')
         expect(requestedPaths()).toContain('/api/drafts')

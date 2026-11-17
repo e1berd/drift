@@ -13,7 +13,7 @@ import {
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import type { AgentId } from '@/shared/agents'
 import { AGENTS } from '@/shared/agents'
-import { useI18n, type MessageKey } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ agent: AgentId }>()
 const { t } = useI18n()
@@ -42,7 +42,7 @@ const value = computed({
                 <PhCheck :size="15" class="check" />
                 <span>
                     <b><SelectItemText>{{ m.label }}</SelectItemText></b>
-                    <small>{{ t(m.hint as MessageKey) }}</small>
+                    <small>{{ t(m.hint) }}</small>
                 </span>
                 <span />
             </SelectItem>

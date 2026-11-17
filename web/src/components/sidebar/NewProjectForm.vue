@@ -3,7 +3,7 @@ import { onMounted, ref, useTemplateRef } from 'vue'
 
 import { useCreateProject } from '@/gen'
 import { errorMessage } from '@/shared/errors'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()

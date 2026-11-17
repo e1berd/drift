@@ -6,8 +6,10 @@ import '@ui-sdk/web/button'
 import '@ui-sdk/web/field'
 import '@ui-sdk/web/input'
 import '@ui-sdk/web/password-input'
+import '@ui-sdk/web/select'
 
 import { passkeyAutofill, passkeyLogin } from '@/shared/webauthn'
+import { bindPreferenceSwitches } from './preferences'
 
 htmx.config.responseHandling = [
     { code: '204', swap: false },
@@ -28,3 +30,9 @@ declare global {
 
 window.htmx = htmx
 window.drift = { passkeyLogin, passkeyAutofill }
+
+bindPreferenceSwitches(document)
+
+// The imports above upgraded every ui-* element; show the page the server kept transparent
+// (data-upgrading in app/internal/auth/templates/layout.html) before the next paint.
+requestAnimationFrame(() => document.documentElement.removeAttribute('data-upgrading'))

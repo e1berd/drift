@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@ui-sdk/vue/dialog'
 
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 defineProps<{ url: string; name: string }>()
 const emit = defineEmits<{ close: [] }>()

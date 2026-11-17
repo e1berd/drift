@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { PhCaretRight } from '@phosphor-icons/vue'
 
 import type { MessageBody } from '@/gen'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ body: MessageBody }>()
 const { t } = useI18n()

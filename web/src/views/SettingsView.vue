@@ -3,7 +3,7 @@ import TopBar from '@/components/TopBar.vue'
 import AgentSettings from '@/components/settings/AgentSettings.vue'
 import InterfaceSettings from '@/components/settings/InterfaceSettings.vue'
 import PasskeySettings from '@/components/settings/PasskeySettings.vue'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 </script>
@@ -22,3 +22,14 @@ const { t } = useI18n()
         </div>
     </div>
 </template>
+
+<i18n lang="yaml">
+ru:
+    lead: Вход по отпечатку пальца, Face ID или аппаратному ключу вместо пароля.
+    empty: Ключей пока нет.
+    add: Добавить ключ доступа
+en:
+    lead: Sign in with a fingerprint, Face ID or a hardware key instead of a password.
+    empty: No passkeys yet.
+    add: Add a passkey
+</i18n>

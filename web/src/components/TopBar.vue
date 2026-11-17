@@ -4,7 +4,7 @@ import { PhSidebarSimple } from '@phosphor-icons/vue'
 import { usePreference } from '@ui-sdk/vue/preferences'
 
 import { useShell } from '@/composables/useShell'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 import { sidebarSide } from '@/shared/preferences'
 
 const { t } = useI18n()

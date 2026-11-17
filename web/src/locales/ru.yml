@@ -1,0 +1,125 @@
+# Общие переводы SPA. Строки одного компонента храните в его блоке <i18n lang="yaml">.
+# Серверные страницы (/login, /setup) переводятся в app/internal/i18n/locales.
+
+language:
+  ru: Русский
+  en: English
+
+theme:
+  system: Системная
+  light: Светлая
+  dark: Тёмная
+  toLight: 'Светлая тема'
+  toDark: 'Тёмная тема'
+
+passkeys:
+  title: Ключи доступа
+  unsupported: Этот браузер не поддерживает ключи доступа.
+
+actions:
+  sign_out: Выйти
+  delete: Удалить
+
+nav:
+  newChat: 'Новый чат'
+  projects: 'Проекты'
+  newProject: 'Новый проект'
+  search: 'Поиск по сессиям'
+  settings: 'Настройки'
+  showMore: 'Показать ещё'
+  noSessions: 'Пока нет сессий'
+  noProjects: 'Создайте первый проект — папку в рабочем каталоге сервера.'
+  resize: 'Ширина панели'
+  toggle:
+    hide: 'Скрыть панель'
+    show: 'Показать панель'
+  online: 'Онлайн'
+  offline: 'Нет соединения, переподключаемся'
+project:
+  name: 'Название проекта'
+  path: 'Папка в рабочем каталоге'
+  create: 'Создать'
+  cancel: 'Отмена'
+  rename: 'Переименовать'
+  delete: 'Удалить'
+  confirmDelete: 'Удалить «{name}» и {count} сесс.? Файлы на диске останутся.'
+session:
+  draft: 'Черновик'
+  typing: 'печатает'
+  fromOther: 'С другого устройства'
+empty:
+  title: 'С чего начнём?'
+  lead: 'Выберите агента и опишите задачу. Новая сессия появится в проекте.'
+  notConnected: 'не подключён'
+  connectHint: 'Подключить агентов можно в'
+  noProject: 'Сначала создайте проект в боковой панели.'
+tabs:
+  label: 'Разделы сессии'
+  chat: 'Чат'
+  cli: 'CLI'
+  files: 'Файлы'
+  git: 'Git'
+  terminal: 'Терминал'
+  soon: 'Появится вместе с запуском агентов на сервере.'
+composer:
+  label: 'Сообщение'
+  placeholder:
+    new: 'Опишите задачу для {agent}…'
+    reply: "Ответьте {agent}…  / — команды, {'@'} — файлы"
+  attach: 'Прикрепить файл'
+  removeAttachment: 'Убрать {name}'
+  historyBack: 'Предыдущее сообщение'
+  historyForward: 'Следующее сообщение'
+  send: 'Отправить'
+  stop: 'Остановить'
+  model: 'Модель'
+  permissions: 'Разрешения'
+  project: 'Проект'
+  remoteTyping: 'Печатает на другом устройстве'
+  remoteDraft: 'Черновик с другого устройства'
+  clear: 'Очистить'
+models:
+  opus: 'Самая сильная, для сложных задач'
+  sonnet: 'Баланс скорости и качества'
+  haiku: 'Быстрая для простых правок'
+  fromConfig: 'Из настроек CLI агента'
+modes:
+  default: 'Спрашивать перед правками и командами'
+  acceptEdits: 'Правки файлов без подтверждения'
+  auto: 'Агент сам решает, что безопасно выполнить'
+  plan: 'Только чтение и план, без изменений'
+  bypass: 'Без подтверждений. Только в песочнице'
+chat:
+  today: 'Сегодня'
+  olderLoading: 'Загружаем ранние сообщения…'
+  thought: 'Рассуждал'
+  thinking: 'Рассуждает…'
+  running: 'выполняется'
+  stopped: 'прервано'
+  expand: 'Развернуть команду полностью'
+  collapse: 'Свернуть команду'
+  showAll: 'Показать все {count} строк'
+  jumpToEnd: 'К последнему сообщению'
+files:
+  label: 'Файлы проекта'
+  pick: 'Выберите файл в дереве'
+  binary: 'Двоичный файл, предпросмотр недоступен'
+  truncated: 'Показан первый 1 МБ файла'
+  readOnly: 'только чтение'
+  lines: '{count} строк'
+toast:
+  close: 'Закрыть'
+  sessionFromOther: 'Новая сессия с другого устройства'
+settings:
+  title: 'Настройки'
+  interface: 'Интерфейс'
+  sidebarSide: 'Боковая панель'
+  sidebarLeft: 'Слева'
+  sidebarRight: 'Справа'
+  theme: 'Тема'
+  language: 'Язык'
+  agents: 'Агенты'
+  agentsLead: 'Подключённые агенты доступны в новом чате.'
+  passkeys: 'Ключи доступа'
+lang:
+  switch: 'Язык интерфейса'

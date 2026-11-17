@@ -16,8 +16,8 @@ import { provideShell } from '@/composables/useShell'
 import { startEventStream } from '@/composables/useEventStream'
 import { loadDrafts } from '@/composables/useDrafts'
 import { reportError } from '@/shared/errors'
-import { useI18n } from '@/shared/i18n'
-import { preferences, sidebarSide } from '@/shared/preferences'
+import { useI18n } from 'vue-i18n'
+import { shellPreferences, sidebarSide } from '@/shared/preferences'
 
 const { t } = useI18n()
 const qc = useQueryClient()
@@ -63,7 +63,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Preferences :preferences="preferences">
+    <Preferences :preferences="shellPreferences">
         <div class="shell h-dvh" :data-side="side.value">
             <div v-if="narrow" class="relative h-full">
                 <main class="flex h-full min-w-0 flex-col"><slot /></main>

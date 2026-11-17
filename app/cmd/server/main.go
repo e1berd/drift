@@ -14,6 +14,7 @@ import (
 	"github.com/e1berd/drift/app/internal/events"
 	"github.com/e1berd/drift/app/internal/frontend"
 	"github.com/e1berd/drift/app/internal/health"
+	"github.com/e1berd/drift/app/internal/i18n"
 	"github.com/e1berd/drift/app/internal/identity"
 	"github.com/e1berd/drift/app/internal/kratos"
 	"github.com/e1berd/drift/app/internal/migrate"
@@ -55,8 +56,13 @@ func run() error {
 		return err
 	}
 
+	translations, err := i18n.Load()
+	if err != nil {
+		return err
+	}
+
 	kc := kratos.New(cfg.KratosPublicURL, cfg.KratosAdminURL)
-	authHandler, err := auth.New(kc, fe, cfg.PublicURL, log)
+	authHandler, err := auth.New(kc, fe, translations, cfg.PublicURL, log)
 	if err != nil {
 		return err
 	}

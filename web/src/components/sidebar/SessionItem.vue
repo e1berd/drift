@@ -9,11 +9,11 @@ import { draftKey, useDraftIndex } from '@/composables/useDrafts'
 import { useEventStream } from '@/composables/useEventStream'
 import { useShell } from '@/composables/useShell'
 import type { Session } from '@/gen'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 import { relativeTime } from '@/shared/time'
 
 const props = defineProps<{ session: Session }>()
-const { t, lang } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const drafts = useDraftIndex()
 const { freshSessions } = useEventStream()
@@ -51,7 +51,7 @@ const draftTitle = computed(() => {
                 ><PhPencilSimple :size="11" />{{ t('session.draft') }}</span
             >
             <time v-else :datetime="session.updateTime">{{
-                relativeTime(session.updateTime, lang)
+                relativeTime(session.updateTime, locale)
             }}</time>
         </span>
         <AgentLogo :agent="session.agent" />

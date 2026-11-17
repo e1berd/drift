@@ -8,7 +8,7 @@ import NewProjectForm from '@/components/sidebar/NewProjectForm.vue'
 import ProjectItem from '@/components/sidebar/ProjectItem.vue'
 import SidebarFooter from '@/components/sidebar/SidebarFooter.vue'
 import { useShell } from '@/composables/useShell'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 import { useProjects } from '@/shared/queries'
 
 const { t } = useI18n()

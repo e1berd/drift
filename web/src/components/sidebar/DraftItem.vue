@@ -5,7 +5,7 @@ import { RouterLink } from 'vue-router'
 
 import { useDraftIndex } from '@/composables/useDrafts'
 import { useShell } from '@/composables/useShell'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ draftKey: string; projectId: string }>()
 const { t } = useI18n()

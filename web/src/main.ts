@@ -6,6 +6,13 @@ import { createVAutoAnimate } from '@formkit/auto-animate/vue'
 
 import App from './App.vue'
 import router from './router'
+import { setupI18n } from './i18n'
+import { applyColorScheme } from '@/shared/preferences'
+
+applyColorScheme()
+
+const i18n = setupI18n()
+document.documentElement.lang = i18n.global.locale.value
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -16,6 +23,7 @@ const queryClient = new QueryClient({
 const app = createApp(App)
 
 app.use(router)
+app.use(i18n)
 app.use(VueQueryPlugin, { queryClient })
 app.directive(
     'auto-animate',

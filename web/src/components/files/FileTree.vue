@@ -7,7 +7,7 @@ import type { TreeEntry } from '@/gen'
 
 import FileRows from '@/components/files/FileRows.vue'
 import { listTree, useListTree } from '@/gen'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ projectId: string }>()
 const selected = defineModel<string | null>({ default: null })

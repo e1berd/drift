@@ -4,7 +4,7 @@ import { PhArrowsIn, PhArrowsOut, PhCaretDown, PhCaretRight, PhCheck } from '@ph
 
 import RunSpinner from '@/components/RunSpinner.vue'
 import type { MessageBody } from '@/gen'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const VISIBLE_LINES = 12
 

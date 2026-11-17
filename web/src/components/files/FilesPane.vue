@@ -7,7 +7,7 @@ import type { Project } from '@/gen'
 import CodeView from '@/components/files/CodeView.vue'
 import FileTree from '@/components/files/FileTree.vue'
 import { useReadFile } from '@/gen'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ project: Project }>()
 const { t } = useI18n()

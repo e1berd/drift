@@ -12,7 +12,7 @@ import {
 
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { PERMISSION_MODES, type PermissionMode } from '@/shared/agents'
-import { useI18n, type MessageKey } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const settings = useComposerSettings()
@@ -43,7 +43,7 @@ const value = computed({
                 <PhCheck :size="15" class="check" />
                 <span>
                     <b><SelectItemText>{{ m.label }}</SelectItemText></b>
-                    <small>{{ t(m.hint as MessageKey) }}</small>
+                    <small>{{ t(m.hint) }}</small>
                 </span>
                 <span v-if="m.id === 'acceptEdits' || m.id === 'plan'" class="kbd">⇧Tab</span>
             </SelectItem>

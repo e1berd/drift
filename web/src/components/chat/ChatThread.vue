@@ -14,7 +14,7 @@ import MessageItem from '@/components/chat/MessageItem.vue'
 import { useInfiniteSentinel } from '@/composables/useInfiniteSentinel'
 import type { Message } from '@/gen'
 import type { AgentId } from '@/shared/agents'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
     messages: Message[]

@@ -14,7 +14,7 @@ import { useOpenProjects } from '@/composables/useOpenProjects'
 import { useInfiniteSentinel } from '@/composables/useInfiniteSentinel'
 import { useDeleteProject, useUpdateProject } from '@/gen'
 import { errorMessage } from '@/shared/errors'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 import { useSessions } from '@/shared/queries'
 
 const props = defineProps<{ project: Project; filter: string; isDefault?: boolean }>()

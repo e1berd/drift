@@ -10,12 +10,15 @@ import (
 	"net/http"
 	"net/mail"
 	"net/url"
+	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"unicode/utf8"
 
 	"github.com/e1berd/drift/app/internal/frontend"
+	"github.com/e1berd/drift/app/internal/i18n"
 	"github.com/e1berd/drift/app/internal/kratos"
 	"github.com/labstack/echo/v5"
 )
@@ -26,6 +29,7 @@ const SuperuserRole = "superuser"
 const (
 	minPasswordLength = 8
 	maxPasswordBytes  = 72
+	maxNameLength     = 200
 )
 
 // Handler serves /setup, /login, /error, /logout and the Kratos public API proxy.
@@ -34,6 +38,7 @@ type Handler struct {
 	frontend  frontend.Frontend
 	publicURL *url.URL
 	pages     *pages
+	i18n      *i18n.Bundle
 	log       *slog.Logger
 
 	setupMu  sync.Mutex
@@ -41,12 +46,12 @@ type Handler struct {
 }
 
 // New parses the templates and returns the handler.
-func New(k *kratos.Client, fe frontend.Frontend, publicURL *url.URL, log *slog.Logger) (*Handler, error) {
+func New(k *kratos.Client, fe frontend.Frontend, tr *i18n.Bundle, publicURL *url.URL, log *slog.Logger) (*Handler, error) {
 	p, err := parsePages()
 	if err != nil {
 		return nil, err
 	}
-	return &Handler{kratos: k, frontend: fe, publicURL: publicURL, pages: p, log: log}, nil
+	return &Handler{kratos: k, frontend: fe, i18n: tr, publicURL: publicURL, pages: p, log: log}, nil
 }
 
 // Register mounts the auth routes.
@@ -91,9 +96,27 @@ func (h *Handler) usersExist(c *echo.Context) (bool, error) {
 	return ok, nil
 }
 
-func (h *Handler) layout(title, lead string) (layoutData, error) {
+// printer returns the translator for the request language.
+func (h *Handler) printer(c *echo.Context) *i18n.Printer {
+	return h.i18n.Printer(h.i18n.Detect(c.Request()))
+}
+
+// layout builds the page chrome; title and lead are translation keys ("" for no lead).
+func (h *Handler) layout(c *echo.Context, p *i18n.Printer, title, lead string) (layoutData, error) {
 	assets, err := h.frontend.EntryTags(frontend.AuthEntry)
-	return layoutData{Title: title, Lead: lead, Assets: assets}, err
+	data := layoutData{L: p, Title: p.T(title), Assets: assets, Theme: colorScheme(c.Request())}
+	if lead != "" {
+		data.Lead = p.T(lead)
+	}
+	return data, err
+}
+
+// colorScheme reads the theme switcher cookie so the page renders in the chosen scheme.
+func colorScheme(r *http.Request) string {
+	if ck, err := r.Cookie(colorSchemeCookie); err == nil && slices.Contains(colorSchemes, ck.Value) {
+		return ck.Value
+	}
+	return colorSchemes[0]
 }
 
 func render(c *echo.Context, status int, t *template.Template, name string, data any) error {
@@ -113,7 +136,7 @@ func (h *Handler) setupPage(c *echo.Context) error {
 	if exists {
 		return c.Redirect(http.StatusSeeOther, "/login")
 	}
-	layout, err := h.layout("Первый запуск", "Создайте суперпользователя. После этого регистрация закрывается.")
+	layout, err := h.layout(c, h.printer(c), "setup.title", "setup.lead")
 	if err != nil {
 		return err
 	}
@@ -137,13 +160,15 @@ func (h *Handler) setupSubmit(c *echo.Context) error {
 		return c.NoContent(http.StatusOK)
 	}
 
+	p := h.printer(c)
 	form := setupData{
-		Name:  strings.TrimSpace(c.FormValue("name")),
-		Email: strings.TrimSpace(c.FormValue("email")),
+		layoutData: layoutData{L: p},
+		Name:       strings.TrimSpace(c.FormValue("name")),
+		Email:      strings.TrimSpace(c.FormValue("email")),
 	}
 	password := c.FormValue("password")
 
-	if msg := validateSetup(form.Name, form.Email, password, c.FormValue("password_confirm")); msg != "" {
+	if msg := validateSetup(p, form.Name, form.Email, password, c.FormValue("password_confirm")); msg != "" {
 		form.Messages = []message{{Type: "error", Text: msg}}
 		return render(c, http.StatusUnprocessableEntity, h.pages.setup, "setup-form", form)
 	}
@@ -156,7 +181,7 @@ func (h *Handler) setupSubmit(c *echo.Context) error {
 	var apiErr *kratos.APIError
 	if errors.As(err, &apiErr) && apiErr.Status < http.StatusInternalServerError {
 		h.log.Warn("superuser setup rejected", "status", apiErr.Status, "reason", apiErr.Reason)
-		form.Messages = []message{{Type: "error", Text: "Kratos отклонил данные: " + firstNonEmpty(apiErr.Reason, apiErr.Message)}}
+		form.Messages = []message{{Type: "error", Text: p.T("setup.rejected", "reason", firstNonEmpty(apiErr.Reason, apiErr.Message))}}
 		return render(c, http.StatusUnprocessableEntity, h.pages.setup, "setup-form", form)
 	}
 	if err != nil {
@@ -169,25 +194,35 @@ func (h *Handler) setupSubmit(c *echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func validateSetup(name, email, password, confirm string) string {
+// validateSetup returns the translated reason the setup form is invalid, or "".
+func validateSetup(p *i18n.Printer, name, email, password, confirm string) string {
 	switch {
-	case utf8.RuneCountInString(name) > 200:
-		return "Имя длиннее 200 символов"
+	case utf8.RuneCountInString(name) > maxNameLength:
+		return p.T("setup.name_too_long", "max", maxNameLength)
 	case email == "":
-		return "Введите email"
+		return p.T("common.email_required")
 	}
 	if addr, err := mail.ParseAddress(email); err != nil || addr.Address != email {
-		return "Неверный формат email"
+		return p.T("common.email_invalid")
 	}
 	switch {
 	case utf8.RuneCountInString(password) < minPasswordLength:
-		return "Пароль короче 8 символов"
+		return p.T("setup.password_too_short", "min", minPasswordLength)
 	case len(password) > maxPasswordBytes:
-		return "Пароль длиннее 72 байт"
+		return p.T("setup.password_too_long", "max", maxPasswordBytes)
 	case password != confirm:
-		return "Пароли не совпадают"
+		return p.T("common.passwords_mismatch")
 	}
 	return ""
+}
+
+// kratosMessage translates a Kratos UI message by its ID, keeping Kratos' English text for unknown IDs.
+func kratosMessage(p *i18n.Printer, m kratos.Message) message {
+	text, ok := p.Lookup("kratos." + strconv.Itoa(m.ID))
+	if !ok {
+		text = m.Text
+	}
+	return message{Type: m.Type, Text: text}
 }
 
 func (h *Handler) login(c *echo.Context) error {
@@ -231,11 +266,12 @@ func (h *Handler) login(c *echo.Context) error {
 		return err
 	}
 
-	title, lead := "Вход", ""
+	p := h.printer(c)
+	title, lead := "login.title", ""
 	if flow.Refresh {
-		title, lead = "Подтвердите вход", "Для этого действия нужно войти ещё раз."
+		title, lead = "login.refresh_title", "login.refresh_lead"
 	}
-	layout, err := h.layout(title, lead)
+	layout, err := h.layout(c, p, title, lead)
 	if err != nil {
 		return err
 	}
@@ -251,13 +287,14 @@ func (h *Handler) login(c *echo.Context) error {
 		Refresh:    flow.Refresh,
 	}
 	for _, m := range flow.UI.AllMessages() {
-		data.Messages = append(data.Messages, message{Type: m.Type, Text: m.Text})
+		data.Messages = append(data.Messages, kratosMessage(p, m))
 	}
 	return render(c, http.StatusOK, h.pages.login, "layout", data)
 }
 
 func (h *Handler) selfServiceError(c *echo.Context) error {
-	text := "Что-то пошло не так. Попробуйте войти ещё раз."
+	p := h.printer(c)
+	text := p.T("error.generic")
 	if id := c.QueryParam("id"); id != "" {
 		e, err := h.kratos.SelfServiceError(c.Request().Context(), id)
 		if err != nil {
@@ -266,7 +303,7 @@ func (h *Handler) selfServiceError(c *echo.Context) error {
 			text = msg
 		}
 	}
-	layout, err := h.layout("Ошибка входа", "")
+	layout, err := h.layout(c, p, "error.title", "")
 	if err != nil {
 		return err
 	}

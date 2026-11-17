@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
 
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 
 defineProps<{ icon: Component }>()
 const { t } = useI18n()

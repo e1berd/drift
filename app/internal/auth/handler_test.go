@@ -1,6 +1,10 @@
 package auth
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/e1berd/drift/app/internal/i18n"
+)
 
 func TestSafeReturnTo(t *testing.T) {
 	cases := map[string]string{
@@ -34,8 +38,13 @@ func TestValidateSetup(t *testing.T) {
 		{"", "root@example.com", "short", "short", false},
 		{"", "root@example.com", pw, pw + "x", false},
 	}
+	tr, err := i18n.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := tr.Printer(i18n.Default)
 	for _, c := range cases {
-		msg := validateSetup(c.name, c.email, c.password, c.confirm)
+		msg := validateSetup(p, c.name, c.email, c.password, c.confirm)
 		if (msg == "") != c.ok {
 			t.Errorf("validateSetup(%q, %q, …) = %q, want ok=%v", c.name, c.email, msg, c.ok)
 		}

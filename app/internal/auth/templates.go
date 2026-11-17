@@ -3,6 +3,8 @@ package auth
 import (
 	"embed"
 	"html/template"
+
+	"github.com/e1berd/drift/app/internal/i18n"
 )
 
 //go:embed templates/*.html
@@ -25,11 +27,22 @@ func parsePages() (*pages, error) {
 	return &pages{setup: setup, login: login}, nil
 }
 
+// Color schemes of the theme switcher; the browser keeps the choice in colorSchemeCookie
+// (createColorScheme + createCookieStorage in web/src/shared/preferences.ts).
+const colorSchemeCookie = "color-scheme"
+
+var colorSchemes = []string{"system", "light", "dark"}
+
 type layoutData struct {
+	L      *i18n.Printer
 	Title  string
 	Lead   string
 	Assets template.HTML
+	Theme  string
 }
+
+// Languages lists the language switcher options.
+func (layoutData) Languages() []string { return i18n.Supported }
 
 type setupData struct {
 	layoutData
@@ -37,6 +50,10 @@ type setupData struct {
 	Email    string
 	Messages []message
 }
+
+func (setupData) MinPasswordLength() int { return minPasswordLength }
+func (setupData) MaxPasswordBytes() int  { return maxPasswordBytes }
+func (setupData) MaxNameLength() int     { return maxNameLength }
 
 type loginData struct {
 	layoutData

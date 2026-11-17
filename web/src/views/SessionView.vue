@@ -20,7 +20,7 @@ import { draftKey } from '@/composables/useDrafts'
 import { useCreateMessage } from '@/gen'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
-import { useI18n, type MessageKey } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 import { useMessages, useProjects, useSession } from '@/shared/queries'
 
 const FilesPane = defineAsyncComponent(() => import('@/components/files/FilesPane.vue'))
@@ -90,7 +90,7 @@ function send({ text, files }: { text: string; files: File[] }) {
                 <TabsList class="tabs" :aria-label="t('tabs.label')">
                     <TabsIndicator class="tab-ind" />
                     <TabsTab v-for="x in TABS" :key="x.id" :value="x.id" class="tab">
-                        <component :is="x.icon" :size="15" />{{ t(`tabs.${x.id}` as MessageKey) }}
+                        <component :is="x.icon" :size="15" />{{ t(`tabs.${x.id}`) }}
                     </TabsTab>
                 </TabsList>
             </template>

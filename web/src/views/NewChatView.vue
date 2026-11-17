@@ -22,7 +22,7 @@ import { useCreateSession } from '@/gen'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
 import type { AgentId } from '@/shared/agents'
-import { useI18n } from '@/shared/i18n'
+import { useI18n } from 'vue-i18n'
 import { useProjects } from '@/shared/queries'
 
 const { t } = useI18n()

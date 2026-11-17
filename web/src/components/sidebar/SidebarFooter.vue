@@ -7,15 +7,16 @@ import { RouterLink } from 'vue-router'
 import { useEventStream } from '@/composables/useEventStream'
 import { useSession } from '@/composables/useSession'
 import { useShell } from '@/composables/useShell'
-import { useI18n } from '@/shared/i18n'
-import { colorScheme, locale } from '@/shared/preferences'
+import { useI18n } from 'vue-i18n'
+import { useLocale } from '@/composables/useLocale'
+import { colorScheme } from '@/shared/preferences'
 
-const { t, lang } = useI18n()
+const { t } = useI18n()
+const { locale, setLocale } = useLocale()
 const { session } = useSession()
 const { connected } = useEventStream()
 const { closeOnNarrow } = useShell()
 const scheme = usePreference(colorScheme)
-const currentLocale = usePreference(locale)
 
 const name = computed(
     () => session.value?.identity.traits.name || session.value?.identity.traits.email || '',
@@ -29,7 +30,7 @@ function toggleTheme() {
 }
 
 function toggleLang() {
-    locale.set(currentLocale.value.value === 'en' ? 'ru' : 'en')
+    setLocale(locale.value === 'en' ? 'ru' : 'en')
 }
 </script>
 
@@ -70,7 +71,7 @@ function toggleLang() {
             :title="t('lang.switch')"
             @click="toggleLang"
         >
-            {{ lang }}
+            {{ locale }}
         </button>
         <a href="/logout" class="icon-btn" aria-label="Logout" title="Logout"
             ><PhSignOut :size="18"
