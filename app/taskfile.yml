@@ -1,0 +1,74 @@
+
+version: '3'
+
+tasks:
+  dev:
+    desc: Запустить Go API с hot reload
+    cmds:
+      - air
+
+  run:
+    desc: Запустить Go API
+    cmds:
+      - go run ./cmd/server
+
+  build:
+    desc: Собрать бинарник Drift
+    cmds:
+      - go build -o ../bin/drift ./cmd/server
+
+  test:
+    desc: Запустить Go-тесты
+    cmds:
+      - go test ./...
+
+  fmt:
+    desc: Форматировать Go-код
+    cmds:
+      - go fmt ./...
+
+  tidy:
+    desc: Обновить зависимости
+    cmds:
+      - go mod tidy
+
+  sqlc:
+    desc: Сгенерировать Go-код из SQL
+    cmds:
+      - sqlc generate
+
+  migration:create:
+    desc: Создать SQL-миграцию
+    requires:
+      vars: [NAME]
+    cmds:
+      - migrate create -ext sql -dir db/migrations -seq {{.NAME}}
+
+  migration:up:
+    desc: Применить все новые миграции
+    preconditions:
+      - sh: test -n "$DATABASE_URL"
+        msg: DATABASE_URL не задан
+    cmds:
+      - migrate -path db/migrations -database "$DATABASE_URL" up
+
+  migration:down:
+    desc: Откатить последнюю миграцию
+    preconditions:
+      - sh: test -n "$DATABASE_URL"
+        msg: DATABASE_URL не задан
+    cmds:
+      - migrate -path db/migrations -database "$DATABASE_URL" down 1
+
+  migration:version:
+    desc: Текущая версия схемы БД
+    cmds:
+      - migrate -path db/migrations -database "$DATABASE_URL" version
+
+  migration:force:
+    desc: Вручную установить версию после исправления сбоя миграции
+    requires:
+      vars: [VERSION]
+    prompt: Убедись, что состояние схемы БД соответствует указанной версии. Продолжить?
+    cmds:
+      - migrate -path db/migrations -database "$DATABASE_URL" force {{.VERSION}}

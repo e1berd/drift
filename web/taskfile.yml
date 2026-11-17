@@ -1,0 +1,33 @@
+
+version: '3'
+
+tasks:
+  install:
+    desc: Установить зависимости Vue
+    cmds:
+      - pnpm install
+
+  dev:
+    desc: Запустить Vite
+    cmds:
+      - pnpm dev
+
+  build:
+    desc: Собрать production frontend
+    cmds:
+      - pnpm build
+
+  preview:
+    desc: Предпросмотр production сборки
+    cmds:
+      - pnpm preview
+
+  lint:
+    desc: Проверить код
+    cmds:
+      - pnpm lint
+
+  typecheck:
+    desc: Проверить TypeScript
+    cmds:
+      - pnpm exec vue-tsc --noEmit

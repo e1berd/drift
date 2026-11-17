@@ -1,0 +1,45 @@
+
+version: '3'
+
+dotenv:
+  - .env
+
+includes:
+  app:
+    taskfile: ./app/Taskfile.yml
+    dir: ./app
+
+  web:
+    taskfile: ./web/Taskfile.yml
+    dir: ./web
+
+tasks:
+  default:
+    desc: Показать доступные команды
+    cmds:
+      - task --list
+
+  db:up:
+    desc: Запустить PostgreSQL
+    cmds:
+      - docker compose up -d postgres
+
+  db:down:
+    desc: Остановить PostgreSQL
+    cmds:
+      - docker compose stop postgres
+
+  db:logs:
+    desc: Логи PostgreSQL
+    cmds:
+      - docker compose logs -f postgres
+
+  up:
+    desc: Запустить инфраструктуру
+    cmds:
+      - docker compose up -d
+
+  down:
+    desc: Остановить инфраструктуру
+    cmds:
+      - docker compose down
