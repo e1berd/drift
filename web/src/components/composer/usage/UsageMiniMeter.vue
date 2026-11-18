@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import type { UsageWindow } from '@/gen'
 
@@ -8,11 +9,17 @@ import {
     InlineMeterIndicator,
     InlineMeterTrack,
 } from '@/components/composer/usage/inlineMeter'
-import { usageLevel } from '@/shared/usage'
+import { formatResetDate, usageLevel } from '@/shared/usage'
 
 const props = defineProps<{ short: string; name: string; window?: UsageWindow }>()
+const { locale } = useI18n()
 
 const percent = computed(() => Math.round(props.window?.usedPercent ?? 0))
+const title = computed(() =>
+    props.window?.resetTime
+        ? `${props.name} · ${formatResetDate(props.window.resetTime, locale.value)}`
+        : props.name,
+)
 </script>
 
 <template>
@@ -20,6 +27,7 @@ const percent = computed(() => Math.round(props.window?.usedPercent ?? 0))
         class="usage-mini"
         :value="percent"
         :aria-label="name"
+        :title="title"
         :data-level="window ? usageLevel(percent) : 'unknown'"
     >
         <span class="usage-mini-label" aria-hidden="true">{{ short }}</span>

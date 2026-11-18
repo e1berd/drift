@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
     formatResetClock,
+    formatResetDate,
     headlineWindows,
     secondsUntil,
     usageLevel,
@@ -43,6 +44,14 @@ describe('formatResetClock', () => {
         expect(formatResetClock(new Date(2026, 10, 20, 9, 30).toISOString(), 'en-GB', now)).toBe(
             'Fri 09:30',
         )
+    })
+})
+
+describe('formatResetDate', () => {
+    it('shows the reset date and time in the local timezone', () => {
+        const iso = new Date(2026, 10, 19, 15, 0).toISOString()
+        expect(formatResetDate(iso, 'ru')).toBe('19 нояб., 15:00')
+        expect(formatResetDate(iso, 'en')).toBe('Nov 19, 15:00')
     })
 })
 

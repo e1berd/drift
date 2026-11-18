@@ -1,3 +1,6 @@
+import { format } from 'date-fns'
+import { enUS, ru } from 'date-fns/locale'
+
 import type { UsageWindow } from '@/gen'
 
 export type UsageWindowKind = 'session' | 'week' | 'weekOpus' | 'weekSonnet' | 'other'
@@ -45,6 +48,12 @@ export function formatResetClock(iso: string, lang: string, now = Date.now()): s
           ? { weekday: 'short', hour: '2-digit', minute: '2-digit' }
           : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }
     return new Intl.DateTimeFormat(lang, options).format(reset)
+}
+
+/** "19 нояб., 15:00" / "Nov 19, 15:00": the reset moment as an absolute local date. */
+export function formatResetDate(iso: string, lang: string): string {
+    const locale = lang.startsWith('ru') ? ru : enUS
+    return format(new Date(iso), locale === ru ? 'd MMM, HH:mm' : 'MMM d, HH:mm', { locale })
 }
 
 export type UsageLevel = 'normal' | 'high' | 'critical'

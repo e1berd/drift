@@ -4,7 +4,13 @@ import { Meter, MeterIndicator, MeterLabel, MeterTrack, MeterValue } from '@ui-s
 import { useI18n } from 'vue-i18n'
 
 import { useGetSubscriptionUsage } from '@/gen'
-import { formatReset, secondsUntil, usageLevel, usageWindowKind } from '@/shared/usage'
+import {
+    formatReset,
+    formatResetDate,
+    secondsUntil,
+    usageLevel,
+    usageWindowKind,
+} from '@/shared/usage'
 
 const props = defineProps<{ subscriptionId: string }>()
 const { t, locale } = useI18n()
@@ -23,6 +29,7 @@ const windows = computed(() =>
                 window.label ??
                 t(`window.${usageWindowKind(window)}`, { minutes: window.windowMinutes ?? 0 }),
             reset: left === null ? '' : t('resets', { when: formatReset(left, locale.value) }),
+            resetDate: window.resetTime ? formatResetDate(window.resetTime, locale.value) : '',
         }
     }),
 )
@@ -44,7 +51,10 @@ const windows = computed(() =>
             <MeterLabel>{{ window.label }}</MeterLabel>
             <MeterValue />
             <MeterTrack><MeterIndicator /></MeterTrack>
-            <span v-if="window.reset" class="usage-reset text-muted">{{ window.reset }}</span>
+            <span v-if="window.reset" class="usage-reset text-muted">
+                {{ window.reset
+                }}<template v-if="window.resetDate"> · {{ window.resetDate }}</template>
+            </span>
         </Meter>
     </div>
     <p v-else class="m-0 text-muted">{{ t('none') }}</p>
