@@ -2,6 +2,23 @@
 
 Один Go-бинарник, в который встроены Vue-приложение и две серверные страницы входа. Пользователями и сессиями управляет Ory Kratos.
 
+## Быстрый запуск
+
+Скачать последний релиз под свою архитектуру и сразу запустить:
+
+```sh
+mkdir -p ~/drift/bin && cd ~/drift && curl -fsSL "https://github.com/e1berd/drift/releases/latest/download/drift_linux_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').gz" | gunzip > bin/drift && chmod +x bin/drift && DATABASE_URL='postgres://drift:drift@localhost:5432/drift?sslmode=disable' ./bin/drift
+```
+
+Открывать http://localhost:8080. Первый вход ведёт на `/setup`, там создаётся суперпользователь.
+
+Перед запуском должны работать:
+
+- **PostgreSQL**: база для Drift, строка подключения передаётся в `DATABASE_URL`. Миграции применяются при старте бинарника.
+- **Ory Kratos** с конфигом из `deploy/kratos` (в нём выключена регистрация и задана схема identity). Public API нужен на `KRATOS_PUBLIC_URL` (по умолчанию `http://localhost:4433`), admin API — на `KRATOS_ADMIN_URL` (по умолчанию `http://localhost:4434`). Kratos нужна своя база в том же Postgres.
+
+Проще всего поднять обоих из клона репозитория: `podman compose up -d postgres kratos`, или `task up` (подробнее в разделе «Разработка»). Остальные переменные окружения перечислены в `.env.example`. Когда Drift открыт не на localhost, задайте `DRIFT_PUBLIC_URL`. Бинарник лежит в `~/drift/bin`, папка доступна на запись, поэтому Drift сможет обновлять себя сам (см. «Обновления»).
+
 ## Как устроено
 
 ```
