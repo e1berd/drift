@@ -15,6 +15,8 @@ const AuthEntry = "src/auth/main.ts"
 type Frontend interface {
 	// EntryTags returns the <script>/<link> tags that load a Vite entry.
 	EntryTags(entry string) (template.HTML, error)
+	// Favicon returns the tab icon path; development and release builds have different icons.
+	Favicon() string
 	// IsPage reports whether the request navigates to an SPA page rather than fetching an asset.
 	IsPage(r *http.Request) bool
 	// ServeHTTP serves assets and the SPA shell.

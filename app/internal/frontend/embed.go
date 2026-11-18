@@ -80,6 +80,10 @@ func (e *embedded) EntryTags(entry string) (template.HTML, error) {
 	return template.HTML(b.String()), nil
 }
 
+func (e *embedded) Favicon() string {
+	return "/favicon-production.svg"
+}
+
 func (e *embedded) IsPage(r *http.Request) bool {
 	return e.asset(r.URL.Path) == ""
 }

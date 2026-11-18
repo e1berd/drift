@@ -34,11 +34,12 @@ const colorSchemeCookie = "color-scheme"
 var colorSchemes = []string{"system", "light", "dark"}
 
 type layoutData struct {
-	L      *i18n.Printer
-	Title  string
-	Lead   string
-	Assets template.HTML
-	Theme  string
+	L       *i18n.Printer
+	Title   string
+	Lead    string
+	Assets  template.HTML
+	Favicon string
+	Theme   string
 }
 
 // Languages lists the language switcher options.

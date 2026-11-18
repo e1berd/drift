@@ -104,7 +104,7 @@ func (h *Handler) printer(c *echo.Context) *i18n.Printer {
 // layout builds the page chrome; title and lead are translation keys ("" for no lead).
 func (h *Handler) layout(c *echo.Context, p *i18n.Printer, title, lead string) (layoutData, error) {
 	assets, err := h.frontend.EntryTags(frontend.AuthEntry)
-	data := layoutData{L: p, Title: p.T(title), Assets: assets, Theme: colorScheme(c.Request())}
+	data := layoutData{L: p, Title: p.T(title), Assets: assets, Favicon: h.frontend.Favicon(), Theme: colorScheme(c.Request())}
 	if lead != "" {
 		data.Lead = p.T(lead)
 	}

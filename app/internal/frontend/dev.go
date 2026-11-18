@@ -35,6 +35,10 @@ func (d *devServer) EntryTags(entry string) (template.HTML, error) {
 	)), nil
 }
 
+func (d *devServer) Favicon() string {
+	return "/favicon-development.svg"
+}
+
 func (d *devServer) IsPage(r *http.Request) bool {
 	if dest := r.Header.Get("Sec-Fetch-Dest"); dest != "" {
 		return dest == "document"
