@@ -34,7 +34,10 @@ const connected = ref(true)
 const freshSessions = ref(new Set<string>())
 const activities = ref(new Map<string, SessionActivity>())
 const listeners = new Set<Listener>()
+const REOPEN_DELAY_MS = 3000
+
 let source: EventSource | null = null
+let lastEventId = ''
 
 function mapPages<TPage, TItem>(
     data: Pages<TPage> | undefined,
@@ -257,13 +260,30 @@ function parseEvent(message: MessageEvent<string>): WireEvent | null {
     }
 }
 
+function eventStreamUrl() {
+    const url = new URL(`${API_BASE}/events`, location.origin)
+    if (lastEventId) url.searchParams.set('last_event_id', lastEventId)
+    return url
+}
+
+function reopenClosedStream(qc: QueryClient, closed: EventSource) {
+    if (closed.readyState !== EventSource.CLOSED || source !== closed) return
+    source = null
+    setTimeout(() => startEventStream(qc), REOPEN_DELAY_MS)
+}
+
 /** Opens the single per-tab SSE connection and folds every event into the query cache. */
 export function startEventStream(qc: QueryClient) {
     if (source || typeof EventSource === 'undefined') return
-    source = new EventSource(new URL(`${API_BASE}/events`, location.origin))
-    source.addEventListener('open', () => (connected.value = true))
-    source.addEventListener('error', () => (connected.value = false))
-    source.addEventListener('message', (message: MessageEvent<string>) => {
+    const stream = new EventSource(eventStreamUrl())
+    source = stream
+    stream.addEventListener('open', () => (connected.value = true))
+    stream.addEventListener('error', () => {
+        connected.value = false
+        reopenClosedStream(qc, stream)
+    })
+    stream.addEventListener('message', (message: MessageEvent<string>) => {
+        if (message.lastEventId) lastEventId = message.lastEventId
         const event = parseEvent(message)
         if (!event) return
         apply(qc, event)
