@@ -15,6 +15,7 @@ import (
 	"github.com/e1berd/drift/app/internal/database"
 	"github.com/e1berd/drift/app/internal/events"
 	"github.com/e1berd/drift/app/internal/frontend"
+	"github.com/e1berd/drift/app/internal/gitrepo"
 	"github.com/e1berd/drift/app/internal/health"
 	"github.com/e1berd/drift/app/internal/i18n"
 	"github.com/e1berd/drift/app/internal/identity"
@@ -105,6 +106,7 @@ func run() error {
 	terminals := terminal.New(terminal.DetectShell(cfg.Shell), workspaceHandler.SessionFolder, log)
 	workspaceHandler.WithTerminals(terminals).Register(api)
 	terminals.Register(api)
+	gitrepo.New(workspaceHandler.SessionFolder).Register(api)
 	subs, err := subscriptions.New(ctx, pool, hub, cli, log)
 	if err != nil {
 		return err

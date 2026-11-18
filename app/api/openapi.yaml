@@ -19,6 +19,7 @@ tags:
   - name: subscriptions
   - name: events
   - name: terminal
+  - name: git
 paths:
   /folders:
     get:
@@ -374,6 +375,178 @@ paths:
           description: No such session or its folder is missing.
         '503':
           description: Too many shells are open on the server.
+  /sessions/{sessionId}/git:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: getGitStatus
+      tags: [git]
+      description: >-
+        Git state of the session folder, a singleton resource (AIP-156): branch, upstream,
+        ahead/behind and changed files. A folder that is not the top of a repository returns
+        `repository: false`; repositories above the folder are not looked up.
+      responses:
+        '200':
+          description: The status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GitStatus' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git/diff:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: getGitDiff
+      tags: [git]
+      description: >-
+        Unified diff of one path: the index against HEAD when `staged`, otherwise the
+        worktree against the index; an untracked file is shown as all added. Cut at 512 KiB.
+      parameters:
+        - name: path
+          in: query
+          required: true
+          description: Path relative to the repository root.
+          schema: { type: string, minLength: 1 }
+        - name: staged
+          in: query
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: The diff, empty when the path has no changes on that side.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GitDiff' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git/branches:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: listGitBranches
+      tags: [git]
+      description: Local branches, most recently committed first, up to 500 (no pagination).
+      responses:
+        '200':
+          description: The branches.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListGitBranchesResponse' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git/commits:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: listGitCommits
+      tags: [git]
+      description: >-
+        History of HEAD, newest first (AIP-158 pagination). The page token pins the head the
+        listing started from, so new commits do not shift later pages.
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200':
+          description: A page of commits.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListGitCommitsResponse' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git:init:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: initGitRepository
+      tags: [git]
+      description: Custom method (AIP-136) that runs `git init` in the session folder; a no-op in a repository.
+      responses:
+        '200': { $ref: '#/components/responses/GitStatus' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git:stage:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: stageGitPaths
+      tags: [git]
+      description: Custom method (AIP-136) that stages the paths, every change when `paths` is empty.
+      requestBody: { $ref: '#/components/requestBodies/GitPaths' }
+      responses:
+        '200': { $ref: '#/components/responses/GitStatus' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git:unstage:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: unstageGitPaths
+      tags: [git]
+      description: Custom method (AIP-136) that unstages the paths, everything when `paths` is empty.
+      requestBody: { $ref: '#/components/requestBodies/GitPaths' }
+      responses:
+        '200': { $ref: '#/components/responses/GitStatus' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git:discard:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: discardGitChanges
+      tags: [git]
+      description: >-
+        Custom method (AIP-136) that drops unstaged changes of the paths: tracked files are
+        restored from the index, untracked files are deleted. `paths` must not be empty.
+      requestBody: { $ref: '#/components/requestBodies/GitPaths' }
+      responses:
+        '200': { $ref: '#/components/responses/GitStatus' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git:commit:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: commitGitChanges
+      tags: [git]
+      description: Custom method (AIP-136) that commits the staged changes; 409 with git's message when it fails.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GitCommitRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/GitStatus' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git:checkout:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: checkoutGitBranch
+      tags: [git]
+      description: Custom method (AIP-136) that switches to a branch, or creates it from HEAD when `create`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GitCheckoutRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/GitStatus' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git:pull:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: pullGitBranch
+      tags: [git]
+      description: Custom method (AIP-136) that runs `git pull --ff-only`, up to 2 minutes.
+      responses:
+        '200': { $ref: '#/components/responses/GitStatus' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git:push:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: pushGitBranch
+      tags: [git]
+      description: >-
+        Custom method (AIP-136) that pushes the current branch, setting its upstream to
+        origin when it has none, up to 2 minutes.
+      responses:
+        '200': { $ref: '#/components/responses/GitStatus' }
+        default: { $ref: '#/components/responses/Error' }
   /sessions/{sessionId}/messages:
     parameters:
       - $ref: '#/components/parameters/SessionId'
@@ -645,12 +818,25 @@ components:
       name: path
       in: query
       schema: { type: string }
+  requestBodies:
+    GitPaths:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GitPathsRequest' }
   responses:
     Error:
       description: Error with a human-readable message.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
+    GitStatus:
+      description: >-
+        The status after the change. Failures of the command return 409 with its own message,
+        invalid paths or names 400, a session of somebody else 404.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/GitStatus' }
   schemas:
     Error:
       type: object
@@ -949,6 +1135,98 @@ components:
         tool: { type: string }
         text: { type: string }
         tokens: { type: integer }
+    GitStatus:
+      description: >-
+        Git state of a session folder, a singleton resource (AIP-156). `staged` compares the
+        index with HEAD, `unstaged` the worktree with the index plus untracked files.
+      type: object
+      required: [repository, detached, ahead, behind, staged, unstaged]
+      properties:
+        repository: { type: boolean }
+        branch: { type: string, description: Absent when HEAD is detached. }
+        detached: { type: boolean }
+        head: { type: string, description: 'Abbreviated commit of HEAD; absent before the first commit.' }
+        upstream: { type: string }
+        ahead: { type: integer }
+        behind: { type: integer }
+        staged:
+          type: array
+          items: { $ref: '#/components/schemas/GitFileChange' }
+        unstaged:
+          type: array
+          items: { $ref: '#/components/schemas/GitFileChange' }
+        truncated: { type: boolean, description: More than 2000 changes on one side. }
+    GitFileChange:
+      type: object
+      required: [path, status]
+      properties:
+        path: { type: string }
+        origPath: { type: string, description: Previous path of a staged rename or copy. }
+        status: { $ref: '#/components/schemas/GitChangeStatus' }
+    GitChangeStatus:
+      type: string
+      enum: [modified, added, deleted, renamed, copied, typeChanged, conflicted, untracked]
+    GitDiff:
+      type: object
+      required: [path, staged, diff]
+      properties:
+        path: { type: string }
+        staged: { type: boolean }
+        diff: { type: string, description: Unified diff as git prints it. }
+        truncated: { type: boolean }
+    GitBranch:
+      type: object
+      required: [name, current]
+      properties:
+        name: { type: string }
+        current: { type: boolean }
+        upstream: { type: string }
+    ListGitBranchesResponse:
+      type: object
+      required: [branches]
+      properties:
+        branches:
+          type: array
+          items: { $ref: '#/components/schemas/GitBranch' }
+    GitCommit:
+      description: One commit of the history; `authorTime` is named after AIP-142.
+      type: object
+      required: [hash, shortHash, subject, authorName, authorEmail, authorTime]
+      properties:
+        hash: { type: string }
+        shortHash: { type: string }
+        subject: { type: string }
+        authorName: { type: string }
+        authorEmail: { type: string }
+        authorTime: { type: string, format: date-time }
+    ListGitCommitsResponse:
+      type: object
+      required: [commits]
+      properties:
+        commits:
+          type: array
+          items: { $ref: '#/components/schemas/GitCommit' }
+        nextPageToken: { type: string }
+    GitPathsRequest:
+      type: object
+      required: [paths]
+      properties:
+        paths:
+          type: array
+          maxItems: 1000
+          description: Paths relative to the repository root; `..` and absolute paths are rejected.
+          items: { type: string }
+    GitCommitRequest:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, minLength: 1 }
+    GitCheckoutRequest:
+      type: object
+      required: [branch]
+      properties:
+        branch: { type: string, minLength: 1, maxLength: 250 }
+        create: { type: boolean, description: Create the branch from HEAD before switching. }
     TerminalControl:
       description: Text frame from the client to the terminal WebSocket.
       type: object
