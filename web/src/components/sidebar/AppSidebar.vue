@@ -7,21 +7,19 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 
 import BrandMark from '@/components/BrandMark.vue'
-import NewProjectForm from '@/components/sidebar/NewProjectForm.vue'
-import ProjectItem from '@/components/sidebar/ProjectItem.vue'
-import StandaloneChats from '@/components/sidebar/StandaloneChats.vue'
+import SessionSearchResults from '@/components/sidebar/SessionSearchResults.vue'
 import SidebarFooter from '@/components/sidebar/SidebarFooter.vue'
+import WorkspaceNav from '@/components/sidebar/WorkspaceNav.vue'
+import { useDebounced } from '@/composables/useDebounced'
 import { useShell } from '@/composables/useShell'
-import { useProjects } from '@/shared/queries'
 
 const { t } = useI18n()
 const router = useRouter()
 const { closeOnNarrow } = useShell()
-const { projects, isPending } = useProjects()
 
 const query = ref('')
-const creating = ref(false)
-const filter = computed(() => query.value.trim().toLowerCase())
+const searchText = useDebounced(() => query.value.trim(), 250)
+const searching = computed(() => !!searchText.value)
 
 function startNewChat() {
     closeOnNarrow()
@@ -42,48 +40,16 @@ function startNewChat() {
             <Input
                 v-model="query"
                 type="search"
+                maxlength="200"
                 :placeholder="t('nav.search')"
                 :aria-label="t('nav.search')"
+                @keydown.esc="query = ''"
             />
         </div>
 
-        <div class="min-h-0 flex-1 overflow-auto">
-            <StandaloneChats :filter="filter" />
-
-            <div class="flex items-center justify-between px-3 pt-3 pb-1 text-muted">
-                <span>{{ t('nav.projects') }}</span>
-                <Button
-                    :aria-label="t('nav.newProject')"
-                    :title="t('nav.newProject')"
-                    :aria-expanded="creating"
-                    @click="creating = !creating"
-                >
-                    <PhPlus />
-                </Button>
-            </div>
-
-            <div class="grid-reveal px-3" :data-open="creating || undefined">
-                <div>
-                    <NewProjectForm v-if="creating" @done="creating = false" />
-                </div>
-            </div>
-
-            <nav class="px-2 pb-2" :aria-label="t('nav.projects')">
-                <div v-if="isPending" class="flex flex-col gap-1 pt-1">
-                    <div v-for="row in 3" :key="row" class="skeleton h-8" />
-                </div>
-                <p v-else-if="!projects.length && !creating" class="px-2 py-2 text-muted">
-                    {{ t('nav.noProjects') }}
-                </p>
-                <div v-auto-animate>
-                    <ProjectItem
-                        v-for="project in projects"
-                        :key="project.id"
-                        :project="project"
-                        :filter="filter"
-                    />
-                </div>
-            </nav>
+        <div v-auto-animate class="min-h-0 flex-1 overflow-auto">
+            <SessionSearchResults v-if="searching" key="search" :text="searchText" />
+            <WorkspaceNav v-else key="browse" />
         </div>
 
         <SidebarFooter />

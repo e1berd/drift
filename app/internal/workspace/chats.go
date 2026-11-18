@@ -55,16 +55,7 @@ func (h *Handler) listStandaloneSessions(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	out := listSessionsResponse{Sessions: make([]Session, 0, len(rows))}
-	for i, s := range rows {
-		if int32(i) == size {
-			last := rows[i-1]
-			out.NextPageToken = encodeCursor(last.UpdatedAt, last.ID)
-			break
-		}
-		out.Sessions = append(out.Sessions, sessionDTO(s))
-	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, sessionPage(rows, size))
 }
 
 func (h *Handler) createStandaloneSession(c *echo.Context) error {

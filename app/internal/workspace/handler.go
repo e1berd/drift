@@ -77,6 +77,7 @@ func (h *Handler) Register(g *echo.Group) {
 
 	g.GET("/sessions", h.listStandaloneSessions)
 	g.POST("/sessions", h.createStandaloneSession)
+	g.GET(`/sessions\:search`, h.searchSessions)
 	g.GET("/sessions/:session", h.getSession)
 	g.PATCH("/sessions/:session", h.updateSession)
 	g.POST("/sessions/:session", h.sessionCustomMethod)

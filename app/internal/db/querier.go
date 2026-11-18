@@ -41,6 +41,7 @@ type Querier interface {
 	PromoteNextSubscription(ctx context.Context, arg PromoteNextSubscriptionParams) (Subscription, error)
 	RenameProject(ctx context.Context, arg RenameProjectParams) (Project, error)
 	ResetRunningSessions(ctx context.Context) error
+	SearchSessions(ctx context.Context, arg SearchSessionsParams) ([]Session, error)
 	SetAgentSessionID(ctx context.Context, arg SetAgentSessionIDParams) error
 	SetCurrentSubscription(ctx context.Context, arg SetCurrentSubscriptionParams) (Subscription, error)
 	SetSessionStatus(ctx context.Context, arg SetSessionStatusParams) (Session, error)

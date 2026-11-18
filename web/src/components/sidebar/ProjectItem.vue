@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, ref, useTemplateRef } from 'vue'
 import { PhFolderSimple, PhPencilSimple, PhPlus, PhTrash } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { Input } from '@ui-sdk/vue/input'
@@ -20,7 +20,7 @@ import { errorMessage } from '@/shared/errors'
 import { useI18n } from 'vue-i18n'
 import { useSessions } from '@/shared/queries'
 
-const props = defineProps<{ project: Project; filter: string }>()
+const props = defineProps<{ project: Project }>()
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
@@ -40,17 +40,6 @@ const { sessions, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = 
 const newKey = computed(() => draftKey(undefined, props.project.id))
 const viewingNew = computed(() => route.name === 'new' && route.query.project === props.project.id)
 const showDraft = computed(() => drafts.has(newKey.value) && !viewingNew.value)
-
-const visible = computed(() => {
-    if (!props.filter) return sessions.value
-    return sessions.value.filter((session) => session.title.toLowerCase().includes(props.filter))
-})
-const hidden = computed(
-    () =>
-        !!props.filter &&
-        !props.project.name.toLowerCase().includes(props.filter) &&
-        !visible.value.length,
-)
 
 const mode = ref<'view' | 'rename' | 'confirm'>('view')
 const name = ref('')
@@ -93,18 +82,10 @@ const sentinel = useTemplateRef<HTMLElement>('sentinel')
 useInfiniteSentinel(sentinel, () => {
     if (hasNextPage.value && !isFetchingNextPage.value) void fetchNextPage()
 })
-
-watch(
-    () => props.filter,
-    (value) => {
-        if (value && !open.value && props.project.name.toLowerCase().includes(value))
-            open.value = true
-    },
-)
 </script>
 
 <template>
-    <Collapsible v-show="!hidden" v-model:open="open">
+    <Collapsible v-model:open="open">
         <div v-if="mode === 'confirm'" class="motion-fade flex flex-col gap-2 p-2">
             <span>{{
                 t('project.confirmDelete', { name: project.name, count: project.sessionCount })
@@ -173,7 +154,7 @@ watch(
                     :draft-key="newKey"
                     :project-id="project.id"
                 />
-                <SessionItem v-for="session in visible" :key="session.id" :session="session" />
+                <SessionItem v-for="session in sessions" :key="session.id" :session="session" />
                 <template v-if="isPending">
                     <div v-for="row in 3" :key="`skeleton-${row}`" class="skeleton my-px h-8" />
                 </template>

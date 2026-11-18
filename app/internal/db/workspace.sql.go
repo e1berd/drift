@@ -553,6 +553,60 @@ func (q *Queries) ResetRunningSessions(ctx context.Context) error {
 	return err
 }
 
+const searchSessions = `-- name: SearchSessions :many
+SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id FROM sessions
+WHERE owner_id = $1
+  AND title ILIKE '%' || $3::text || '%'
+  AND ($4::timestamptz IS NULL
+       OR (updated_at, id) < ($4::timestamptz, $5::uuid))
+ORDER BY updated_at DESC, id DESC
+LIMIT $2
+`
+
+type SearchSessionsParams struct {
+	OwnerID       string             `json:"owner_id"`
+	Limit         int32              `json:"limit"`
+	Pattern       string             `json:"pattern"`
+	BeforeUpdated pgtype.Timestamptz `json:"before_updated"`
+	BeforeID      pgtype.UUID        `json:"before_id"`
+}
+
+func (q *Queries) SearchSessions(ctx context.Context, arg SearchSessionsParams) ([]Session, error) {
+	rows, err := q.db.Query(ctx, searchSessions,
+		arg.OwnerID,
+		arg.Limit,
+		arg.Pattern,
+		arg.BeforeUpdated,
+		arg.BeforeID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Session
+	for rows.Next() {
+		var i Session
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.OwnerID,
+			&i.Title,
+			&i.Agent,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AgentSessionID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setAgentSessionID = `-- name: SetAgentSessionID :exec
 UPDATE sessions SET agent_session_id = $2 WHERE id = $1
 `

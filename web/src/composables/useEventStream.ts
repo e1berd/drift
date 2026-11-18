@@ -20,6 +20,7 @@ import {
     listSessionsInfiniteQueryKey,
     listStandaloneSessionsInfiniteQueryKey,
     listSubscriptionsQueryKey,
+    searchSessionsInfiniteQueryKey,
 } from '@/gen'
 import { applyDraftEvent, loadDrafts } from '@/composables/useDrafts'
 import { deviceId } from '@/shared/device'
@@ -105,6 +106,23 @@ function updateSessions(
     )
 }
 
+const searchResultsKey = searchSessionsInfiniteQueryKey({ query: { query: '' } }).slice(0, 1)
+
+function updateSearchResults(qc: QueryClient, change: (items: Session[]) => Session[]) {
+    qc.setQueriesData<Pages<ListSessionsResponse>>({ queryKey: searchResultsKey }, (data) =>
+        mapPages(
+            data,
+            (page) => page.sessions,
+            (page, sessions) => ({ ...page, sessions }),
+            change,
+        ),
+    )
+}
+
+function refreshSearchResults(qc: QueryClient) {
+    void qc.invalidateQueries({ queryKey: searchResultsKey })
+}
+
 function putSessionFirst(qc: QueryClient, session: Session) {
     updateSessions(qc, session.projectId, (items, index) => {
         const rest = items.filter((item) => item.id !== session.id)
@@ -123,11 +141,13 @@ function onSessionCreated(qc: QueryClient, session: Session, mine: boolean) {
     const known = isKnownSession(qc, session)
     putSessionFirst(qc, session)
     if (!known) bumpSessionCount(qc, session.projectId, 1)
+    refreshSearchResults(qc)
     if (!mine) freshSessions.value = new Set(freshSessions.value).add(session.id)
 }
 
 function onSessionDeleted(qc: QueryClient, { id, projectId }: { id: string; projectId?: string }) {
     updateSessions(qc, projectId, (items) => items.filter((item) => item.id !== id))
+    updateSearchResults(qc, (items) => items.filter((item) => item.id !== id))
     qc.removeQueries({ queryKey: getSessionQueryKey({ path: { sessionId: id } }) })
     bumpSessionCount(qc, projectId, -1)
 }
@@ -135,6 +155,7 @@ function onSessionDeleted(qc: QueryClient, { id, projectId }: { id: string; proj
 function onProjectDeleted(qc: QueryClient, { id }: { id: string }) {
     updateProjects(qc, (items) => items.filter((item) => item.id !== id))
     qc.removeQueries({ queryKey: sessionsKey(id) })
+    updateSearchResults(qc, (items) => items.filter((item) => item.projectId !== id))
 }
 
 function onMessageCreated(qc: QueryClient, message: Message) {
@@ -177,6 +198,9 @@ function onSessionUpdated(qc: QueryClient, session: Session) {
     if (session.status !== 'running' && activities.value.has(session.id))
         setActivity(session.id, null)
     putSessionFirst(qc, session)
+    updateSearchResults(qc, (items) =>
+        items.map((item) => (item.id === session.id ? session : item)),
+    )
 }
 
 function onAgentMessage(message: Message) {

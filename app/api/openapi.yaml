@@ -216,6 +216,29 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/CreateSessionResponse' }
         default: { $ref: '#/components/responses/Error' }
+  /sessions:search:
+    get:
+      operationId: searchSessions
+      description: >-
+        Custom method (AIP-136) that finds sessions of every project and standalone chats
+        whose title contains the query, case-insensitive, latest activity first
+        (AIP-158 pagination).
+      tags: [sessions]
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Text to look for in session titles, up to 200 characters.
+          schema: { type: string, minLength: 1, maxLength: 200 }
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200':
+          description: A page of matching sessions.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListSessionsResponse' }
+        default: { $ref: '#/components/responses/Error' }
   /sessions/{sessionId}:
     parameters:
       - $ref: '#/components/parameters/SessionId'

@@ -38,6 +38,15 @@ WHERE owner_id = $1 AND project_id IS NULL
 ORDER BY updated_at DESC, id DESC
 LIMIT $2;
 
+-- name: SearchSessions :many
+SELECT * FROM sessions
+WHERE owner_id = $1
+  AND title ILIKE '%' || sqlc.arg(pattern)::text || '%'
+  AND (sqlc.narg(before_updated)::timestamptz IS NULL
+       OR (updated_at, id) < (sqlc.narg(before_updated)::timestamptz, sqlc.narg(before_id)::uuid))
+ORDER BY updated_at DESC, id DESC
+LIMIT $2;
+
 -- name: GetSession :one
 SELECT * FROM sessions WHERE id = $1 AND owner_id = $2;
 

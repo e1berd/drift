@@ -22,6 +22,19 @@ type listSessionsResponse struct {
 	NextPageToken string    `json:"nextPageToken,omitempty"`
 }
 
+func sessionPage(rows []db.Session, size int32) listSessionsResponse {
+	out := listSessionsResponse{Sessions: make([]Session, 0, min(len(rows), int(size)))}
+	for i, s := range rows {
+		if int32(i) == size {
+			last := rows[i-1]
+			out.NextPageToken = encodeCursor(last.UpdatedAt, last.ID)
+			break
+		}
+		out.Sessions = append(out.Sessions, sessionDTO(s))
+	}
+	return out
+}
+
 func (h *Handler) listSessions(c *echo.Context) error {
 	id, err := parseID(c, "project")
 	if err != nil {
@@ -38,16 +51,7 @@ func (h *Handler) listSessions(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	out := listSessionsResponse{Sessions: make([]Session, 0, len(rows))}
-	for i, s := range rows {
-		if int32(i) == size {
-			last := rows[i-1]
-			out.NextPageToken = encodeCursor(last.UpdatedAt, last.ID)
-			break
-		}
-		out.Sessions = append(out.Sessions, sessionDTO(s))
-	}
-	return c.JSON(http.StatusOK, out)
+	return c.JSON(http.StatusOK, sessionPage(rows, size))
 }
 
 type sessionInput struct {

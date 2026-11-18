@@ -1,4 +1,5 @@
 import { computed, toValue } from 'vue'
+import { keepPreviousData } from '@tanstack/vue-query'
 
 import type { MaybeRefOrGetter } from 'vue'
 
@@ -8,6 +9,7 @@ import {
     useListProjectsInfinite,
     useListSessionsInfinite,
     useListStandaloneSessionsInfinite,
+    useSearchSessionsInfinite,
 } from '@/gen'
 
 /** All projects across loaded pages, oldest first. */
@@ -33,6 +35,16 @@ export function useSessions(
 /** Sessions without a project, latest activity first. */
 export function useStandaloneSessions() {
     const query = useListStandaloneSessionsInfinite()
+    const sessions = computed(() => query.data.value?.pages.flatMap((page) => page.sessions) ?? [])
+    return { ...query, sessions }
+}
+
+/** Sessions of all projects and chats whose title contains `text`; idle while `text` is empty. */
+export function useSessionSearch(text: MaybeRefOrGetter<string>) {
+    const query = useSearchSessionsInfinite(
+        { query: () => ({ query: toValue(text) }) },
+        { query: { enabled: () => !!toValue(text), placeholderData: keepPreviousData } },
+    )
     const sessions = computed(() => query.data.value?.pages.flatMap((page) => page.sessions) ?? [])
     return { ...query, sessions }
 }
