@@ -31,6 +31,7 @@ import { useI18n } from 'vue-i18n'
 import { useMessages, useProjects, useSession } from '@/shared/queries'
 
 const FilesPane = defineAsyncComponent(() => import('@/components/files/FilesPane.vue'))
+const GitPane = defineAsyncComponent(() => import('@/components/git/GitPane.vue'))
 const TerminalPane = defineAsyncComponent(() => import('@/components/terminal/TerminalPane.vue'))
 
 const TABS = [
@@ -194,9 +195,9 @@ const stop = useStopSession({
                 :hint="project?.path"
             />
         </TabsPanel>
-        <TabsPanel value="git" class="session-pane"
-            ><PanePlaceholder :icon="PhGitBranch"
-        /></TabsPanel>
+        <TabsPanel value="git" class="session-pane">
+            <GitPane v-if="session.data.value" :session-id="sessionId" />
+        </TabsPanel>
         <TabsPanel value="terminal" class="session-pane">
             <TerminalPane v-if="session.data.value" :session-id="sessionId" />
         </TabsPanel>
