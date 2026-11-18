@@ -37,6 +37,7 @@ nav:
   offline: 'Offline, reconnecting'
 project:
   name: 'Project name'
+  newChat: 'New chat in this project'
   path: 'Folder in the workspace'
   pathHint: 'Relative to the server workspace. A missing folder is created'
   create: 'Create'

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
-import { PhFolderSimple, PhPencilSimple, PhTrash } from '@phosphor-icons/vue'
+import { PhFolderSimple, PhPencilSimple, PhPlus, PhTrash } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { Input } from '@ui-sdk/vue/input'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@ui-sdk/vue/collapsible'
@@ -13,6 +13,7 @@ import SessionItem from '@/components/sidebar/SessionItem.vue'
 import DraftItem from '@/components/sidebar/DraftItem.vue'
 import { draftKey, useDraftIndex } from '@/composables/useDrafts'
 import { useOpenProjects } from '@/composables/useOpenProjects'
+import { useShell } from '@/composables/useShell'
 import { useInfiniteSentinel } from '@/composables/useInfiniteSentinel'
 import { useDeleteProject, useUpdateProject } from '@/gen'
 import { errorMessage } from '@/shared/errors'
@@ -25,6 +26,7 @@ const route = useRoute()
 const router = useRouter()
 const { isOpen, setOpen } = useOpenProjects()
 const drafts = useDraftIndex()
+const { closeOnNarrow } = useShell()
 
 const open = computed({
     get: () => isOpen(props.project.id),
@@ -69,6 +71,12 @@ const remove = useDeleteProject({
         onError: showError,
     },
 })
+
+function startChatInProject() {
+    open.value = true
+    closeOnNarrow()
+    void router.push({ name: 'new', query: { project: props.project.id } })
+}
 
 async function startRename() {
     name.value = props.project.name
@@ -137,6 +145,13 @@ watch(
                 </span>
             </CollapsibleTrigger>
             <div class="project-actions">
+                <Button
+                    :aria-label="t('project.newChat')"
+                    :title="t('project.newChat')"
+                    @click="startChatInProject"
+                >
+                    <PhPlus />
+                </Button>
                 <Button
                     :aria-label="t('project.rename')"
                     :title="t('project.rename')"
