@@ -45,21 +45,25 @@ type File struct {
 	Truncated bool   `json:"truncated,omitempty"`
 }
 
-func (h *Handler) projectFS(c *echo.Context) (fs.FS, func(), error) {
+func (h *Handler) projectRoot(c *echo.Context) (*os.Root, error) {
 	p, err := h.project(c)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	root, err := os.OpenRoot(h.root)
+	return openProjectRoot(h.root, p.Path)
+}
+
+func openProjectRoot(workspaceRoot, projectPath string) (*os.Root, error) {
+	root, err := os.OpenRoot(workspaceRoot)
 	if err != nil {
-		return nil, nil, echo.NewHTTPError(http.StatusServiceUnavailable, "workspace root is not available")
+		return nil, echo.NewHTTPError(http.StatusServiceUnavailable, "workspace root is not available")
 	}
-	sub, err := root.OpenRoot(p.Path)
-	root.Close()
+	defer root.Close()
+	sub, err := root.OpenRoot(projectPath)
 	if err != nil {
-		return nil, nil, echo.NewHTTPError(http.StatusNotFound, "project folder is missing")
+		return nil, echo.NewHTTPError(http.StatusNotFound, "project folder is missing")
 	}
-	return sub.FS(), func() { sub.Close() }, nil
+	return sub, nil
 }
 
 func cleanRel(raw string) (string, error) {
@@ -75,11 +79,12 @@ func cleanRel(raw string) (string, error) {
 }
 
 func (h *Handler) listTree(c *echo.Context) error {
-	fsys, done, err := h.projectFS(c)
+	root, err := h.projectRoot(c)
 	if err != nil {
 		return err
 	}
-	defer done()
+	defer root.Close()
+	fsys := root.FS()
 	dir, err := cleanRel(c.QueryParam("path"))
 	if err != nil {
 		return err
@@ -127,11 +132,12 @@ func readEntries(fsys fs.FS, dir string, keep func(fs.DirEntry) bool) (treeRespo
 }
 
 func (h *Handler) readFile(c *echo.Context) error {
-	fsys, done, err := h.projectFS(c)
+	root, err := h.projectRoot(c)
 	if err != nil {
 		return err
 	}
-	defer done()
+	defer root.Close()
+	fsys := root.FS()
 	name, err := cleanRel(c.QueryParam("path"))
 	if err != nil {
 		return err

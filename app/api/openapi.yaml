@@ -132,6 +132,22 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/TreeResponse' }
         default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createTreeEntry
+      tags: [files]
+      description: Creates an empty file or a folder, with missing parent folders (AIP-133).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TreeEntryInput' }
+      responses:
+        '201':
+          description: The created entry. 409 when the path is taken.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreeEntry' }
+        default: { $ref: '#/components/responses/Error' }
   /projects/{projectId}/file:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
@@ -143,6 +159,24 @@ paths:
       responses:
         '200':
           description: Text content up to 1 MiB, or a binary marker.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FileContent' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      operationId: updateFile
+      tags: [files]
+      description: Replaces the text of an existing file; content is its only mutable field (AIP-134).
+      parameters:
+        - $ref: '#/components/parameters/FilePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FileInput' }
+      responses:
+        '200':
+          description: The saved file.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/FileContent' }
@@ -465,6 +499,12 @@ components:
         path: { type: string }
         dir: { type: boolean }
         size: { type: integer }
+    TreeEntryInput:
+      type: object
+      required: [path]
+      properties:
+        path: { type: string, minLength: 1, description: Path relative to the project folder. }
+        dir: { type: boolean }
     TreeResponse:
       type: object
       required: [path, entries]
@@ -483,6 +523,11 @@ components:
         content: { type: string }
         binary: { type: boolean }
         truncated: { type: boolean }
+    FileInput:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string, maxLength: 1048576 }
     WireEvent:
       type: object
       required: [type]

@@ -51,7 +51,9 @@ func (h *Handler) Register(g *echo.Group) {
 	g.GET("/projects/:project/sessions", h.listSessions)
 	g.POST("/projects/:project/sessions", h.createSession)
 	g.GET("/projects/:project/tree", h.listTree)
+	g.POST("/projects/:project/tree", h.createTreeEntry)
 	g.GET("/projects/:project/file", h.readFile)
+	g.PATCH("/projects/:project/file", h.updateFile)
 
 	g.GET("/sessions/:session", h.getSession)
 	g.PATCH("/sessions/:session", h.updateSession)
