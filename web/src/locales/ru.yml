@@ -76,6 +76,7 @@ composer:
   placeholder:
     new: 'Опишите задачу для {agent}…'
     reply: "Ответьте {agent}…  / — команды, {'@'} — файлы"
+    queue: 'Агент ещё отвечает — сообщение уйдёт {agent} следом…'
   attach: 'Прикрепить картинку'
   imagesOnly: 'Можно прикрепить до 10 картинок PNG, JPEG, GIF или WebP, каждую до 5 МБ. Не прикреплены:'
   removeAttachment: 'Убрать {name}'
@@ -83,6 +84,7 @@ composer:
   historyForward: 'Следующее сообщение'
   send: 'Отправить'
   stop: 'Остановить'
+  queue: 'Добавить в очередь'
   model: 'Модель'
   permissions: 'Разрешения'
   project: 'Проект'

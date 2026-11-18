@@ -76,6 +76,7 @@ composer:
   placeholder:
     new: 'Describe the task for {agent}…'
     reply: "Reply to {agent}…  / for commands, {'@'} for files"
+    queue: '{agent} is still answering — this message goes next…'
   attach: 'Attach an image'
   imagesOnly: 'Up to 10 PNG, JPEG, GIF or WebP images of at most 5 MB each can be attached. Left out:'
   removeAttachment: 'Remove {name}'
@@ -83,6 +84,7 @@ composer:
   historyForward: 'Next message'
   send: 'Send'
   stop: 'Stop'
+  queue: 'Add to the queue'
   model: 'Model'
   permissions: 'Permissions'
   project: 'Project'

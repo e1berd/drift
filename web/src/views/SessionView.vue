@@ -2,13 +2,11 @@
 import { computed, defineAsyncComponent, useTemplateRef } from 'vue'
 import {
     PhChatCircle,
-    PhStop,
     PhFile,
     PhGitBranch,
     PhTerminal,
     PhTerminalWindow,
 } from '@phosphor-icons/vue'
-import { Button } from '@ui-sdk/vue/button'
 import { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from '@ui-sdk/vue/tabs'
 import { toast } from '@ui-sdk/vue/toast'
 import { useRoute, useRouter } from 'vue-router'
@@ -161,28 +159,23 @@ const stop = useStopSession({
                     :draft-key="draftKey(sessionId)"
                     :agent="agent"
                     :history="history"
-                    :placeholder="t('composer.placeholder.reply', { agent: AGENTS[agent].name })"
+                    :placeholder="
+                        running
+                            ? t('composer.placeholder.queue', { agent: AGENTS[agent].name })
+                            : t('composer.placeholder.reply', { agent: AGENTS[agent].name })
+                    "
                     :busy="
                         post.isPending.value ||
                         update.isPending.value ||
                         attachments.uploading.value
                     "
+                    :running="running"
+                    :stopping="stop.isPending.value"
                     autofocus
                     @send="send"
+                    @stop="stop.mutate({ path: { sessionId } })"
                     @switch-agent="switchAgent"
-                >
-                    <template v-if="running" #action>
-                        <Button
-                            data-variant="solid"
-                            :disabled="stop.isPending.value"
-                            :aria-label="t('composer.stop')"
-                            :title="t('composer.stop')"
-                            @click="stop.mutate({ path: { sessionId } })"
-                        >
-                            <PhStop weight="fill" />
-                        </Button>
-                    </template>
-                </PromptComposer>
+                />
                 <SwitchFamilyDialog ref="switchDialog" />
             </div>
         </TabsPanel>

@@ -66,6 +66,19 @@ func (r *Runner) Enqueue(req workspace.RunRequest) {
 	go r.drain(req.Owner, req.Session, current)
 }
 
+// Interrupt cancels the agent's current answer; messages queued for the session still go to
+// the agent next.
+func (r *Runner) Interrupt(owner string, session pgtype.UUID) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	current, ok := r.runs[session]
+	if !ok || current.cancel == nil {
+		return false
+	}
+	current.cancel()
+	return true
+}
+
 // Stop cancels the running agent of the session and drops its queue.
 func (r *Runner) Stop(owner string, session pgtype.UUID) bool {
 	r.mu.Lock()

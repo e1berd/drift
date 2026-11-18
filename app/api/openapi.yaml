@@ -281,11 +281,11 @@ paths:
     post:
       operationId: stopSession
       description: >-
-        Custom method (AIP-136): stops the running agent of the session and drops the
-        messages still waiting for it.
+        Custom method (AIP-136): interrupts the agent's current answer. Messages queued
+        while it ran are kept and go to the agent right after, as the next prompt.
       tags: [sessions]
       responses:
-        '204': { description: Stopped, or nothing was running. }
+        '204': { description: 'Interrupted, or nothing was running.' }
         default: { $ref: '#/components/responses/Error' }
   /sessions/{sessionId}/tree:
     parameters:

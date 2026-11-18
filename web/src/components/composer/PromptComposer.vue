@@ -6,6 +6,7 @@ import {
     PhArrowUp,
     PhDeviceMobile,
     PhPaperclip,
+    PhStop,
 } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { FileInput, FileInputTrigger } from '@ui-sdk/vue/file-input'
@@ -36,15 +37,25 @@ const props = withDefaults(
         placeholder: string
         history?: string[]
         busy?: boolean
+        running?: boolean
+        stopping?: boolean
         showHistory?: boolean
         autofocus?: boolean
     }>(),
-    { history: () => [], busy: false, showHistory: true, autofocus: false },
+    {
+        history: () => [],
+        busy: false,
+        running: false,
+        stopping: false,
+        showHistory: true,
+        autofocus: false,
+    },
 )
 
 const emit = defineEmits<{
     send: [payload: { text: string; files: File[] }]
     switchAgent: [choice: { agent: AgentId; model: string }]
+    stop: []
 }>()
 const { t } = useI18n()
 const agents = useAgents()
@@ -220,17 +231,25 @@ defineExpose({ focus: () => editor.value?.focus() })
                         @switch-agent="(choice) => emit('switchAgent', choice)"
                     />
                     <ModeSelect />
-                    <slot name="action">
-                        <Button
-                            data-variant="solid"
-                            :disabled="!canSend"
-                            :aria-label="t('composer.send')"
-                            :title="t('composer.send')"
-                            @click="send"
-                        >
-                            <PhArrowUp />
-                        </Button>
-                    </slot>
+                    <Button
+                        v-if="running"
+                        data-variant="destructive"
+                        :disabled="stopping"
+                        :aria-label="t('composer.stop')"
+                        :title="t('composer.stop')"
+                        @click="emit('stop')"
+                    >
+                        <PhStop weight="fill" />
+                    </Button>
+                    <Button
+                        data-variant="solid"
+                        :disabled="!canSend"
+                        :aria-label="running ? t('composer.queue') : t('composer.send')"
+                        :title="running ? t('composer.queue') : t('composer.send')"
+                        @click="send"
+                    >
+                        <PhArrowUp />
+                    </Button>
                 </div>
             </div>
         </div>

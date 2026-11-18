@@ -23,6 +23,7 @@ type RunRequest struct {
 // AgentRunner runs agent CLIs for sessions; requests for a busy session wait in its queue.
 type AgentRunner interface {
 	Enqueue(RunRequest)
+	Interrupt(owner string, session pgtype.UUID) bool
 	Stop(owner string, session pgtype.UUID) bool
 }
 
@@ -73,7 +74,7 @@ func (h *Handler) sessionCustomMethod(c *echo.Context) error {
 	switch method {
 	case "stop":
 		if h.runner != nil {
-			h.runner.Stop(owner, id)
+			h.runner.Interrupt(owner, id)
 		}
 		return c.NoContent(http.StatusNoContent)
 	}

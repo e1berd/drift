@@ -14,7 +14,7 @@ export const stopSessionMutationKey = () => [{ url: '/sessions/:sessionId:stop' 
 
 /**
  * `POST /sessions/{sessionId}:stop`
- * @description Custom method (AIP-136): stops the running agent of the session and drops the messages still waiting for it.
+ * @description Custom method (AIP-136): interrupts the agent's current answer. Messages queued while it ran are kept and go to the agent right after, as the next prompt.
  */
 export function useStopSession<TContext>(options: {
   mutation?: MutationObserverOptions<StopSessionStatus204, ResponseErrorConfig<Error>, StopSessionOptions, TContext> & { client?: QueryClient },
