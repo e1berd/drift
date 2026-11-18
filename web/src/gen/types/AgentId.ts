@@ -7,6 +7,8 @@ export const agentId = {
   claude: 'claude',
   codex: 'codex',
   antigravity: 'antigravity',
+  kimi: 'kimi',
+  mimo: 'mimo',
 } as const;
 
 export type AgentIdKey = (typeof agentId)[keyof typeof agentId];

@@ -13,7 +13,7 @@ import (
 	"github.com/e1berd/drift/app/internal/workspace"
 )
 
-var runnable = map[string]bool{"claude": true, "codex": true, "antigravity": true}
+var runnable = map[string]bool{"claude": true, "codex": true, "antigravity": true, "kimi": true, "mimo": true}
 
 var imageExtensions = map[string]string{
 	"image/png": ".png", "image/jpeg": ".jpg", "image/gif": ".gif", "image/webp": ".webp",
@@ -60,6 +60,29 @@ func (r *Runner) plan(agent string, req workspace.RunRequest, agentSessionID, di
 			bin:     r.cli.Antigravity,
 			args:    antigravityArgs(withImagePaths(req, paths), agentSessionID),
 			stream:  &antigravityStream{t: t, projectDir: dir, conversationID: agentSessionID, saveSessionID: saveSessionID},
+			cleanup: removeFolder(folder),
+		}, nil
+	case "kimi":
+		folder, paths, err := writeImages(images)
+		if err != nil {
+			return runPlan{}, err
+		}
+		return runPlan{
+			bin:     r.cli.Kimi,
+			args:    kimiArgs(withImagePaths(req, paths), agentSessionID),
+			stream:  &kimiStream{t: t, projectDir: dir, saveSessionID: saveSessionID},
+			cleanup: removeFolder(folder),
+		}, nil
+	case "mimo":
+		folder, paths, err := writeImages(images)
+		if err != nil {
+			return runPlan{}, err
+		}
+		return runPlan{
+			bin:     r.cli.Mimo,
+			args:    mimoArgs(req, agentSessionID, paths),
+			stdin:   req.Text,
+			stream:  &mimoStream{t: t, projectDir: dir, saveSessionID: saveSessionID},
 			cleanup: removeFolder(folder),
 		}, nil
 	}

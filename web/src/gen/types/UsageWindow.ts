@@ -5,7 +5,7 @@
 
 export type UsageWindow = {
   /**
-   * @description five_hour, seven_day, seven_day_opus… (Claude); primary, secondary (Codex); a model slug such as gemini_4_argon (Antigravity).
+   * @description five_hour, seven_day, seven_day_opus… (Claude); primary, secondary (Codex); a model slug such as gemini_4_argon (Antigravity); a limit_5h, limit_7d, limit_month_total, limit_month_code (Kimi).
    * @type string
    */
   id: string;

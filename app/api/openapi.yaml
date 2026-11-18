@@ -1000,7 +1000,7 @@ components:
         nextPageToken: { type: string }
     AgentId:
       type: string
-      enum: [claude, codex, antigravity]
+      enum: [claude, codex, antigravity, kimi, mimo]
     Session:
       type: object
       required: [id, title, agent, status, createTime, updateTime]
@@ -1289,7 +1289,7 @@ components:
       type: object
       required: [id, usedPercent]
       properties:
-        id: { type: string, description: 'five_hour, seven_day, seven_day_opus… (Claude); primary, secondary (Codex); a model slug such as gemini_4_argon (Antigravity).' }
+        id: { type: string, description: 'five_hour, seven_day, seven_day_opus… (Claude); primary, secondary (Codex); a model slug such as gemini_4_argon (Antigravity); a limit_5h, limit_7d, limit_month_total, limit_month_code (Kimi).' }
         label: { type: string, description: 'The agent''s own name for the window, e.g. the model of an Antigravity quota.' }
         usedPercent: { type: number }
         windowMinutes: { type: integer }

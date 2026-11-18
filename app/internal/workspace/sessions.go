@@ -15,7 +15,7 @@ import (
 
 const maxMessageBytes = 256 << 10
 
-var agents = map[string]bool{"claude": true, "codex": true, "antigravity": true}
+var agents = map[string]bool{"claude": true, "codex": true, "antigravity": true, "kimi": true, "mimo": true}
 
 type listSessionsResponse struct {
 	Sessions      []Session `json:"sessions"`

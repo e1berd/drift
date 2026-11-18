@@ -97,6 +97,9 @@ models:
   sonnet: 'Balanced speed and quality'
   haiku: 'Fast for small edits'
   fromConfig: 'From the agent CLI settings'
+  kimiPro: 'Flagship K3.1 Pro for hard tasks'
+  kimiK3: 'K3 for everyday tasks'
+  kimiCoding: 'K2.8 Preview'
 modes:
   default: 'Ask before edits and commands'
   acceptEdits: 'Edit files without asking'

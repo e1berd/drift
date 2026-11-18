@@ -24,6 +24,10 @@ func TestMain(m *testing.M) {
 		fakeCodex()
 	case "antigravity":
 		fakeAntigravity()
+	case "kimi":
+		fakeKimi()
+	case "mimo":
+		fakeMimo()
 	default:
 		os.Exit(m.Run())
 	}
@@ -77,6 +81,39 @@ func fakeCodex() {
 	os.Exit(0)
 }
 
+func fakeKimi() {
+	args := strings.Join(os.Args[1:], " ")
+	if strings.HasPrefix(args, "login") {
+		fmt.Println("Opening browser for Kimi device login: https://www.kimi.ai/code/authorize_device?user_code=KO87-A7XC")
+		fmt.Println("If the browser did not open, paste the URL above and enter code: KO87-A7XC")
+		fmt.Println("Code expires in 1800s.")
+		os.Exit(0)
+	}
+	fmt.Println("unknown command")
+	os.Exit(1)
+}
+
+func fakeMimo() {
+	args := strings.Join(os.Args[1:], " ")
+	if strings.HasPrefix(args, "providers login") {
+		fmt.Println("Browser didn't open? Use the url below to sign in:")
+		fmt.Println("https://platform.xiaomimimo.com/authorize?pk=abc&redirect_uri=callback&kn=mimocode&key_name=mimo-code-cli-key-test")
+		fmt.Print("Paste code here if prompted > ")
+		line, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+		if strings.TrimSpace(line) == "good-code" {
+			dir := filepath.Join(os.Getenv("XDG_DATA_HOME"), "mimocode")
+			_ = os.MkdirAll(dir, 0o700)
+			auth := `{"xiaomi":{"type":"api","key":"k","metadata":{"uid":"6890014132","base_url":"https://token-plan-sgp.xiaomimimo.com/v1"}}}`
+			_ = os.WriteFile(filepath.Join(dir, "auth.json"), []byte(auth), 0o600)
+			os.Exit(0)
+		}
+		fmt.Println("Sign-in failed: wrong code")
+		os.Exit(1)
+	}
+	fmt.Println("unknown command")
+	os.Exit(1)
+}
+
 func fakeCLI(t *testing.T, agent string) CLI {
 	t.Helper()
 	t.Setenv("DRIFT_FAKE_CLI", agent)
@@ -86,7 +123,7 @@ func fakeCLI(t *testing.T, agent string) CLI {
 	}
 	passthroughEnv = append(passthroughEnv, "DRIFT_FAKE_CLI")
 	t.Cleanup(func() { passthroughEnv = passthroughEnv[:len(passthroughEnv)-1] })
-	return CLI{Root: t.TempDir(), Claude: self, Codex: self, Antigravity: self}
+	return CLI{Root: t.TempDir(), Claude: self, Codex: self, Antigravity: self, Kimi: self, Mimo: self}
 }
 
 func waitLogin(t *testing.T, login *Login) error {

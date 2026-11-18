@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { PhArrowSquareOut, PhCopy } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { Field, FieldDescription, FieldLabel } from '@ui-sdk/vue/field'
@@ -14,7 +14,8 @@ import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
 import { reportError } from '@/shared/errors'
 
 const props = defineProps<{ subscription: Subscription; login: SubscriptionLogin }>()
-const { t } = useI18n()
+const { t, te } = useI18n()
+const hasDeviceHint = computed(() => te(`deviceHint.${props.subscription.agent}`))
 const { complete } = useSubscriptionActions()
 const code = ref('')
 
@@ -90,7 +91,9 @@ function copyUserCode() {
         >
             <RunSpinner :size="14" />{{ t('waiting') }}
         </p>
-        <FieldDescription v-if="!login.needsCode">{{ t('deviceHint') }}</FieldDescription>
+        <FieldDescription v-if="!login.needsCode && hasDeviceHint">{{
+            t(`deviceHint.${subscription.agent}`)
+        }}</FieldDescription>
     </div>
 </template>
 
@@ -100,6 +103,8 @@ ru:
         claude: Откройте страницу входа Anthropic и войдите в аккаунт с подпиской.
         codex: Откройте страницу OpenAI и войдите в аккаунт ChatGPT.
         antigravity: Откройте страницу Google и войдите в аккаунт с подпиской Google AI.
+        kimi: Откройте страницу Kimi и войдите в аккаунт с подпиской.
+        mimo: Откройте страницу Xiaomi и войдите в аккаунт с подпиской MiMo.
     open: Открыть страницу входа
     enterCode: Введите на странице этот код
     copy: Скопировать код
@@ -108,12 +113,15 @@ ru:
     pasteAddress: Если после входа браузер открыл пустую страницу localhost, скопируйте её адрес целиком и вставьте сюда.
     confirm: Подтвердить
     waiting: Ждём подтверждения входа…
-    deviceHint: Если страница не принимает код, включите вход по коду устройства для Codex в настройках безопасности ChatGPT.
+    deviceHint:
+        codex: Если страница не принимает код, включите вход по коду устройства для Codex в настройках безопасности ChatGPT.
 en:
     openPage:
         claude: Open the Anthropic sign-in page and sign in to the account with the subscription.
         codex: Open the OpenAI page and sign in to your ChatGPT account.
         antigravity: Open the Google page and sign in to the account with the Google AI subscription.
+        kimi: Open the Kimi page and sign in to the account with the subscription.
+        mimo: Open the Xiaomi page and sign in to the account with the MiMo subscription.
     open: Open the sign-in page
     enterCode: Enter this code on the page
     copy: Copy the code
@@ -122,5 +130,6 @@ en:
     pasteAddress: If the browser lands on an empty localhost page after sign-in, copy its whole address and paste it here.
     confirm: Confirm
     waiting: Waiting for the sign-in to finish…
-    deviceHint: If the page rejects the code, enable device code sign-in for Codex in ChatGPT security settings.
+    deviceHint:
+        codex: If the page rejects the code, enable device code sign-in for Codex in ChatGPT security settings.
 </i18n>

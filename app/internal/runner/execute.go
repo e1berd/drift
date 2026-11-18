@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/e1berd/drift/app/internal/agents"
 	"github.com/e1berd/drift/app/internal/db"
 	"github.com/e1berd/drift/app/internal/workspace"
 	"github.com/jackc/pgx/v5"
@@ -69,7 +70,7 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 	defer plan.cleanup()
 	cmd := exec.CommandContext(ctx, plan.bin, plan.args...)
 	cmd.Dir = dir
-	cmd.Env = r.cli.Env(r.cli.Home(uuidString(sub.ID)))
+	cmd.Env = agentEnv(r.cli, rc.Agent, r.cli.Home(uuidString(sub.ID)))
 	cmd.Stdin = strings.NewReader(plan.stdin)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error { return signalGroup(cmd.Process.Pid, syscall.SIGINT) }
@@ -111,6 +112,17 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 type agentStream interface {
 	handle(line []byte)
 	done() bool
+}
+
+// agentEnv is the environment one agent's process runs with in the subscription home.
+func agentEnv(cli agents.CLI, agent, home string) []string {
+	switch agent {
+	case "kimi":
+		return cli.KimiEnv(home)
+	case "mimo":
+		return cli.MimoEnv(home)
+	}
+	return cli.Env(home)
 }
 
 func signalGroup(pid int, signal syscall.Signal) error {

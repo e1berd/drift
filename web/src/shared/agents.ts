@@ -1,6 +1,9 @@
 import claudeLogo from '@lobehub/icons-static-svg/icons/claudecode-color.svg?url'
 import codexLogo from '@lobehub/icons-static-svg/icons/codex-color.svg?url'
 import antigravityLogo from '@lobehub/icons-static-svg/icons/antigravity-color.svg?url'
+import kimiLogo from '@lobehub/icons-static-svg/icons/kimi-color.svg?url'
+
+import mimoLogo from '@/assets/mimo-color.svg?url'
 
 import type { Component } from 'vue'
 import {
@@ -55,6 +58,25 @@ export const AGENTS: Record<AgentId, AgentMeta> = {
         name: 'Antigravity',
         cli: 'agy',
         logo: antigravityLogo,
+        models: [{ id: 'default', hint: 'models.fromConfig' }],
+    },
+    kimi: {
+        id: 'kimi',
+        name: 'Kimi Code',
+        cli: 'kimi',
+        logo: kimiLogo,
+        models: [
+            { id: 'default', hint: 'models.default' },
+            { id: 'kimi-code/k3.1-pro', label: 'K3.1 Pro', hint: 'models.kimiPro' },
+            { id: 'kimi-code/k3', label: 'K3', hint: 'models.kimiK3' },
+            { id: 'kimi-code/kimi-for-coding', label: 'K2.8', hint: 'models.kimiCoding' },
+        ],
+    },
+    mimo: {
+        id: 'mimo',
+        name: 'MiMo Code',
+        cli: 'mimo',
+        logo: mimoLogo,
         models: [{ id: 'default', hint: 'models.fromConfig' }],
     },
 }

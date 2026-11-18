@@ -114,7 +114,10 @@ func run() (string, error) {
 	hub := events.NewHub()
 	api := e.Group("/api", identity.New(kc).Require)
 	api.GET("/events", hub.Stream)
-	cli := agents.CLI{Root: cfg.AgentsRoot, Claude: cfg.ClaudeBin, Codex: cfg.CodexBin, Antigravity: cfg.AntigravityBin}
+	cli := agents.CLI{
+		Root: cfg.AgentsRoot, Claude: cfg.ClaudeBin, Codex: cfg.CodexBin,
+		Antigravity: cfg.AntigravityBin, Kimi: cfg.KimiBin, Mimo: cfg.MimoBin,
+	}
 	folders := workspace.Folders{Workspace: cfg.WorkspaceRoot, Chats: cfg.ChatsRoot}
 	agentRunner, err := runner.New(ctx, pool, hub, cli, folders, log)
 	if err != nil {

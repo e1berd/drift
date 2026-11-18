@@ -22,6 +22,8 @@ type Config struct {
 	CodexBin        string
 	Shell           string
 	AntigravityBin  string
+	KimiBin         string
+	MimoBin         string
 	DeliveryRepo    string
 	DeliveryAPIURL  *url.URL
 }
@@ -50,6 +52,8 @@ func Load() (*Config, error) {
 	cfg.CodexBin = env("DRIFT_CODEX_BIN", "codex")
 	cfg.Shell = os.Getenv("DRIFT_SHELL")
 	cfg.AntigravityBin = env("DRIFT_AGY_BIN", "agy")
+	cfg.KimiBin = env("DRIFT_KIMI_BIN", "kimi")
+	cfg.MimoBin = env("DRIFT_MIMO_BIN", "mimo")
 	cfg.DeliveryRepo = env("DRIFT_DELIVERY_REPO", "e1berd/drift")
 
 	urls := []struct {

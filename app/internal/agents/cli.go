@@ -1,6 +1,7 @@
-// Package agents drives the official agent CLIs (Claude Code, Codex, Antigravity) on behalf of Drift:
-// signing in to a subscription, reading the signed-in account and its usage limits.
-// Every subscription gets its own home folder, so several accounts of one agent can coexist.
+// Package agents drives the official agent CLIs (Claude Code, Codex, Antigravity, Kimi Code,
+// MiMo Code) on behalf of Drift: signing in to a subscription, reading the signed-in account
+// and its usage limits. Every subscription gets its own home folder, so several accounts of
+// one agent can coexist.
 package agents
 
 import (
@@ -64,6 +65,8 @@ type CLI struct {
 	Claude      string
 	Codex       string
 	Antigravity string
+	Kimi        string
+	Mimo        string
 }
 
 // Driver returns the driver of an agent id, or false when Drift cannot sign in to it yet.
@@ -75,6 +78,10 @@ func (c CLI) Driver(agent string) (Driver, bool) {
 		return codex{c}, true
 	case "antigravity":
 		return antigravity{c}, true
+	case "kimi":
+		return kimi{c}, true
+	case "mimo":
+		return mimo{c}, true
 	}
 	return nil, false
 }
@@ -129,6 +136,24 @@ func (c CLI) Env(home string) []string {
 		env = append(env, "CLAUDE_CODE_OAUTH_TOKEN="+string(token))
 	}
 	return env
+}
+
+// KimiEnv points the Kimi Code CLI at the subscription home.
+func (c CLI) KimiEnv(home string) []string {
+	return append(c.Env(home), "KIMI_CODE_HOME="+home)
+}
+
+// MimoEnv points the MiMo Code CLI data folders at the subscription home.
+func (c CLI) MimoEnv(home string) []string {
+	for _, dir := range []string{".config", ".local/share", ".cache", ".local/state"} {
+		_ = os.MkdirAll(filepath.Join(home, dir), 0o700)
+	}
+	return append(c.Env(home),
+		"XDG_CONFIG_HOME="+filepath.Join(home, ".config"),
+		"XDG_DATA_HOME="+filepath.Join(home, ".local/share"),
+		"XDG_CACHE_HOME="+filepath.Join(home, ".cache"),
+		"XDG_STATE_HOME="+filepath.Join(home, ".local/state"),
+	)
 }
 
 func lastMessage(output string) string {

@@ -20,7 +20,7 @@ const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
 const { create } = useSubscriptionActions()
 
-const SIGN_IN_AGENTS: AgentId[] = ['claude', 'codex', 'antigravity']
+const SIGN_IN_AGENTS: AgentId[] = ['claude', 'codex', 'antigravity', 'kimi', 'mimo']
 
 const agent = ref<AgentId>('claude')
 const method = ref<'login' | 'token'>('login')
@@ -119,6 +119,8 @@ ru:
         claude: Drift запустит Claude Code на сервере и даст ссылку на вход. Вы войдёте в браузере и вставите код со страницы.
         codex: Drift запустит Codex на сервере и покажет ссылку и код. Введите код на странице OpenAI, вход завершится сам.
         antigravity: Drift запустит Antigravity CLI на сервере и даст ссылку на вход Google. Вы войдёте в аккаунт с подпиской Google AI и вставите код со страницы.
+        kimi: Drift запустит Kimi Code на сервере и покажет ссылку и код. Введите код на странице Kimi, вход завершится сам.
+        mimo: Drift запустит MiMo Code на сервере и даст ссылку на вход Xiaomi. Вы войдёте в аккаунт с подпиской MiMo и вставите код со страницы.
     cancel: Отмена
     connect: Подключить
     signIn: Начать вход
@@ -134,6 +136,8 @@ en:
         claude: Drift runs Claude Code on the server and gives you a sign-in link. Sign in in the browser and paste the code from the page.
         codex: Drift runs Codex on the server and shows a link and a code. Enter the code on the OpenAI page; the sign-in finishes by itself.
         antigravity: Drift runs the Antigravity CLI on the server and gives you a Google sign-in link. Sign in to the account with the Google AI subscription and paste the code from the page.
+        kimi: Drift runs Kimi Code on the server and shows a link and a code. Enter the code on the Kimi page; the sign-in finishes by itself.
+        mimo: Drift runs MiMo Code on the server and gives you a Xiaomi sign-in link. Sign in to the account with the MiMo subscription and paste the code from the page.
     cancel: Cancel
     connect: Connect
     signIn: Start sign-in
