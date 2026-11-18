@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AgentLogo from '@/components/AgentLogo.vue'
+import MarkdownText from '@/components/chat/MarkdownText.vue'
 import type { SessionActivity } from '@/gen'
 import type { AgentId } from '@/shared/agents'
 
@@ -50,9 +51,7 @@ const label = computed(() => {
     <div class="grid grid-cols-[20px_minmax(0,1fr)] gap-4" role="status" aria-live="polite">
         <AgentLogo :agent="agent" :size="20" decorative />
         <div class="flex min-w-0 flex-col gap-2">
-            <p v-if="partial" class="m-0 whitespace-pre-wrap">
-                {{ partial }}<span class="caret" aria-hidden="true" />
-            </p>
+            <MarkdownText v-if="partial" :source="partial" class="streaming" />
             <p class="m-0 flex gap-2 text-muted">
                 <span class="motion-shine">{{ label }}</span>
                 <span class="tabular-nums">{{ elapsed }}</span>
@@ -62,7 +61,8 @@ const label = computed(() => {
 </template>
 
 <style scoped>
-.caret {
+.streaming > :deep(:last-child)::after {
+    content: '';
     display: inline-block;
     width: 0.5em;
     height: 1em;
@@ -79,7 +79,7 @@ const label = computed(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .caret {
+    .streaming > :deep(:last-child)::after {
         animation: none;
     }
 }

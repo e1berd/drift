@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AgentLogo from '@/components/AgentLogo.vue'
+import MarkdownText from '@/components/chat/MarkdownText.vue'
 import MessageAttachments from '@/components/chat/MessageAttachments.vue'
 import ThinkingBlock from '@/components/chat/ThinkingBlock.vue'
 import SystemNote from '@/components/chat/SystemNote.vue'
@@ -31,6 +32,6 @@ defineProps<{ message: Message; agent: AgentId }>()
 
     <div v-else class="grid grid-cols-[20px_minmax(0,1fr)] gap-4">
         <AgentLogo :agent="agent" :size="20" decorative />
-        <p class="m-0 whitespace-pre-wrap">{{ message.body.text }}</p>
+        <MarkdownText :source="message.body.text ?? ''" />
     </div>
 </template>

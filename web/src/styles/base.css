@@ -5,6 +5,7 @@
 @import './tokens.css';
 @import './motion.css';
 @import './layout.css';
+@import './markdown.css';
 
 @theme inline {
     --font-sans: var(--ui-font-sans);
