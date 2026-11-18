@@ -12,6 +12,7 @@ import {
 
 import AppSidebar from '@/components/sidebar/AppSidebar.vue'
 import AppToasts from '@/components/AppToasts.vue'
+import DeliveryPrompt from '@/components/delivery/DeliveryPrompt.vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { provideShell } from '@/composables/useShell'
 import { startEventStream } from '@/composables/useEventStream'
@@ -105,6 +106,7 @@ onMounted(() => {
             </Resizable>
         </div>
         <AppToasts />
+        <DeliveryPrompt />
     </Preferences>
 </template>
 

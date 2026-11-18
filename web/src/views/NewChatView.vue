@@ -17,6 +17,7 @@ import {
 import { toast } from '@ui-sdk/vue/toast'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
+import ScrollPane from '@/components/ScrollPane.vue'
 import AgentLogo from '@/components/AgentLogo.vue'
 import BrandMark from '@/components/BrandMark.vue'
 import TopBar from '@/components/TopBar.vue'
@@ -114,8 +115,9 @@ async function send({ text, files }: { text: string; files: File[] }) {
     <TopBar>
         <template #start><span class="truncate font-medium">{{ t('nav.newChat') }}</span></template>
     </TopBar>
-    <section
-        class="motion-fade flex min-h-0 flex-1 items-center justify-center overflow-auto p-6 max-md:p-3"
+    <ScrollPane
+        class="motion-fade min-h-0 flex-1"
+        content-class="flex min-h-full items-center justify-center p-6 max-md:p-3"
     >
         <div class="flex w-full max-w-[720px] flex-col items-center gap-5">
             <BrandMark :size="32" />
@@ -170,5 +172,5 @@ async function send({ text, files }: { text: string; files: File[] }) {
                 }}</RouterLink>
             </p>
         </div>
-    </section>
+    </ScrollPane>
 </template>

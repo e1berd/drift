@@ -5,6 +5,8 @@ import { Placeholder } from '@tiptap/extensions'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 
+import ScrollPane from '@/components/ScrollPane.vue'
+
 const props = defineProps<{
     modelValue: string
     placeholder: string
@@ -121,14 +123,18 @@ onBeforeUnmount(() => editor.value?.destroy())
 </script>
 
 <template>
-    <EditorContent :editor="editor" class="editor" />
+    <ScrollPane class="editor-scroll">
+        <EditorContent :editor="editor" class="editor" />
+    </ScrollPane>
 </template>
 
 <style scoped>
+.editor-scroll {
+    max-height: 240px;
+}
+
 .editor :deep(.prompt) {
     min-height: 56px;
-    max-height: 240px;
-    overflow-y: auto;
     padding: 12px 12px 4px;
     outline: none;
     white-space: pre-wrap;

@@ -1,4 +1,18 @@
 @layer components {
+    .scroll-pane {
+        border: 0;
+        border-radius: 0;
+        font-size: inherit;
+
+        & > [data-slot='scroll-area-viewport'] {
+            max-height: inherit;
+
+            & > [data-slot='scroll-area-content'] {
+                padding: 0;
+            }
+        }
+    }
+
     .nav-row {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto 16px;

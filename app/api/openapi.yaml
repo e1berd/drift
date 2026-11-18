@@ -20,6 +20,7 @@ tags:
   - name: events
   - name: terminal
   - name: git
+  - name: delivery
 paths:
   /folders:
     get:
@@ -821,6 +822,63 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/SubscriptionUsage' }
         default: { $ref: '#/components/responses/Error' }
+  /delivery:
+    get:
+      operationId: getDelivery
+      tags: [delivery]
+      description: >-
+        Running version, the latest GitHub release and the update in progress (AIP-156 singleton).
+        Releases are checked hourly; changes arrive as the `delivery.updated` event.
+      responses:
+        '200':
+          description: Update state of this Drift instance.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Delivery' }
+        default: { $ref: '#/components/responses/Error' }
+  /delivery/releases:
+    get:
+      operationId: listReleases
+      tags: [delivery]
+      description: Recent GitHub releases, newest first (AIP-132 without paging, at most 30).
+      responses:
+        '200':
+          description: Releases that can be picked as a custom version.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListReleasesResponse' }
+        default: { $ref: '#/components/responses/Error' }
+  /delivery:check:
+    post:
+      operationId: checkDelivery
+      tags: [delivery]
+      description: Checks GitHub for releases now, at most once a minute (AIP-136 custom method).
+      responses:
+        '200':
+          description: Fresh update state.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Delivery' }
+        default: { $ref: '#/components/responses/Error' }
+  /delivery:install:
+    post:
+      operationId: installRelease
+      tags: [delivery]
+      description: >-
+        Downloads the release binary, verifies it against checksums.txt, swaps it in and relaunches
+        the process (AIP-136 custom method). Progress arrives as `delivery.updated` events.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InstallReleaseRequest' }
+      responses:
+        '202':
+          description: The update has started.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Delivery' }
+        default: { $ref: '#/components/responses/Error' }
   /events:
     get:
       operationId: streamEvents
@@ -1369,6 +1427,63 @@ components:
       properties:
         type: { type: string, enum: [exit] }
         exitCode: { type: integer }
+    Release:
+      type: object
+      description: One GitHub release of Drift (AIP-121 resource).
+      required: [version, name, notes, url, publishTime, prerelease, installable]
+      properties:
+        version: { type: string, description: Release tag, e.g. v1.2.0. }
+        name: { type: string }
+        notes: { type: string, description: Release notes in Markdown. }
+        url: { type: string, format: uri }
+        publishTime: { type: string, format: date-time }
+        prerelease: { type: boolean }
+        installable: { type: boolean, description: The release has a binary for this platform and checksums. }
+    ListReleasesResponse:
+      type: object
+      required: [releases]
+      properties:
+        releases:
+          type: array
+          items: { $ref: '#/components/schemas/Release' }
+    DeliveryRepository:
+      type: object
+      required: [url, stars]
+      properties:
+        url: { type: string, format: uri }
+        stars: { type: integer }
+    DeliveryInstallation:
+      type: object
+      required: [state, downloadedBytes, totalBytes]
+      properties:
+        state:
+          type: string
+          enum: [idle, downloading, restarting, failed]
+        targetVersion: { type: string }
+        downloadedBytes: { type: integer, format: int64 }
+        totalBytes: { type: integer, format: int64 }
+        error: { type: string }
+    Delivery:
+      type: object
+      description: Update state of the instance (AIP-156 singleton).
+      required: [currentVersion, releaseBuild, updateAvailable, repository, installation]
+      properties:
+        currentVersion: { type: string, description: 'Release tag, `git describe` output of a local build, or "dev".' }
+        releaseBuild: { type: boolean }
+        latestRelease: { $ref: '#/components/schemas/Release' }
+        updateAvailable: { type: boolean }
+        repository: { $ref: '#/components/schemas/DeliveryRepository' }
+        installBlocker:
+          type: string
+          enum: [development_build, read_only]
+          description: Why this instance cannot install releases itself.
+        installation: { $ref: '#/components/schemas/DeliveryInstallation' }
+        checkTime: { type: string, format: date-time }
+    InstallReleaseRequest:
+      type: object
+      required: [version]
+      properties:
+        version: { type: string, minLength: 1 }
     WireEvent:
       type: object
       required: [type]
@@ -1391,5 +1506,6 @@ components:
             - subscription.created
             - subscription.updated
             - subscription.deleted
+            - delivery.updated
         data: {}
         origin: { type: string }

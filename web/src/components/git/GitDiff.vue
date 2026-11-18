@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import ScrollPane from '@/components/ScrollPane.vue'
 import { parseDiff } from '@/components/git/parseDiff'
 import { useSessionGit } from '@/composables/useSessionGit'
 import { useGetGitDiff } from '@/gen'
@@ -53,7 +54,7 @@ const binary = computed(() => lines.value.some((line) => line.text.startsWith('B
         <div v-else-if="!lines.length" class="grid flex-1 place-items-center text-muted">
             {{ t('empty') }}
         </div>
-        <div v-else class="diff-body">
+        <ScrollPane v-else axis="both" class="min-h-0 flex-1">
             <p v-if="binary" class="m-0 px-4 py-2 text-muted">{{ t('binary') }}</p>
             <div class="diff-lines">
                 <div
@@ -70,7 +71,7 @@ const binary = computed(() => lines.value.some((line) => line.text.startsWith('B
             <p v-if="diff.data.value?.truncated" class="m-0 px-4 py-2 text-muted">
                 {{ t('truncated') }}
             </p>
-        </div>
+        </ScrollPane>
     </section>
 </template>
 
@@ -85,12 +86,6 @@ const binary = computed(() => lines.value.some((line) => line.text.startsWith('B
     border-bottom: 1px solid var(--ui-border);
     color: var(--ui-muted-foreground);
     font-size: 12.5px;
-}
-
-.diff-body {
-    min-height: 0;
-    flex: 1;
-    overflow: auto;
 }
 
 .diff-lines {

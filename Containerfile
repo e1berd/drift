@@ -15,6 +15,7 @@ COPY web/ ./
 RUN mkdir -p ../app/internal/frontend && pnpm build
 
 FROM docker.io/library/golang:1.27.4-alpine AS app
+ARG DRIFT_VERSION=dev
 WORKDIR /src/app
 COPY app/go.mod app/go.sum ./
 RUN --mount=type=cache,id=drift-gomod,target=/go/pkg/mod \
@@ -23,7 +24,7 @@ COPY app/ ./
 COPY --from=web /src/app/internal/frontend/dist ./internal/frontend/dist
 RUN --mount=type=cache,id=drift-gomod,target=/go/pkg/mod \
     --mount=type=cache,id=drift-gobuild,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/drift ./cmd/server
+    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X github.com/e1berd/drift/app/internal/delivery.version=${DRIFT_VERSION}" -o /out/drift ./cmd/server
 
 FROM docker.io/library/node:24.22.3-slim AS agents
 ARG CLAUDE_CODE_VERSION=2.1.327

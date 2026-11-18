@@ -14,6 +14,7 @@ import (
 	"github.com/e1berd/drift/app/internal/auth"
 	"github.com/e1berd/drift/app/internal/config"
 	"github.com/e1berd/drift/app/internal/database"
+	"github.com/e1berd/drift/app/internal/delivery"
 	"github.com/e1berd/drift/app/internal/events"
 	"github.com/e1berd/drift/app/internal/frontend"
 	"github.com/e1berd/drift/app/internal/gitrepo"
@@ -37,54 +38,64 @@ func main() {
 		}
 		return
 	}
-	if err := run(); err != nil {
+	if len(os.Args) == 2 && os.Args[1] == "version" {
+		fmt.Println(delivery.Version())
+		return
+	}
+	relaunchPath, err := run()
+	if relaunchPath != "" {
+		err = delivery.Relaunch(relaunchPath)
+	}
+	if err != nil {
 		slog.Error("drift stopped", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
+func run() (string, error) {
+	signals, stopSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopSignals()
+	ctx, shutdown := context.WithCancel(signals)
+	defer shutdown()
 
 	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 	cfg, err := config.Load()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if err := os.MkdirAll(cfg.WorkspaceRoot, 0o755); err != nil {
-		return fmt.Errorf("create workspace root: %w", err)
+		return "", fmt.Errorf("create workspace root: %w", err)
 	}
 	if err := os.MkdirAll(cfg.AgentsRoot, 0o700); err != nil {
-		return fmt.Errorf("create agents folder: %w", err)
+		return "", fmt.Errorf("create agents folder: %w", err)
 	}
 
 	pool, err := database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer pool.Close()
 
 	if err := migrate.Up(ctx, pool, schema.Migrations, "migrations", log); err != nil {
-		return err
+		return "", err
 	}
 
 	fe, err := frontend.New(cfg.ViteDevURL)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	translations, err := i18n.Load()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	kc := kratos.New(cfg.KratosPublicURL, cfg.KratosAdminURL)
 	authHandler, err := auth.New(kc, fe, translations, cfg.PublicURL, log)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	e := echo.New()
@@ -107,7 +118,7 @@ func run() error {
 	folders := workspace.Folders{Workspace: cfg.WorkspaceRoot, Chats: cfg.ChatsRoot}
 	agentRunner, err := runner.New(ctx, pool, hub, cli, folders, log)
 	if err != nil {
-		return err
+		return "", err
 	}
 	workspaceHandler := workspace.New(pool, hub, folders, log).WithRunner(agentRunner)
 	terminals := terminal.New(terminal.DetectShell(cfg.Shell), workspaceHandler.SessionFolder, log)
@@ -116,12 +127,19 @@ func run() error {
 	gitrepo.New(workspaceHandler.SessionFolder).Register(api)
 	subs, err := subscriptions.New(ctx, pool, hub, cli, log)
 	if err != nil {
-		return err
+		return "", err
 	}
 	subs.Register(api)
+	updates, err := delivery.New(delivery.Options{Repository: cfg.DeliveryRepo, APIURL: cfg.DeliveryAPIURL, Shutdown: shutdown}, hub, log)
+	if err != nil {
+		return "", err
+	}
+	updates.Register(api)
+	go updates.Watch(ctx)
 
 	e.Any("/*", echo.WrapHandler(fe), authHandler.RequireSession)
 
-	log.Info("listening", "addr", cfg.Addr, "public_url", cfg.PublicURL.String(), "workspace_root", cfg.WorkspaceRoot)
-	return echo.StartConfig{Address: cfg.Addr, HideBanner: true}.Start(ctx, e)
+	log.Info("listening", "addr", cfg.Addr, "version", delivery.Version(), "public_url", cfg.PublicURL.String(), "workspace_root", cfg.WorkspaceRoot)
+	serveErr := echo.StartConfig{Address: cfg.Addr, HideBanner: true}.Start(ctx, e)
+	return updates.RelaunchPath(), serveErr
 }

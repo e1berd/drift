@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Tree } from '@ui-sdk/vue/tree'
 
 import type { TreeItemData } from '@ui-sdk/vue/tree'
+import ScrollPane from '@/components/ScrollPane.vue'
 import type { TreeEntry } from '@/gen'
 
 import FileRows from '@/components/files/FileRows.vue'
@@ -38,7 +39,7 @@ function open(path: string) {
 </script>
 
 <template>
-    <div class="min-h-0 flex-1 overflow-auto p-1.5">
+    <ScrollPane class="min-h-0 flex-1" content-class="p-1.5">
         <div v-if="root.isPending.value" class="flex flex-col gap-1">
             <div
                 v-for="row in 6"
@@ -59,5 +60,5 @@ function open(path: string) {
         >
             <FileRows :items="items" />
         </Tree>
-    </div>
+    </ScrollPane>
 </template>

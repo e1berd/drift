@@ -133,16 +133,22 @@ const stop = useStopSession({
                 <span class="truncate font-medium">{{ session.data.value?.title }}</span>
             </template>
             <template #center>
-                <TabsList :aria-label="t('tabs.label')">
-                    <TabsTab v-for="item in TABS" :key="item.id" :value="item.id">
-                        <component :is="item.icon" />{{ t(`tabs.${item.id}`) }}
+                <TabsList :aria-label="t('tabs.label')" class="session-tabs">
+                    <TabsTab
+                        v-for="item in TABS"
+                        :key="item.id"
+                        :value="item.id"
+                        :title="t(`tabs.${item.id}`)"
+                    >
+                        <component :is="item.icon" />
+                        <span class="session-tab-label">{{ t(`tabs.${item.id}`) }}</span>
                     </TabsTab>
                     <TabsIndicator />
                 </TabsList>
             </template>
             <template #end>
-                <span v-if="running" class="status-tag motion-fade">
-                    <RunSpinner />{{ AGENTS[agent].name }}
+                <span v-if="running" class="status-tag motion-fade" :title="AGENTS[agent].name">
+                    <RunSpinner /><span class="max-md:sr-only">{{ AGENTS[agent].name }}</span>
                 </span>
             </template>
         </TopBar>
@@ -207,6 +213,28 @@ const stop = useStopSession({
 </template>
 
 <style scoped>
+.session-tabs {
+    @media (max-width: 760px) {
+        width: 100%;
+
+        & > [data-slot='tabs-tab'] {
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+            padding-inline: calc(var(--ui-spacing) * 2);
+        }
+
+        & .session-tab-label {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+    }
+}
+
 .session-pane {
     display: flex;
     min-height: 0;

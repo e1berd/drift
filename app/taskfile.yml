@@ -17,12 +17,15 @@ tasks:
       - go run -tags dev ./cmd/server
 
   build:
-    desc: Собрать бинарник Drift со встроенным фронтендом
+    desc: Собрать бинарник Drift со встроенным фронтендом (версия — из git describe)
+    vars:
+      VERSION:
+        sh: git describe --tags --always --dirty 2>/dev/null || echo dev
     preconditions:
       - sh: test -f internal/frontend/dist/.vite/manifest.json
         msg: Нет сборки фронтенда, сначала `task web:build` (или `task build`)
     cmds:
-      - CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ../bin/drift ./cmd/server
+      - CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X github.com/e1berd/drift/app/internal/delivery.version={{.VERSION}}" -o ../bin/drift ./cmd/server
 
   test:
     desc: Запустить Go-тесты

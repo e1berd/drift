@@ -11,6 +11,7 @@ import {
 } from '@ui-sdk/vue/menu'
 import { useI18n } from 'vue-i18n'
 
+import ScrollPane from '@/components/ScrollPane.vue'
 import GitNewBranchDialog from '@/components/git/GitNewBranchDialog.vue'
 import { useSessionGit } from '@/composables/useSessionGit'
 import { useListGitBranches } from '@/gen'
@@ -51,20 +52,22 @@ function choose(value: string) {
             <span class="truncate font-mono">{{ label }}</span>
             <PhCaretDown class="shrink-0" />
         </MenuTrigger>
-        <MenuContent class="max-h-[60dvh] overflow-auto">
-            <MenuItem v-if="branches.isPending.value" value="" disabled>{{
-                t('loading')
-            }}</MenuItem>
-            <MenuItem
-                v-for="branch in branches.data.value?.branches ?? []"
-                :key="branch.name"
-                :value="BRANCH_PREFIX + branch.name"
-            >
-                <MenuItemIcon>
-                    <PhCheck v-if="branch.current" />
-                </MenuItemIcon>
-                <span class="truncate font-mono">{{ branch.name }}</span>
-            </MenuItem>
+        <MenuContent>
+            <ScrollPane class="max-h-[50dvh]">
+                <MenuItem v-if="branches.isPending.value" value="" disabled>{{
+                    t('loading')
+                }}</MenuItem>
+                <MenuItem
+                    v-for="branch in branches.data.value?.branches ?? []"
+                    :key="branch.name"
+                    :value="BRANCH_PREFIX + branch.name"
+                >
+                    <MenuItemIcon>
+                        <PhCheck v-if="branch.current" />
+                    </MenuItemIcon>
+                    <span class="truncate font-mono">{{ branch.name }}</span>
+                </MenuItem>
+            </ScrollPane>
             <MenuSeparator />
             <MenuItem :value="CREATE">
                 <MenuItemIcon><PhPlus /></MenuItemIcon>

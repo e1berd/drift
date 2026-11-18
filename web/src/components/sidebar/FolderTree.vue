@@ -4,6 +4,7 @@ import { Tree } from '@ui-sdk/vue/tree'
 import { useI18n } from 'vue-i18n'
 
 import type { TreeItemData } from '@ui-sdk/vue/tree'
+import ScrollPane from '@/components/ScrollPane.vue'
 import type { TreeEntry } from '@/gen'
 
 import FileRows from '@/components/files/FileRows.vue'
@@ -34,7 +35,7 @@ async function loadChildren(path: string, { signal }: { signal: AbortSignal }) {
 </script>
 
 <template>
-    <div class="folder-tree">
+    <ScrollPane class="folder-tree" content-class="p-1.5">
         <div v-if="root.isPending.value" class="flex flex-col gap-1">
             <div
                 v-for="row in 6"
@@ -57,14 +58,12 @@ async function loadChildren(path: string, { signal }: { signal: AbortSignal }) {
         >
             <FileRows :items="items" />
         </Tree>
-    </div>
+    </ScrollPane>
 </template>
 
 <style scoped>
 .folder-tree {
     height: min(60dvh, 420px);
-    overflow: auto;
-    padding: calc(var(--ui-spacing) * 1.5);
     border: 1px solid var(--ui-border);
     border-radius: var(--ui-radius);
 }

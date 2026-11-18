@@ -2,6 +2,7 @@
 import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import ScrollPane from '@/components/ScrollPane.vue'
 import type { GitFileChange } from '@/gen'
 
 import GitDiscardDialog from '@/components/git/GitDiscardDialog.vue'
@@ -26,7 +27,7 @@ function discard(change: GitFileChange) {
 </script>
 
 <template>
-    <div class="flex min-h-0 flex-1 flex-col gap-2 overflow-auto pb-2">
+    <ScrollPane class="min-h-0 flex-1" content-class="flex flex-col gap-2 pb-2">
         <p v-if="clean" class="m-0 px-4 py-6 text-center text-muted">{{ t('clean') }}</p>
         <GitFileList :title="t('staged')" :changes="status?.staged ?? []" staged />
         <GitFileList
@@ -37,7 +38,7 @@ function discard(change: GitFileChange) {
         />
         <p v-if="status?.truncated" class="m-0 px-4 text-muted">{{ t('truncated') }}</p>
         <GitDiscardDialog ref="discardDialog" />
-    </div>
+    </ScrollPane>
 </template>
 
 <i18n lang="yaml">

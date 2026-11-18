@@ -2,6 +2,7 @@
 import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import ScrollPane from '@/components/ScrollPane.vue'
 import { useInfiniteSentinel } from '@/composables/useInfiniteSentinel'
 import { useSessionGit } from '@/composables/useSessionGit'
 import { useListGitCommitsInfinite } from '@/gen'
@@ -28,7 +29,7 @@ useInfiniteSentinel(sentinel, () => {
 </script>
 
 <template>
-    <div class="flex min-h-0 flex-1 flex-col overflow-auto py-2">
+    <ScrollPane class="min-h-0 flex-1" content-class="flex flex-col py-2">
         <p v-if="history.isError.value" class="m-0 px-4 text-danger">
             {{ errorMessage(history.error.value) }}
         </p>
@@ -57,7 +58,7 @@ useInfiniteSentinel(sentinel, () => {
         </ol>
         <div ref="sentinel" class="h-px flex-none" />
         <p v-if="history.isFetching.value" class="m-0 px-4 py-2 text-muted">{{ t('loading') }}</p>
-    </div>
+    </ScrollPane>
 </template>
 
 <style scoped>

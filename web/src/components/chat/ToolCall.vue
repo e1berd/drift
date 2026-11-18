@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n'
 import type { MessageBody } from '@/gen'
 
 import RunSpinner from '@/components/RunSpinner.vue'
+import ScrollPane from '@/components/ScrollPane.vue'
 
 const VISIBLE_LINES = 12
 
@@ -65,11 +66,16 @@ function toggleFull() {
             </Button>
         </div>
         <CollapsiblePanel>
-            <div class="tool-output">
-                <div v-for="(line, index) in lines" :key="index" :data-line="lineKind(line)">
+            <ScrollPane axis="both" class="tool-output" content-class="py-2">
+                <div
+                    v-for="(line, index) in lines"
+                    :key="index"
+                    class="tool-line"
+                    :data-line="lineKind(line)"
+                >
                     {{ line || ' ' }}
                 </div>
-            </div>
+            </ScrollPane>
             <Button v-if="!full && lines.length > VISIBLE_LINES" @click="toggleFull">
                 {{ t('chat.showAll', { count: lines.length }) }}
             </Button>
@@ -111,8 +117,6 @@ function toggleFull() {
 
 .tool-output {
     max-height: 248px;
-    overflow: auto;
-    padding: 8px 0;
     border-radius: var(--ui-radius);
     background: var(--ui-muted);
     font-family: var(--ui-font-mono);
@@ -122,7 +126,7 @@ function toggleFull() {
         max-height: 1800px;
     }
 
-    & > div {
+    & .tool-line {
         padding-inline: 12px;
         white-space: pre;
         tab-size: 4;

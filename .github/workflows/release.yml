@@ -1,0 +1,65 @@
+name: release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.34.9
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: app/go.sum
+
+      - name: Build the web app
+        working-directory: web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - name: Test the server
+        working-directory: app
+        run: go test ./...
+
+      - name: Build binaries
+        working-directory: app
+        run: |
+          mkdir -p ../dist
+          for arch in amd64 arm64; do
+            GOOS=linux GOARCH=$arch CGO_ENABLED=0 go build -trimpath \
+              -ldflags="-s -w -X github.com/e1berd/drift/app/internal/delivery.version=$VERSION" \
+              -o ../dist/drift_linux_$arch ./cmd/server
+            gzip -9 ../dist/drift_linux_$arch
+          done
+          cd ../dist && sha256sum drift_linux_*.gz > checksums.txt
+
+      - name: Check the version stamp
+        run: |
+          gunzip -c dist/drift_linux_amd64.gz > /tmp/drift && chmod +x /tmp/drift
+          test "$(/tmp/drift version)" = "$VERSION"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=$([[ "$VERSION" == *-* ]] && echo --prerelease || true)
+          gh release create "$VERSION" dist/* --verify-tag --generate-notes --title "$VERSION" $prerelease

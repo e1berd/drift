@@ -8,6 +8,7 @@ require (
 	github.com/jackc/pgx/v5 v5.13.0
 	github.com/labstack/echo/v5 v5.4.6
 	go.yaml.in/yaml/v3 v3.0.6
+	golang.org/x/mod v0.43.0
 	golang.org/x/text v0.41.0
 )
 

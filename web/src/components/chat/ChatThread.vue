@@ -32,9 +32,9 @@ useInfiniteSentinel(top, () => {
 </script>
 
 <template>
-    <ScrollArea stick-to-end class="relative min-h-0 flex-1 rounded-none border-0">
+    <ScrollArea stick-to-end class="scroll-pane min-h-0 flex-1">
         <ScrollAreaViewport role="log" :aria-label="t('tabs.chat')">
-            <ScrollAreaContent>
+            <ScrollAreaContent class="px-4 py-3">
                 <div class="mx-auto flex max-w-[780px] flex-col gap-4 py-6">
                     <div ref="top" class="h-px" />
                     <p v-if="loadingOlder" class="self-center text-muted">

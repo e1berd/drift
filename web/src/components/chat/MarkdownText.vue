@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import '@ui-sdk/web/scroll-area'
 
 import { renderMarkdown } from '@/shared/markdown'
 

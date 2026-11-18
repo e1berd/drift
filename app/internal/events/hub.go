@@ -144,3 +144,16 @@ func (h *Hub) pruneLocked() {
 		}
 	}
 }
+
+// PublishAll sends an instance-wide event, such as a new Drift release, to every known user.
+func (h *Hub) PublishAll(typ string, data any) {
+	h.mu.Lock()
+	owners := make([]string, 0, len(h.users))
+	for owner := range h.users {
+		owners = append(owners, owner)
+	}
+	h.mu.Unlock()
+	for _, owner := range owners {
+		h.Publish(owner, typ, data, "")
+	}
+}

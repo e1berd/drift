@@ -2,6 +2,7 @@ import { ref } from 'vue'
 
 import type { InfiniteData, QueryClient } from '@tanstack/vue-query'
 import type {
+    Delivery,
     Draft,
     ListMessagesResponse,
     ListProjectsResponse,
@@ -14,6 +15,7 @@ import type {
 } from '@/gen'
 
 import {
+    getDeliveryQueryKey,
     getSessionQueryKey,
     listMessagesInfiniteQueryKey,
     listProjectsInfiniteQueryKey,
@@ -248,6 +250,8 @@ function apply(qc: QueryClient, event: WireEvent) {
         case 'subscription.updated':
         case 'subscription.deleted':
             return void qc.invalidateQueries({ queryKey: listSubscriptionsQueryKey() })
+        case 'delivery.updated':
+            return void qc.setQueryData(getDeliveryQueryKey(), event.data as Delivery)
     }
 }
 

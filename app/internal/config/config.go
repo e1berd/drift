@@ -22,6 +22,8 @@ type Config struct {
 	CodexBin        string
 	Shell           string
 	AntigravityBin  string
+	DeliveryRepo    string
+	DeliveryAPIURL  *url.URL
 }
 
 // Load reads the configuration from environment variables, falling back to local development defaults.
@@ -48,6 +50,7 @@ func Load() (*Config, error) {
 	cfg.CodexBin = env("DRIFT_CODEX_BIN", "codex")
 	cfg.Shell = os.Getenv("DRIFT_SHELL")
 	cfg.AntigravityBin = env("DRIFT_AGY_BIN", "agy")
+	cfg.DeliveryRepo = env("DRIFT_DELIVERY_REPO", "e1berd/drift")
 
 	urls := []struct {
 		dst      **url.URL
@@ -58,6 +61,7 @@ func Load() (*Config, error) {
 		{&cfg.KratosPublicURL, "KRATOS_PUBLIC_URL", "http://localhost:4433"},
 		{&cfg.KratosAdminURL, "KRATOS_ADMIN_URL", "http://localhost:4434"},
 		{&cfg.ViteDevURL, "VITE_DEV_URL", "http://localhost:5173"},
+		{&cfg.DeliveryAPIURL, "DRIFT_DELIVERY_API_URL", "https://api.github.com"},
 	}
 	for _, u := range urls {
 		raw := os.ExpandEnv(env(u.key, u.def))

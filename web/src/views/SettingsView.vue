@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ScrollPane from '@/components/ScrollPane.vue'
 import TopBar from '@/components/TopBar.vue'
 import InterfaceSettings from '@/components/settings/InterfaceSettings.vue'
 import PasskeySettings from '@/components/settings/PasskeySettings.vue'
@@ -14,13 +15,13 @@ const { t } = useI18n()
             ><span class="truncate font-medium">{{ t('settings.title') }}</span></template
         >
     </TopBar>
-    <div class="min-h-0 flex-1 overflow-auto">
+    <ScrollPane class="min-h-0 flex-1">
         <div class="motion-fade mx-auto flex max-w-[640px] flex-col gap-10 px-6 py-8 max-md:px-4">
             <InterfaceSettings />
             <SubscriptionSettings />
             <PasskeySettings />
         </div>
-    </div>
+    </ScrollPane>
 </template>
 
 <i18n lang="yaml">

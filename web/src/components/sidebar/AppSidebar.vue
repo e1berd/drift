@@ -6,6 +6,7 @@ import { Input } from '@ui-sdk/vue/input'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 
+import ScrollPane from '@/components/ScrollPane.vue'
 import BrandMark from '@/components/BrandMark.vue'
 import SessionSearchResults from '@/components/sidebar/SessionSearchResults.vue'
 import SidebarFooter from '@/components/sidebar/SidebarFooter.vue'
@@ -47,10 +48,12 @@ function startNewChat() {
             />
         </div>
 
-        <div v-auto-animate class="min-h-0 flex-1 overflow-auto">
-            <SessionSearchResults v-if="searching" key="search" :text="searchText" />
-            <WorkspaceNav v-else key="browse" />
-        </div>
+        <ScrollPane class="min-h-0 flex-1">
+            <div v-auto-animate>
+                <SessionSearchResults v-if="searching" key="search" :text="searchText" />
+                <WorkspaceNav v-else key="browse" />
+            </div>
+        </ScrollPane>
 
         <SidebarFooter />
     </div>
