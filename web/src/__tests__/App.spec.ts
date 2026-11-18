@@ -117,7 +117,15 @@ describe('App', () => {
         expect(requestedPaths()).toContain('/api/drafts')
         expect(requestedPaths()).toContain('/api/sessions')
         expect(wrapper.text()).toContain('v1.0.0')
-        expect(wrapper.text()).toContain('1.2K')
+        wrapper.unmount()
+    })
+
+    it('shows the GitHub stars in the versions dialog', async () => {
+        const wrapper = await mountApp()
+
+        buttonByText('v1.0.0').click()
+        await flushPromises()
+        expect(document.body.textContent).toContain('1.2K')
         wrapper.unmount()
     })
 

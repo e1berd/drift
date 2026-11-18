@@ -8,6 +8,7 @@ import { RouterLink, useRouter } from 'vue-router'
 
 import ScrollPane from '@/components/ScrollPane.vue'
 import BrandMark from '@/components/BrandMark.vue'
+import DeliveryVersion from '@/components/delivery/DeliveryVersion.vue'
 import SessionSearchResults from '@/components/sidebar/SessionSearchResults.vue'
 import SidebarFooter from '@/components/sidebar/SidebarFooter.vue'
 import WorkspaceNav from '@/components/sidebar/WorkspaceNav.vue'
@@ -31,10 +32,17 @@ function startNewChat() {
 <template>
     <div class="flex h-full flex-col">
         <div class="sidebar-head">
-            <RouterLink to="/" class="flex items-center gap-2 font-semibold no-underline"
-                ><BrandMark />drift</RouterLink
+            <span class="flex min-w-0 items-center gap-2">
+                <RouterLink
+                    to="/"
+                    class="flex flex-none items-center gap-2 font-semibold no-underline"
+                    ><BrandMark />drift</RouterLink
+                >
+                <DeliveryVersion />
+            </span>
+            <Button class="flex-none" @click="startNewChat"
+                ><PhPlus />{{ t('nav.newChat') }}</Button
             >
-            <Button @click="startNewChat"><PhPlus />{{ t('nav.newChat') }}</Button>
         </div>
 
         <div class="px-3 pt-3">

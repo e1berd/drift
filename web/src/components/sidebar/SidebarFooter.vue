@@ -7,7 +7,6 @@ import { usePreference } from '@ui-sdk/vue/preferences'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import DeliveryFooter from '@/components/delivery/DeliveryFooter.vue'
 import { useEventStream } from '@/composables/useEventStream'
 import { useLocale } from '@/composables/useLocale'
 import { useSession } from '@/composables/useSession'
@@ -79,6 +78,5 @@ function signOut() {
                 <PhSignOut />
             </Button>
         </div>
-        <DeliveryFooter />
     </div>
 </template>

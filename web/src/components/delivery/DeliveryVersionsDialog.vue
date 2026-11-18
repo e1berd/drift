@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { PhArrowsClockwise } from '@phosphor-icons/vue'
+import { PhArrowsClockwise, PhGithubLogo, PhStar } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import {
     Dialog,
@@ -18,11 +18,16 @@ import { useDelivery } from '@/composables/useDelivery'
 import { reportError } from '@/shared/errors'
 
 const open = defineModel<boolean>('open', { required: true })
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { delivery, latest, install, installPending, installing, check, checking } = useDelivery()
 const releasesQuery = useListReleases({ query: { enabled: open } })
 
 const releases = computed(() => releasesQuery.data.value?.releases ?? [])
+const stars = computed(() =>
+    new Intl.NumberFormat(locale.value, { notation: 'compact' }).format(
+        delivery.value?.repository.stars ?? 0,
+    ),
+)
 const current = computed(() => delivery.value?.currentVersion ?? '')
 const chosenVersion = ref('')
 const chosen = computed(() =>
@@ -61,14 +66,26 @@ function installChosen() {
 <template>
     <Dialog v-model:open="open">
         <DialogContent class="delivery-versions">
-            <div class="flex flex-col gap-1">
-                <DialogTitle>{{ t('title') }}</DialogTitle>
-                <DialogDescription>
-                    {{ t('current', { version: current }) }}
-                    <template v-if="delivery && !delivery.releaseBuild"
-                        >· {{ t('local') }}</template
-                    >
-                </DialogDescription>
+            <div class="flex items-start gap-3">
+                <div class="flex min-w-0 flex-1 flex-col gap-1">
+                    <DialogTitle>{{ t('title') }}</DialogTitle>
+                    <DialogDescription>
+                        {{ t('current', { version: current }) }}
+                        <template v-if="delivery && !delivery.releaseBuild"
+                            >· {{ t('local') }}</template
+                        >
+                    </DialogDescription>
+                </div>
+                <a
+                    v-if="delivery"
+                    :href="delivery.repository.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="delivery-repo"
+                    :title="t('repo', { stars: delivery.repository.stars })"
+                >
+                    <PhGithubLogo /><PhStar weight="fill" />{{ stars }}
+                </a>
             </div>
 
             <div class="flex items-center gap-2">
@@ -126,6 +143,20 @@ function installChosen() {
     flex-direction: column;
     gap: 1rem;
 }
+
+.delivery-repo {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+    color: var(--ui-muted-foreground);
+    text-decoration: none;
+
+    &:hover {
+        color: var(--ui-foreground);
+    }
+}
 </style>
 
 <i18n lang="yaml">
@@ -140,6 +171,7 @@ ru:
     close: Закрыть
     install: 'Установить {version}'
     installNone: Установить
+    repo: 'Drift на GitHub, звёзд: {stars}'
     blocker:
         development_build: Это dev-сборка (go run / air) — устанавливать релизы в неё нельзя.
         read_only: У процесса Drift нет прав на запись в папку бинарника, поэтому обновиться сам он не может.
@@ -154,6 +186,7 @@ en:
     close: Close
     install: 'Install {version}'
     installNone: Install
+    repo: 'Drift on GitHub, {stars} stars'
     blocker:
         development_build: This is a dev build (go run / air); releases cannot be installed into it.
         read_only: The Drift process cannot write to the folder of its binary, so it cannot update itself.
