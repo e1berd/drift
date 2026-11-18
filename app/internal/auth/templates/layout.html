@@ -17,14 +17,14 @@
   </style>
   {{.Assets}}
 </head>
-<body class="min-h-dvh bg-(--ui-background) text-(--ui-foreground) antialiased">
+<body class="min-h-dvh bg-bg text-bg antialiased">
   {{template "preferences" .}}
   <main class="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 px-4 py-12">
     <div class="max-w-3xl mx-auto pt-4">
       <header class="flex flex-col gap-1">
-        <p class="text-sm font-semibold tracking-widest text-(--ui-muted-foreground) uppercase">Drift</p>
+        <p class="text-sm font-semibold tracking-widest text-muted uppercase">Drift</p>
         <h1 class="text-2xl font-semibold">{{.Title}}</h1>
-        {{with .Lead}}<p class="text-sm text-(--ui-muted-foreground)">{{.}}</p>{{end}}
+        {{with .Lead}}<p class="text-sm text-muted">{{.}}</p>{{end}}
       </header>
       {{template "content" .}}
     </div>
@@ -91,7 +91,7 @@
 {{- if .}}
 <ul class="flex flex-col gap-2" role="alert">
   {{- range .}}
-  <li class="rounded-(--ui-radius) border px-3 py-2 text-sm {{if eq .Type "error"}}border-(--ui-destructive) text-(--ui-destructive){{else}}border-(--ui-border) text-(--ui-muted-foreground){{end}}">{{.Text}}</li>
+  <li class="rounded-(--ui-radius) border px-3 py-2 text-sm {{if eq .Type "error"}}border-danger text-danger{{else}}border-line text-(--ui-muted-foreground){{end}}">{{.Text}}</li>
   {{- end}}
 </ul>
 {{- end}}
