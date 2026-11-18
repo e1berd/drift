@@ -28,4 +28,33 @@
         color: var(--ui-muted-foreground);
         font-size: calc(var(--ui-font-size) - 0.0625rem);
     }
+
+    .composer-select {
+        min-width: 0;
+        gap: calc(var(--ui-spacing) * 1.5);
+        padding-inline: calc(var(--ui-spacing) * 2);
+
+        & > .composer-select-icon {
+            display: inline-flex;
+        }
+
+        @container composer (width < 560px) {
+            & > .composer-select-label {
+                display: none;
+            }
+        }
+    }
+
+    [data-slot='select-group-label'] {
+        padding: calc(var(--ui-spacing) * 1.5) calc(var(--ui-spacing) * 2)
+            calc(var(--ui-spacing) * 1);
+        color: var(--ui-muted-foreground);
+        font-size: calc(var(--ui-font-size) - 0.125rem);
+    }
+
+    [data-slot='select-separator'] {
+        height: 1px;
+        margin: calc(var(--ui-spacing) * 1) calc(var(--ui-spacing) * -1);
+        background: var(--ui-border);
+    }
 }

@@ -21,6 +21,7 @@ import AgentLogo from '@/components/AgentLogo.vue'
 import BrandMark from '@/components/BrandMark.vue'
 import TopBar from '@/components/TopBar.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
+import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
 import { useAgents } from '@/composables/useAgents'
 import { useCreateSession } from '@/gen'
@@ -35,6 +36,7 @@ const route = useRoute()
 const router = useRouter()
 const { projects } = useProjects()
 const agents = useAgents()
+const settings = useComposerSettings()
 
 const agent = ref<AgentId>(agents.connected.value.at(0) ?? 'claude')
 const projectId = computed({
@@ -74,7 +76,13 @@ function announceUnsupportedAttachments(files: File[]) {
         toast.info(t('tabs.soon'), { description: files.map((file) => file.name).join(', ') })
 }
 
+function switchAgent(choice: { agent: AgentId; model: string }) {
+    settings.setModel(choice.agent, choice.model)
+    agent.value = choice.agent
+}
+
 function send({ text, files }: { text: string; files: File[] }) {
+    if (!agents.isConnected(agent.value)) return
     announceUnsupportedAttachments(files)
     if (text)
         create.mutate({ path: { projectId: projectId.value }, body: { agent: agent.value, text } })
@@ -113,11 +121,13 @@ function send({ text, files }: { text: string; files: File[] }) {
                 :agent="agent"
                 :placeholder="t('composer.placeholder.new', { agent: AGENTS[agent].name })"
                 :busy="create.isPending.value"
+                autofocus
                 @send="send"
+                @switch-agent="switchAgent"
             >
                 <template #start>
                     <Select v-model:value="projectId" :items="projectItems">
-                        <SelectTrigger :aria-label="t('composer.project')"
+                        <SelectTrigger class="composer-select" :aria-label="t('composer.project')"
                             ><SelectValue
                         /></SelectTrigger>
                         <SelectContent side="top" align="start">

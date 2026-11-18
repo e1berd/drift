@@ -9,6 +9,7 @@ import (
 	"github.com/e1berd/drift/app/internal/db"
 	"github.com/e1berd/drift/app/internal/identity"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v5"
 )
 
@@ -145,20 +146,46 @@ func (h *Handler) getSession(c *echo.Context) error {
 	return c.JSON(http.StatusOK, sessionDTO(s))
 }
 
-func (h *Handler) renameSession(c *echo.Context) error {
+type sessionUpdate struct {
+	Title *string `json:"title"`
+	Agent *string `json:"agent"`
+}
+
+func (u sessionUpdate) params(id pgtype.UUID, owner string) (db.UpdateSessionParams, error) {
+	out := db.UpdateSessionParams{ID: id, OwnerID: owner}
+	if u.Title == nil && u.Agent == nil {
+		return out, badRequest("title or agent is required")
+	}
+	if u.Title != nil {
+		title, ok := cleanName(*u.Title, 200)
+		if !ok {
+			return out, badRequest("title must be 1–200 characters")
+		}
+		out.Title = pgtype.Text{String: title, Valid: true}
+	}
+	if u.Agent != nil {
+		if !agents[*u.Agent] {
+			return out, badRequest("unknown agent")
+		}
+		out.Agent = pgtype.Text{String: *u.Agent, Valid: true}
+	}
+	return out, nil
+}
+
+func (h *Handler) updateSession(c *echo.Context) error {
 	id, err := parseID(c, "session")
 	if err != nil {
 		return err
 	}
-	var in sessionInput
+	var in sessionUpdate
 	if err := c.Bind(&in); err != nil {
 		return badRequest("invalid body")
 	}
-	title, ok := cleanName(in.Title, 200)
-	if !ok {
-		return badRequest("title must be 1–200 characters")
+	params, err := in.params(id, identity.From(c))
+	if err != nil {
+		return err
 	}
-	s, err := h.q.RenameSession(c.Request().Context(), db.RenameSessionParams{ID: id, OwnerID: identity.From(c), Title: title})
+	s, err := h.q.UpdateSession(c.Request().Context(), params)
 	if err != nil {
 		return notFound(err)
 	}

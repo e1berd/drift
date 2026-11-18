@@ -54,7 +54,7 @@ func (h *Handler) Register(g *echo.Group) {
 	g.GET("/projects/:project/file", h.readFile)
 
 	g.GET("/sessions/:session", h.getSession)
-	g.PATCH("/sessions/:session", h.renameSession)
+	g.PATCH("/sessions/:session", h.updateSession)
 	g.DELETE("/sessions/:session", h.deleteSession)
 	g.GET("/sessions/:session/messages", h.listMessages)
 	g.POST("/sessions/:session/messages", h.createMessage)

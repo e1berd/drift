@@ -5,7 +5,7 @@
 
 import type { Error } from './Error'
 import type { Session } from './Session'
-import type { SessionRename } from './SessionRename'
+import type { SessionUpdate } from './SessionUpdate'
 
 export type UpdateSessionPath = {
   /**
@@ -20,7 +20,11 @@ export type UpdateSessionStatus200 = Session;
 
 export type UpdateSessionStatusDefault = Error;
 
-export type UpdateSessionBody = SessionRename;
+/**
+ * @description Partial update (AIP-134): only the fields present are changed. Changing `agent` hands the conversation to another model family, which starts without the previous agent's context.
+ * @type object
+ */
+export type UpdateSessionBody = SessionUpdate;
 
 export type UpdateSessionOptions = {
   body: UpdateSessionBody;

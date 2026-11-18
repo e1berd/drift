@@ -167,10 +167,10 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/SessionRename' }
+            schema: { $ref: '#/components/schemas/SessionUpdate' }
       responses:
         '200':
-          description: The renamed session.
+          description: The updated session.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Session' }
@@ -363,11 +363,16 @@ components:
         agent: { $ref: '#/components/schemas/AgentId' }
         title: { type: string, maxLength: 200 }
         text: { type: string }
-    SessionRename:
+    SessionUpdate:
+      description: >-
+        Partial update (AIP-134): only the fields present are changed. Changing `agent`
+        hands the conversation to another model family, which starts without the
+        previous agent's context.
       type: object
-      required: [title]
+      minProperties: 1
       properties:
         title: { type: string, minLength: 1, maxLength: 200 }
+        agent: { $ref: '#/components/schemas/AgentId' }
     ListSessionsResponse:
       type: object
       required: [sessions]

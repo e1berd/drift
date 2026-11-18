@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import {
     PhArrowLeft,
     PhArrowRight,
@@ -9,6 +9,7 @@ import {
 } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { FileInput, FileInputTrigger } from '@ui-sdk/vue/file-input'
+import { RouterLink } from 'vue-router'
 
 import AttachmentChip from '@/components/composer/AttachmentChip.vue'
 import ModeSelect from '@/components/composer/ModeSelect.vue'
@@ -16,7 +17,9 @@ import ModelSelect from '@/components/composer/ModelSelect.vue'
 import PromptEditor from '@/components/composer/PromptEditor.vue'
 import ImagePreview from '@/components/composer/ImagePreview.vue'
 import { useDraft } from '@/composables/useDrafts'
+import { useAgents } from '@/composables/useAgents'
 import type { AgentId } from '@/shared/agents'
+import { AGENTS } from '@/shared/agents'
 import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
@@ -27,12 +30,18 @@ const props = withDefaults(
         history?: string[]
         busy?: boolean
         showHistory?: boolean
+        autofocus?: boolean
     }>(),
-    { history: () => [], busy: false, showHistory: true },
+    { history: () => [], busy: false, showHistory: true, autofocus: false },
 )
 
-const emit = defineEmits<{ send: [payload: { text: string; files: File[] }] }>()
+const emit = defineEmits<{
+    send: [payload: { text: string; files: File[] }]
+    switchAgent: [choice: { agent: AgentId; model: string }]
+}>()
 const { t } = useI18n()
+const agents = useAgents()
+const unavailable = computed(() => !agents.isConnected(props.agent))
 
 const draft = useDraft(() => props.draftKey)
 const files = ref<File[]>([])
@@ -40,7 +49,10 @@ const historyIndex = ref(-1)
 const preview = ref<{ url: string; name: string } | null>(null)
 const editor = useTemplateRef<InstanceType<typeof PromptEditor>>('editor')
 
-const canSend = computed(() => !props.busy && (!!draft.text.value.trim() || files.value.length > 0))
+const canSend = computed(
+    () =>
+        !unavailable.value && !props.busy && (!!draft.text.value.trim() || files.value.length > 0),
+)
 
 function setText(value: string) {
     draft.set(value)
@@ -84,12 +96,38 @@ function onInput(value: string) {
     draft.set(value)
 }
 
+watch(
+    [() => props.draftKey, unavailable],
+    async () => {
+        if (!props.autofocus || unavailable.value) return
+        await nextTick()
+        editor.value?.focus()
+    },
+    { immediate: true, flush: 'post' },
+)
+
 defineExpose({ focus: () => editor.value?.focus() })
 </script>
 
 <template>
-    <FileInput v-model:value="files" class="max-w-none" multiple :max-size="25 * 1024 * 1024">
-        <div class="composer" :data-remote="draft.remote.value.typing || undefined">
+    <FileInput
+        v-model:value="files"
+        class="max-w-none"
+        multiple
+        :disabled="unavailable"
+        :max-size="25 * 1024 * 1024"
+    >
+        <div
+            class="composer"
+            :data-remote="draft.remote.value.typing || undefined"
+            :data-unavailable="unavailable || undefined"
+        >
+            <p v-if="unavailable" class="motion-fade m-0 px-3 pt-3 text-muted">
+                {{ t('composer.unavailable', { agent: AGENTS[agent].name }) }}
+                <RouterLink to="/settings" class="text-fg underline underline-offset-4">{{
+                    t('composer.setUp')
+                }}</RouterLink>
+            </p>
             <div
                 v-if="draft.remote.value.typing || draft.remote.value.fromOther"
                 class="status-tag motion-fade px-3 pt-2"
@@ -127,6 +165,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                 :revision="draft.external.value"
                 :placeholder="placeholder"
                 :label="t('composer.label')"
+                :disabled="unavailable"
                 @update:model-value="onInput"
                 @submit="send"
                 @history-back="back"
@@ -144,7 +183,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                     <slot name="start">
                         <template v-if="showHistory">
                             <Button
-                                :disabled="!history.length || historyIndex === 0"
+                                :disabled="unavailable || !history.length || historyIndex === 0"
                                 :aria-label="t('composer.historyBack')"
                                 :title="t('composer.historyBack')"
                                 @click="back"
@@ -163,7 +202,10 @@ defineExpose({ focus: () => editor.value?.focus() })
                     </slot>
                 </div>
                 <div class="flex items-center gap-1">
-                    <ModelSelect :agent="agent" />
+                    <ModelSelect
+                        :agent="agent"
+                        @switch-agent="(choice) => emit('switchAgent', choice)"
+                    />
                     <ModeSelect />
                     <slot name="action">
                         <Button
@@ -185,6 +227,7 @@ defineExpose({ focus: () => editor.value?.focus() })
 
 <style scoped>
 .composer {
+    container: composer / inline-size;
     width: 100%;
     max-width: 780px;
     margin-inline: auto;
@@ -199,6 +242,10 @@ defineExpose({ focus: () => editor.value?.focus() })
 
     &[data-remote] {
         border-style: dashed;
+    }
+
+    &[data-unavailable] {
+        background: var(--ui-muted);
     }
 }
 </style>

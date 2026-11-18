@@ -10,6 +10,7 @@ const props = defineProps<{
     placeholder: string
     revision: number
     label: string
+    disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -64,6 +65,7 @@ const Keys = Extension.create({
 
 const editor = useEditor({
     content: toDoc(props.modelValue),
+    editable: !props.disabled,
     extensions: [
         StarterKit.configure({
             heading: false,
@@ -106,6 +108,11 @@ watch(
 watch(
     () => props.placeholder,
     () => editor.value?.view.dispatch(editor.value.state.tr),
+)
+
+watch(
+    () => props.disabled,
+    (disabled) => editor.value?.setEditable(!disabled, false),
 )
 
 defineExpose({ focus: () => editor.value?.commands.focus('end') })

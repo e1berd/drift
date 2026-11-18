@@ -27,8 +27,8 @@ type Querier interface {
 	ListProjects(ctx context.Context, arg ListProjectsParams) ([]ListProjectsRow, error)
 	ListSessions(ctx context.Context, arg ListSessionsParams) ([]Session, error)
 	RenameProject(ctx context.Context, arg RenameProjectParams) (Project, error)
-	RenameSession(ctx context.Context, arg RenameSessionParams) (Session, error)
 	TouchSession(ctx context.Context, id pgtype.UUID) error
+	UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error)
 	UpsertDraft(ctx context.Context, arg UpsertDraftParams) (Draft, error)
 }
 

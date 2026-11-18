@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, useTemplateRef } from 'vue'
 import {
     PhChatCircle,
     PhFile,
@@ -15,11 +15,14 @@ import RunSpinner from '@/components/RunSpinner.vue'
 import TopBar from '@/components/TopBar.vue'
 import ChatThread from '@/components/chat/ChatThread.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
+import SwitchFamilyDialog from '@/components/composer/SwitchFamilyDialog.vue'
 import PanePlaceholder from '@/components/PanePlaceholder.vue'
+import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
-import { useCreateMessage } from '@/gen'
+import { useCreateMessage, useUpdateSession } from '@/gen'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
+import type { AgentId } from '@/shared/agents'
 import { useI18n } from 'vue-i18n'
 import { useMessages, useProjects, useSession } from '@/shared/queries'
 
@@ -69,6 +72,18 @@ const post = useCreateMessage({
     mutation: { onError: (error) => toast.error(errorMessage(error)) },
 })
 
+const settings = useComposerSettings()
+const switchDialog = useTemplateRef<InstanceType<typeof SwitchFamilyDialog>>('switchDialog')
+const update = useUpdateSession({
+    mutation: { onError: (error) => toast.error(errorMessage(error)) },
+})
+
+async function switchAgent({ agent: next, model }: { agent: AgentId; model: string }) {
+    if (!(await switchDialog.value?.ask(next))) return
+    settings.setModel(next, model)
+    update.mutate({ path: { sessionId: sessionId.value }, body: { agent: next } })
+}
+
 function announceUnsupportedAttachments(files: File[]) {
     if (files.length)
         toast.info(t('tabs.soon'), { description: files.map((file) => file.name).join(', ') })
@@ -117,9 +132,12 @@ function send({ text, files }: { text: string; files: File[] }) {
                     :agent="agent"
                     :history="history"
                     :placeholder="t('composer.placeholder.reply', { agent: AGENTS[agent].name })"
-                    :busy="post.isPending.value"
+                    :busy="post.isPending.value || update.isPending.value"
+                    autofocus
                     @send="send"
+                    @switch-agent="switchAgent"
                 />
+                <SwitchFamilyDialog ref="switchDialog" />
             </div>
         </TabsPanel>
         <TabsPanel value="cli" class="session-pane"

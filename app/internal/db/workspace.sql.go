@@ -449,18 +449,38 @@ func (q *Queries) RenameProject(ctx context.Context, arg RenameProjectParams) (P
 	return i, err
 }
 
-const renameSession = `-- name: RenameSession :one
-UPDATE sessions SET title = $3, updated_at = now() WHERE id = $1 AND owner_id = $2 RETURNING id, project_id, owner_id, title, agent, status, created_at, updated_at
+const touchSession = `-- name: TouchSession :exec
+UPDATE sessions SET updated_at = now() WHERE id = $1
 `
 
-type RenameSessionParams struct {
-	ID      pgtype.UUID `json:"id"`
-	OwnerID string      `json:"owner_id"`
-	Title   string      `json:"title"`
+func (q *Queries) TouchSession(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, touchSession, id)
+	return err
 }
 
-func (q *Queries) RenameSession(ctx context.Context, arg RenameSessionParams) (Session, error) {
-	row := q.db.QueryRow(ctx, renameSession, arg.ID, arg.OwnerID, arg.Title)
+const updateSession = `-- name: UpdateSession :one
+UPDATE sessions
+SET title = coalesce($3, title),
+    agent = coalesce($4, agent),
+    updated_at = now()
+WHERE id = $1 AND owner_id = $2
+RETURNING id, project_id, owner_id, title, agent, status, created_at, updated_at
+`
+
+type UpdateSessionParams struct {
+	ID      pgtype.UUID `json:"id"`
+	OwnerID string      `json:"owner_id"`
+	Title   pgtype.Text `json:"title"`
+	Agent   pgtype.Text `json:"agent"`
+}
+
+func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error) {
+	row := q.db.QueryRow(ctx, updateSession,
+		arg.ID,
+		arg.OwnerID,
+		arg.Title,
+		arg.Agent,
+	)
 	var i Session
 	err := row.Scan(
 		&i.ID,
@@ -473,15 +493,6 @@ func (q *Queries) RenameSession(ctx context.Context, arg RenameSessionParams) (S
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const touchSession = `-- name: TouchSession :exec
-UPDATE sessions SET updated_at = now() WHERE id = $1
-`
-
-func (q *Queries) TouchSession(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, touchSession, id)
-	return err
 }
 
 const upsertDraft = `-- name: UpsertDraft :one

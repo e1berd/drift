@@ -187,17 +187,27 @@ watch(
 .project-row {
     display: flex;
     align-items: center;
-    gap: 4px;
+}
+
+.project-row {
+    interpolate-size: allow-keywords;
 }
 
 .project-actions {
     display: flex;
+    flex: none;
     gap: 2px;
+    width: 0;
+    overflow: hidden;
     opacity: 0;
-    transition: opacity var(--dur-1);
+    transition:
+        width var(--dur-1),
+        opacity var(--dur-1);
 }
 
 .project-row:is(:hover, :focus-within) .project-actions {
+    width: auto;
+    padding-inline-start: 4px;
     opacity: 1;
 }
 </style>

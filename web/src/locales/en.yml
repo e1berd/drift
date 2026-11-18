@@ -63,6 +63,13 @@ tabs:
   terminal: 'Terminal'
   soon: 'Arrives together with running agents on the server.'
 composer:
+  unavailable: '{agent} is not connected, so you cannot chat with it.'
+  setUp: 'Set up a subscription'
+  switchFamily:
+    title: 'Switch to {agent}?'
+    body: 'The new model will not have the current agent’s context: it will most likely re-read the whole conversation, which takes time and tokens.'
+    confirm: 'Switch'
+    cancel: 'Cancel'
   label: 'Message'
   placeholder:
     new: 'Describe the task for {agent}…'
@@ -80,6 +87,7 @@ composer:
   remoteDraft: 'Draft from another device'
   clear: 'Clear'
 models:
+  default: 'From CLI config'
   opus: 'Most capable, for hard tasks'
   sonnet: 'Balanced speed and quality'
   haiku: 'Fast for small edits'

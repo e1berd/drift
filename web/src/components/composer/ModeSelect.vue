@@ -4,10 +4,10 @@ import {
     Select,
     SelectContent,
     SelectItem,
+    SelectItemIcon,
     SelectItemIndicator,
     SelectItemText,
     SelectTrigger,
-    SelectValue,
 } from '@ui-sdk/vue/select'
 import { useI18n } from 'vue-i18n'
 
@@ -26,21 +26,56 @@ const value = computed({
         if (mode) settings.setMode(mode)
     },
 })
+const current = computed(
+    () => PERMISSION_MODES.find((mode) => mode.id === value.value) ?? PERMISSION_MODES.at(0)!,
+)
 </script>
 
 <template>
     <Select v-model:value="value" :items="items">
-        <SelectTrigger :aria-label="t('composer.permissions')"><SelectValue /></SelectTrigger>
+        <SelectTrigger
+            class="composer-select"
+            :data-mode="current.id"
+            :aria-label="`${t('composer.permissions')}: ${current.label}`"
+            :title="current.label"
+        >
+            <span class="composer-select-icon"><component :is="current.icon" weight="bold" /></span>
+            <span class="composer-select-label">{{ current.short }}</span>
+        </SelectTrigger>
         <SelectContent side="top" align="end">
             <SelectItem
                 v-for="mode in PERMISSION_MODES"
                 :key="mode.id"
                 :value="mode.id"
+                :data-mode="mode.id"
                 :title="t(mode.hint)"
             >
+                <SelectItemIcon><component :is="mode.icon" weight="bold" /></SelectItemIcon>
                 <SelectItemText>{{ mode.label }}</SelectItemText>
                 <SelectItemIndicator />
             </SelectItem>
         </SelectContent>
     </Select>
 </template>
+
+<style scoped>
+[data-mode] {
+    color: var(--mode-default);
+
+    &[data-mode='acceptEdits'] {
+        color: var(--mode-acceptEdits);
+    }
+
+    &[data-mode='auto'] {
+        color: var(--mode-auto);
+    }
+
+    &[data-mode='plan'] {
+        color: var(--mode-plan);
+    }
+
+    &[data-mode='bypassPermissions'] {
+        color: var(--mode-bypassPermissions);
+    }
+}
+</style>
