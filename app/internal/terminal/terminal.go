@@ -36,6 +36,7 @@ var shellCandidates = []string{"fish", "bash", "zsh", "sh"}
 var passthroughEnv = []string{
 	"PATH", "HOME", "USER", "LANG", "LC_ALL", "TZ", "SSL_CERT_FILE", "SSL_CERT_DIR",
 	"HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy",
+	"XDG_RUNTIME_DIR", "DOCKER_HOST", "TESTCONTAINERS_RYUK_DISABLED",
 }
 
 var errTooMany = errors.New("too many terminals")

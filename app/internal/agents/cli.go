@@ -22,6 +22,7 @@ const (
 var passthroughEnv = []string{
 	"PATH", "LANG", "TZ", "SSL_CERT_FILE", "SSL_CERT_DIR",
 	"HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy",
+	"GIT_CONFIG_GLOBAL", "XDG_RUNTIME_DIR", "DOCKER_HOST", "TESTCONTAINERS_RYUK_DISABLED",
 }
 
 var (

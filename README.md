@@ -130,4 +130,174 @@ task build                  # vite build → go build → bin/drift
 
 ## Продакшен
 
-`deploy/kratos/kratos.yml` рассчитан на `http://localhost:8080` и запускается с `--dev`. Для боевого домена поменяйте `base_url`, все `ui_url`, `allowed_return_urls`, `passkey.config.rp.id/origins`, уберите `--dev` (нужен HTTPS) и задайте `DRIFT_PUBLIC_URL`.
+На сервере `drift` работает бинарником на хосте под пользователем (`systemd --user`), а не в контейнере: агенты и терминал видят toolchain проектов (node, pnpm, go, python, podman), `~/.gitconfig` и SSH-ключи, а лишнего контейнерного слоя нет. В podman — только Postgres и Kratos, в сети хоста и на `127.0.0.1`, без pod, `pasta` и `rootlessport`. HTTPS и сжатие — во внешнем reverse proxy (Caddy).
+
+Сборка бинарника на машине разработчика (`GOAMD64=v3` — для CPU с AVX2):
+
+```sh
+task web:build && (cd app && GOAMD64=v3 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ../bin/drift ./cmd/server)
+```
+
+Каталог на сервере (`~/drift`): `compose.yml`, `deploy/kratos/`, `bin/drift`, `.env`, `compose.override.yml`, данные в `data/`. `compose.override.yml` в `.gitignore`, podman-compose подхватывает его сам. Пример для продакшена:
+
+```yaml
+x-podman:
+  in_pod: false
+
+x-kratos-dsn: &kratos-dsn postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/kratos?sslmode=disable&max_conns=5&max_idle_conns=1
+
+services:
+  drift:
+    profiles: [container]
+
+  postgres:
+    network_mode: host
+    ports: !reset []
+    mem_limit: 256m
+    restart: always
+    shm_size: 64m
+    healthcheck:
+      interval: 30s
+    command:
+      - postgres
+      - -c
+      - listen_addresses=127.0.0.1
+      - -c
+      - max_connections=25
+      - -c
+      - shared_buffers=48MB
+      - -c
+      - effective_cache_size=192MB
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - wal_buffers=2MB
+      - -c
+      - min_wal_size=32MB
+      - -c
+      - max_wal_size=256MB
+      - -c
+      - jit=off
+      - -c
+      - max_worker_processes=2
+      - -c
+      - max_parallel_workers=0
+      - -c
+      - max_parallel_workers_per_gather=0
+      - -c
+      - autovacuum_max_workers=1
+
+  kratos-db:
+    network_mode: host
+    environment:
+      PGHOST: 127.0.0.1
+
+  kratos-migrate:
+    network_mode: host
+    environment:
+      DSN: *kratos-dsn
+
+  kratos:
+    network_mode: host
+    ports: !reset []
+    mem_limit: 128m
+    restart: always
+    command: serve -c /etc/config/kratos/kratos.yml
+    healthcheck:
+      interval: 30s
+    environment:
+      DSN: *kratos-dsn
+      LOG_LEVEL: warning
+      GOMEMLIMIT: 48MiB
+      SERVE_PUBLIC_HOST: 127.0.0.1
+      SERVE_ADMIN_HOST: 127.0.0.1
+      SERVE_PUBLIC_BASE_URL: https://${DRIFT_DOMAIN}/.ory/kratos/public/
+      SERVE_ADMIN_BASE_URL: http://127.0.0.1:4434/
+      SELFSERVICE_DEFAULT_BROWSER_RETURN_URL: https://${DRIFT_DOMAIN}/
+      SELFSERVICE_ALLOWED_RETURN_URLS: https://${DRIFT_DOMAIN}
+      SELFSERVICE_METHODS_PASSKEY_CONFIG_RP_ID: ${DRIFT_DOMAIN}
+      SELFSERVICE_METHODS_PASSKEY_CONFIG_RP_ORIGINS: https://${DRIFT_DOMAIN}
+      SELFSERVICE_FLOWS_ERROR_UI_URL: https://${DRIFT_DOMAIN}/error
+      SELFSERVICE_FLOWS_LOGIN_UI_URL: https://${DRIFT_DOMAIN}/login
+      SELFSERVICE_FLOWS_REGISTRATION_UI_URL: https://${DRIFT_DOMAIN}/setup
+      SELFSERVICE_FLOWS_SETTINGS_UI_URL: https://${DRIFT_DOMAIN}/settings
+      SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL: https://${DRIFT_DOMAIN}/login
+```
+
+- `drift` из compose выключен профилем: его заменяет `systemd`-сервис ниже (`podman-compose --profile container up` вернёт контейнер).
+- `in_pod: false` — podman-compose по умолчанию собирает сервисы в pod, а pod несовместим с `userns_mode`.
+- `restart: always` — после перезагрузки контейнеры поднимает `podman-restart.service` (`systemctl --user enable podman-restart.service`, нужен `loginctl enable-linger`); `unless-stopped` он не трогает.
+- `healthcheck.interval: 30s` — каждая проверка podman запускает процесс через таймер systemd; `start_interval` podman не поддерживает, поэтому первая проверка ждёт полный интервал.
+- Kratos без `--dev` (secure cookie, нужен HTTPS); URL из `kratos.yml` перекрываются переменными окружения.
+
+`.env` (`chmod 600`; его читают и podman-compose, и `systemd`):
+
+```dotenv
+DRIFT_DOMAIN=drift.example.com
+
+POSTGRES_USER=drift
+POSTGRES_PASSWORD=<openssl rand -hex 24>
+POSTGRES_DB=drift
+
+KRATOS_SECRETS_COOKIE=<openssl rand -hex 32>
+KRATOS_SECRETS_CIPHER=<openssl rand -hex 16>
+KRATOS_PASSKEY_ENABLED=true
+
+DRIFT_ADDR=127.0.0.1:8080
+DRIFT_PUBLIC_URL=https://drift.example.com
+DATABASE_URL=postgres://drift:<openssl rand -hex 24>@127.0.0.1:5432/drift?sslmode=disable
+KRATOS_PUBLIC_URL=http://127.0.0.1:4433
+KRATOS_ADMIN_URL=http://127.0.0.1:4434
+DRIFT_WORKSPACE_ROOT=/home/user/work
+DRIFT_CHATS_DIR=/home/user/drift/data/chats
+DRIFT_AGENTS_DIR=/home/user/drift/data/agents
+DRIFT_SHELL=fish
+GOMEMLIMIT=192MiB
+
+GIT_CONFIG_GLOBAL=/home/user/.gitconfig
+XDG_RUNTIME_DIR=/run/user/1000
+DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
+TESTCONTAINERS_RYUK_DISABLED=true
+HTTP_PROXY=http://127.0.0.1:2080
+HTTPS_PROXY=http://127.0.0.1:2080
+http_proxy=http://127.0.0.1:2080
+https_proxy=http://127.0.0.1:2080
+NO_PROXY=localhost,127.0.0.1,::1
+no_proxy=localhost,127.0.0.1,::1
+```
+
+`~/.config/systemd/user/drift.service`:
+
+```ini
+[Unit]
+Description=Drift (web UI for coding agents)
+After=network-online.target evx-gw.service podman-restart.service
+Wants=podman-restart.service
+
+[Service]
+WorkingDirectory=%h/drift
+EnvironmentFile=%h/drift/.env
+Environment=PATH=%h/.local/bin:%h/.npm-global/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=%h/drift/bin/drift
+Restart=always
+RestartSec=3
+KillMode=mixed
+TimeoutStopSec=20
+
+[Install]
+WantedBy=default.target
+```
+
+Запуск и обновление:
+
+```sh
+cd ~/drift && podman-compose up -d
+systemctl --user enable --now drift.service
+scp bin/drift server:drift/bin/drift.new && ssh server 'mv ~/drift/bin/drift.new ~/drift/bin/drift && systemctl --user restart drift'
+```
+
+CLI агентов ставятся на хост в `PATH` сервиса (`~/.local/bin`, `~/.npm-global/bin`), версии — из `ARG` в `Containerfile`: `claude`, `codex` и `agy` (архив `linux-x64-musl/cli_linux_x64_musl.tar.gz` из `antigravity-public`, сверить `AGY_SHA512_AMD64`, бинарник `antigravity` установить как `agy`).
+
+Caddy: `reverse_proxy 127.0.0.1:8080` (SSE и WebSocket проходят без настроек).
