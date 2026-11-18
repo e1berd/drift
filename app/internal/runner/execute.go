@@ -53,6 +53,7 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 		return
 	}
 	defer r.release()
+	r.supersedeOpenCards(req.Owner, req.Session)
 
 	saveSessionID := func(id string) {
 		if err := r.q.SetAgentSessionID(r.ctx, db.SetAgentSessionIDParams{ID: req.Session, AgentSessionID: id}); err != nil {
@@ -104,6 +105,7 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 	default:
 		t.closeTools(toolDone)
 	}
+	r.settleLimits(context.WithoutCancel(ctx), rc.Agent, uuidString(sub.ID), req, t)
 }
 
 type agentStream interface {

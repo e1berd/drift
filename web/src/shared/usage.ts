@@ -33,3 +33,16 @@ export function formatReset(seconds: number, lang: string): string {
     if (seconds < 48 * 3600) return format.format(Math.round(seconds / 3600), 'hour')
     return format.format(Math.round(seconds / 86_400), 'day')
 }
+
+/** "15:00" today, "пт, 15:00" later in the week, "21 нояб., 15:00" beyond it. */
+export function formatResetClock(iso: string, lang: string, now = Date.now()): string {
+    const reset = new Date(iso)
+    const days = (reset.getTime() - now) / 86_400_000
+    const sameDay = reset.toDateString() === new Date(now).toDateString()
+    const options: Intl.DateTimeFormatOptions = sameDay
+        ? { hour: '2-digit', minute: '2-digit' }
+        : days < 6
+          ? { weekday: 'short', hour: '2-digit', minute: '2-digit' }
+          : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }
+    return new Intl.DateTimeFormat(lang, options).format(reset)
+}

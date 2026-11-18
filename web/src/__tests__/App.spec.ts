@@ -35,6 +35,7 @@ beforeEach(() => {
             const { pathname } = requestURL(input)
             if (pathname === '/api/projects') return Response.json({ projects: [] })
             if (pathname === '/api/drafts') return Response.json({ drafts: [] })
+            if (pathname === '/api/sessions') return Response.json({ sessions: [] })
             return Response.json(whoami)
         }),
     )
@@ -72,5 +73,6 @@ describe('App', () => {
         expect(requestedPaths()).toContain('/.ory/kratos/public/sessions/whoami')
         expect(requestedPaths()).toContain('/api/projects')
         expect(requestedPaths()).toContain('/api/drafts')
+        expect(requestedPaths()).toContain('/api/sessions')
     })
 })

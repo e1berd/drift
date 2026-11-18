@@ -46,7 +46,7 @@ func (r *Runner) plan(agent string, req workspace.RunRequest, agentSessionID, di
 		}
 		return runPlan{
 			bin:     r.cli.Codex,
-			args:    codexArgs(req, agentSessionID, paths),
+			args:    codexArgs(req, agentSessionID, paths, r.askMCP),
 			stdin:   req.Text,
 			stream:  &codexStream{t: t, projectDir: dir, threadID: agentSessionID, saveSessionID: saveSessionID},
 			cleanup: removeFolder(folder),
@@ -65,7 +65,7 @@ func (r *Runner) plan(agent string, req workspace.RunRequest, agentSessionID, di
 	}
 	return runPlan{
 		bin:     r.cli.Claude,
-		args:    claudeArgs(req, agentSessionID, len(images) > 0),
+		args:    claudeArgs(req, agentSessionID, len(images) > 0, r.askMCP),
 		stdin:   claudeInput(req.Text, images),
 		stream:  &claudeStream{t: t, projectDir: dir, agentSessionID: agentSessionID, saveSessionID: saveSessionID},
 		cleanup: func() {},
@@ -139,8 +139,9 @@ func withImagePaths(req workspace.RunRequest, paths []string) workspace.RunReque
 	return req
 }
 
-func claudeArgs(req workspace.RunRequest, agentSessionID string, streamInput bool) []string {
+func claudeArgs(req workspace.RunRequest, agentSessionID string, streamInput bool, askMCP mcpCommand) []string {
 	args := []string{"-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"}
+	args = append(args, askMCP.claudeArgs()...)
 	if streamInput {
 		args = append(args, "--input-format", "stream-json")
 	}

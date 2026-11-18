@@ -1,10 +1,21 @@
 package runner
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/e1berd/drift/app/internal/agents"
+	"github.com/e1berd/drift/app/internal/askuser"
+
 	"github.com/e1berd/drift/app/internal/workspace"
+)
+
+var testMCP = mcpCommand{path: "/bin/drift", args: []string{"mcp-ask"}}
+
+const (
+	claudeMCP = `--mcp-config {"mcpServers":{"drift":{"args":["mcp-ask"],"command":"/bin/drift"}}} --allowedTools mcp__drift__ask_user --disallowedTools AskUserQuestion`
+	codexMCP  = `-c mcp_servers.drift.command="/bin/drift" -c mcp_servers.drift.args=["mcp-ask"] -c mcp_servers.drift.default_tools_approval_mode="approve"`
 )
 
 type recorded struct {
@@ -31,6 +42,19 @@ func (f *fakeSink) finishTool(callID, output string, failed bool) {
 	f.got = append(f.got, recorded{"result", callID, status + " " + output})
 }
 func (f *fakeSink) closeTools(status string) { f.got = append(f.got, recorded{"close", status, ""}) }
+func (f *fakeSink) question(questions []askuser.Question) {
+	f.got = append(f.got, recorded{"question", questions[0].Question, strconv.Itoa(len(questions))})
+}
+func (f *fakeSink) usage(window agents.Window) {
+	f.got = append(f.got, recorded{"usage", window.ID, strconv.FormatFloat(window.UsedPercent, 'f', 0, 64)})
+}
+func (f *fakeSink) limitReached(window agents.Window, text string) {
+	reset := ""
+	if window.ResetTime != nil {
+		reset = strconv.FormatInt(window.ResetTime.Unix(), 10)
+	}
+	f.got = append(f.got, recorded{"limit", window.ID + " " + reset, text})
+}
 func (f *fakeSink) activity(phase, tool, text string, tokens int) {
 	f.activities = append(f.activities, recorded{phase, tool, text})
 	f.tokens = tokens
@@ -86,12 +110,12 @@ func TestClaudeStreamReportsFailedResult(t *testing.T) {
 }
 
 func TestClaudeArgsResumeAndModes(t *testing.T) {
-	args := strings.Join(claudeArgs(runRequest("opus", "acceptEdits"), "abc", false), " ")
-	if args != "-p --output-format stream-json --verbose --include-partial-messages --model opus --permission-mode acceptEdits --resume abc" {
+	args := strings.Join(claudeArgs(runRequest("opus", "acceptEdits"), "abc", false, testMCP), " ")
+	if args != "-p --output-format stream-json --verbose --include-partial-messages "+claudeMCP+" --model opus --permission-mode acceptEdits --resume abc" {
 		t.Errorf("args %q", args)
 	}
-	args = strings.Join(claudeArgs(runRequest("default", "default"), "", false), " ")
-	if args != "-p --output-format stream-json --verbose --include-partial-messages" {
+	args = strings.Join(claudeArgs(runRequest("default", "default"), "", false, testMCP), " ")
+	if args != "-p --output-format stream-json --verbose --include-partial-messages "+claudeMCP {
 		t.Errorf("args %q", args)
 	}
 }

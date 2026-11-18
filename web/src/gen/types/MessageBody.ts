@@ -3,13 +3,22 @@
 * Do not edit manually.
 */
 
+import type { Answer } from './Answer'
 import type { Attachment } from './Attachment'
+import type { Question } from './Question'
 
 export const messageBodyStatusEnum = {
   running: 'running',
   done: 'done',
   stopped: 'stopped',
   error: 'error',
+  pending: 'pending',
+  answered: 'answered',
+  dismissed: 'dismissed',
+  reached: 'reached',
+  scheduled: 'scheduled',
+  continued: 'continued',
+  superseded: 'superseded',
 } as const;
 
 export type MessageBodyStatusEnumKey = (typeof messageBodyStatusEnum)[keyof typeof messageBodyStatusEnum];
@@ -19,6 +28,7 @@ export const messageBodyCodeEnum = {
   failed: 'failed',
   noSubscription: 'noSubscription',
   unsupportedAgent: 'unsupportedAgent',
+  usageWarning: 'usageWarning',
 } as const;
 
 export type MessageBodyCodeEnumKey = (typeof messageBodyCodeEnum)[keyof typeof messageBodyCodeEnum];
@@ -28,6 +38,10 @@ export type MessageBody = {
   name?: string;
   input?: string;
   output?: string[];
+  /**
+   * @description Tool call: running, done, stopped, error. Question card: pending, answered, dismissed. Limit card: reached, scheduled, continued, superseded.
+   * @type string | undefined
+   */
   status?: MessageBodyStatusEnumKey;
   meta?: string;
   /**
@@ -36,4 +50,23 @@ export type MessageBody = {
    */
   code?: MessageBodyCodeEnumKey;
   attachments?: Attachment[];
+  questions?: Question[];
+  answers?: Answer[];
+  /**
+   * @description Usage limit window of a usageWarning note or a limit card, e.g. five_hour.
+   * @type string | undefined
+   */
+  window?: string;
+  windowMinutes?: number;
+  /**
+   * @description Share of the window still unused, 0 to 100.
+   * @type integer | undefined
+   */
+  percentLeft?: number;
+  /**
+   * @description
+   * Format: `date-time`
+   * @type string | undefined
+   */
+  resetTime?: string;
 };

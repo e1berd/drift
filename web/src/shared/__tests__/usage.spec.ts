@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { secondsUntil, usageWindowKind } from '@/shared/usage'
+import { formatResetClock, secondsUntil, usageWindowKind } from '@/shared/usage'
 
 describe('usageWindowKind', () => {
     it('names Claude windows by id', () => {
@@ -21,5 +21,21 @@ describe('secondsUntil', () => {
         expect(secondsUntil('2026-11-18T12:00:00Z', now)).toBe(7200)
         expect(secondsUntil('2026-11-18T09:00:00Z', now)).toBe(0)
         expect(secondsUntil(undefined, now)).toBeNull()
+    })
+})
+
+describe('formatResetClock', () => {
+    it('shows only the time for a reset later today', () => {
+        const now = new Date(2026, 10, 18, 10, 0).getTime()
+        expect(formatResetClock(new Date(2026, 10, 18, 15, 0).toISOString(), 'en-GB', now)).toBe(
+            '15:00',
+        )
+    })
+
+    it('adds the weekday for a reset within the week', () => {
+        const now = new Date(2026, 10, 18, 10, 0).getTime()
+        expect(formatResetClock(new Date(2026, 10, 20, 9, 30).toISOString(), 'en-GB', now)).toBe(
+            'Fri 09:30',
+        )
     })
 })

@@ -27,10 +27,14 @@ type Runner struct {
 	cli     agents.CLI
 	folders workspace.Folders
 	log     *slog.Logger
+	askMCP  mcpCommand
 
-	slots chan struct{}
-	mu    sync.Mutex
-	runs  map[pgtype.UUID]*run
+	slots  chan struct{}
+	mu     sync.Mutex
+	runs   map[pgtype.UUID]*run
+	parked map[pgtype.UUID]*parkedSession
+	usage  map[string]cachedUsage
+	warned map[string]float64
 }
 
 type run struct {
@@ -45,17 +49,33 @@ func New(ctx context.Context, pool *pgxpool.Pool, hub *events.Hub, cli agents.CL
 	if err := q.ResetRunningSessions(ctx); err != nil {
 		return nil, err
 	}
-	return &Runner{
-		ctx: ctx, q: q, hub: hub, cli: cli, folders: folders, log: log,
-		slots: make(chan struct{}, maxParallelRuns),
-		runs:  make(map[pgtype.UUID]*run),
-	}, nil
+	askMCP, err := askMCPCommand()
+	if err != nil {
+		return nil, err
+	}
+	r := &Runner{
+		ctx: ctx, q: q, hub: hub, cli: cli, folders: folders, log: log, askMCP: askMCP,
+		slots:  make(chan struct{}, maxParallelRuns),
+		runs:   make(map[pgtype.UUID]*run),
+		parked: make(map[pgtype.UUID]*parkedSession),
+		usage:  make(map[string]cachedUsage),
+		warned: make(map[string]float64),
+	}
+	if err := r.restoreContinuations(); err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
-// Enqueue starts the session's agent, or queues the request while it is busy.
+// Enqueue starts the session's agent, or queues the request while it is busy or waits for
+// a usage limit to reset.
 func (r *Runner) Enqueue(req workspace.RunRequest) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if parked, ok := r.parked[req.Session]; ok {
+		parked.queue = append(parked.queue, req)
+		return
+	}
 	if current, ok := r.runs[req.Session]; ok {
 		current.queue = append(current.queue, req)
 		return

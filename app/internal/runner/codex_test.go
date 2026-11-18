@@ -55,26 +55,26 @@ func TestCodexStreamTurnsEventsIntoTranscript(t *testing.T) {
 func TestCodexStreamReportsFailedTurn(t *testing.T) {
 	sink := &fakeSink{}
 	stream := codexStream{t: sink, saveSessionID: func(string) {}}
-	stream.handle([]byte(`{"type":"error","message":"usage limit"}`))
-	stream.handle([]byte(`{"type":"turn.failed","error":{"message":"usage limit"}}`))
-	want := []recorded{{"close", "error", ""}, {"note", "failed", "usage limit"}}
+	stream.handle([]byte(`{"type":"error","message":"stream disconnected"}`))
+	stream.handle([]byte(`{"type":"turn.failed","error":{"message":"stream disconnected"}}`))
+	want := []recorded{{"close", "error", ""}, {"note", "failed", "stream disconnected"}}
 	if len(sink.got) != 2 || sink.got[0] != want[0] || sink.got[1] != want[1] || !stream.done() {
 		t.Fatalf("got %v", sink.got)
 	}
 }
 
 func TestCodexArgs(t *testing.T) {
-	args := strings.Join(codexArgs(runRequest("gpt-5.5", "acceptEdits"), "", []string{"/tmp/a.png"}), " ")
-	want := `exec --json --skip-git-repo-check --model gpt-5.5 -c sandbox_mode="workspace-write" -c approval_policy="never" --image=/tmp/a.png -- -`
+	args := strings.Join(codexArgs(runRequest("gpt-5.5", "acceptEdits"), "", []string{"/tmp/a.png"}, testMCP), " ")
+	want := `exec --json --skip-git-repo-check --model gpt-5.5 -c sandbox_mode="workspace-write" -c approval_policy="never" ` + codexMCP + ` --image=/tmp/a.png -- -`
 	if args != want {
 		t.Errorf("args %q", args)
 	}
-	args = strings.Join(codexArgs(runRequest("default", "bypassPermissions"), "th-1", nil), " ")
-	want = "exec resume --json --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox -- th-1 -"
+	args = strings.Join(codexArgs(runRequest("default", "bypassPermissions"), "th-1", nil, testMCP), " ")
+	want = "exec resume --json --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox " + codexMCP + " -- th-1 -"
 	if args != want {
 		t.Errorf("args %q", args)
 	}
-	args = strings.Join(codexArgs(runRequest("", "plan"), "", nil), " ")
+	args = strings.Join(codexArgs(runRequest("", "plan"), "", nil, testMCP), " ")
 	if !strings.Contains(args, `sandbox_mode="read-only"`) {
 		t.Errorf("args %q", args)
 	}
@@ -96,7 +96,7 @@ func TestClaudeInputCarriesImages(t *testing.T) {
 	if content[1].Source.MediaType != "image/png" || content[1].Source.Data != base64.StdEncoding.EncodeToString([]byte{1, 2}) {
 		t.Errorf("image block %+v", content[1].Source)
 	}
-	args := strings.Join(claudeArgs(runRequest("", ""), "", true), " ")
+	args := strings.Join(claudeArgs(runRequest("", ""), "", true, testMCP), " ")
 	if !strings.Contains(args, "--input-format stream-json") {
 		t.Errorf("args %q", args)
 	}

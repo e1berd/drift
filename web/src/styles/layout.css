@@ -58,3 +58,36 @@
         background: var(--ui-border);
     }
 }
+
+.chat-card {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--ui-spacing) * 3);
+    margin-inline-start: 36px;
+    padding: calc(var(--ui-spacing) * 4);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius);
+    background: var(--ui-background);
+
+    &[data-closed] {
+        color: var(--ui-muted-foreground);
+    }
+
+    & > .chat-card-head {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--ui-spacing) * 2);
+        font-weight: 600;
+    }
+
+    & > .chat-card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: calc(var(--ui-spacing) * 2);
+    }
+
+    @media (max-width: 760px) {
+        margin-inline-start: 0;
+    }
+}

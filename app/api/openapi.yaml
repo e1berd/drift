@@ -578,6 +578,67 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Message' }
         default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/messages/{messageId}:answer:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+      - $ref: '#/components/parameters/MessageId'
+    post:
+      operationId: answerQuestion
+      description: >-
+        Custom method (AIP-136) on a question card: stores the user's answers and sends them
+        to the agent as the next prompt. Only a pending card takes answers.
+      tags: [sessions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnswerInput' }
+      responses:
+        '200':
+          description: The answered question card.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/messages/{messageId}:continue:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+      - $ref: '#/components/parameters/MessageId'
+    post:
+      operationId: continueAfterLimit
+      description: >-
+        Custom method (AIP-136) on a limit card: asks the agent to continue right away,
+        together with messages that waited for the limit.
+      tags: [sessions]
+      responses:
+        '204': { description: The continuation is queued. }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/messages/{messageId}:scheduleContinue:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+      - $ref: '#/components/parameters/MessageId'
+    post:
+      operationId: scheduleContinueAfterLimit
+      description: >-
+        Custom method (AIP-136) on a limit card: the agent continues on its own a minute after
+        the limit resets. Messages sent meanwhile wait and reach it with the continuation.
+      tags: [sessions]
+      responses:
+        '204': { description: The continuation is scheduled. }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/messages/{messageId}:cancelContinue:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+      - $ref: '#/components/parameters/MessageId'
+    post:
+      operationId: cancelContinueAfterLimit
+      description: >-
+        Custom method (AIP-136) on a limit card: drops the scheduled continuation; messages
+        that waited for it go to the agent now.
+      tags: [sessions]
+      responses:
+        '204': { description: The continuation is cancelled. }
+        default: { $ref: '#/components/responses/Error' }
   /attachments:
     post:
       operationId: uploadAttachment
@@ -798,6 +859,11 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    MessageId:
+      name: messageId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     DraftKey:
       name: key
       in: path
@@ -956,16 +1022,77 @@ components:
           type: array
           items: { type: string }
         status:
+          description: >-
+            Tool call: running, done, stopped, error. Question card: pending, answered,
+            dismissed. Limit card: reached, scheduled, continued, superseded.
           type: string
-          enum: [running, done, stopped, error]
+          enum:
+            - running
+            - done
+            - stopped
+            - error
+            - pending
+            - answered
+            - dismissed
+            - reached
+            - scheduled
+            - continued
+            - superseded
         meta: { type: string }
         code:
           description: Why a system note was written; the client words it.
           type: string
-          enum: [stopped, failed, noSubscription, unsupportedAgent]
+          enum: [stopped, failed, noSubscription, unsupportedAgent, usageWarning]
         attachments:
           type: array
           items: { $ref: '#/components/schemas/Attachment' }
+        questions:
+          type: array
+          items: { $ref: '#/components/schemas/Question' }
+        answers:
+          type: array
+          items: { $ref: '#/components/schemas/Answer' }
+        window:
+          description: Usage limit window of a usageWarning note or a limit card, e.g. five_hour.
+          type: string
+        windowMinutes: { type: integer }
+        percentLeft:
+          description: Share of the window still unused, 0 to 100.
+          type: integer
+        resetTime: { type: string, format: date-time }
+    Question:
+      type: object
+      required: [question]
+      properties:
+        question: { type: string }
+        header: { type: string }
+        multiSelect: { type: boolean }
+        options:
+          type: array
+          items: { $ref: '#/components/schemas/QuestionOption' }
+    QuestionOption:
+      type: object
+      required: [label]
+      properties:
+        label: { type: string }
+        description: { type: string }
+    Answer:
+      description: The answer to the question with the same index; options, own text or both.
+      type: object
+      properties:
+        selected:
+          type: array
+          items: { type: string }
+        custom: { type: string, maxLength: 2000 }
+    AnswerInput:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          items: { $ref: '#/components/schemas/Answer' }
+        model: { type: string, maxLength: 100 }
+        mode: { $ref: '#/components/schemas/PermissionMode' }
     Message:
       type: object
       required: [id, sessionId, role, kind, body, createTime]
@@ -977,7 +1104,7 @@ components:
           enum: [user, assistant, system]
         kind:
           type: string
-          enum: [text, thinking, tool, note]
+          enum: [text, thinking, tool, note, question, limit]
         body: { $ref: '#/components/schemas/MessageBody' }
         createTime: { type: string, format: date-time }
     MessageInput:

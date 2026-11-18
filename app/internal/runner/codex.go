@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/e1berd/drift/app/internal/agents"
+	"github.com/e1berd/drift/app/internal/askuser"
 	"github.com/e1berd/drift/app/internal/workspace"
 )
 
@@ -15,7 +17,7 @@ var codexSandboxes = map[string]string{
 	"auto":        "workspace-write",
 }
 
-func codexArgs(req workspace.RunRequest, threadID string, images []string) []string {
+func codexArgs(req workspace.RunRequest, threadID string, images []string, askMCP mcpCommand) []string {
 	args := []string{"exec"}
 	if threadID != "" {
 		args = append(args, "resume")
@@ -29,6 +31,7 @@ func codexArgs(req workspace.RunRequest, threadID string, images []string) []str
 	} else {
 		args = append(args, "-c", `sandbox_mode="`+codexSandboxes[req.Mode]+`"`, "-c", `approval_policy="never"`)
 	}
+	args = append(args, askMCP.codexArgs()...)
 	for _, image := range images {
 		args = append(args, "--image="+image)
 	}
@@ -124,11 +127,22 @@ func (s *codexStream) handle(line []byte) {
 		if event.Error != nil {
 			message = event.Error.Message
 		}
-		s.t.note(noteFailed, firstNonEmpty(message, event.Message))
+		s.failed(firstNonEmpty(message, event.Message))
 	}
 }
 
+func (s *codexStream) failed(message string) {
+	if limitExhaustedMessage.MatchString(message) {
+		s.t.limitReached(agents.Window{}, message)
+		return
+	}
+	s.t.note(noteFailed, message)
+}
+
 func (s *codexStream) itemStarted(item codexItem) {
+	if item.asksUser() {
+		return
+	}
 	switch item.Type {
 	case "reasoning":
 		s.t.activity(phaseThinking, "", "", 0)
@@ -149,6 +163,10 @@ func (s *codexStream) itemStarted(item codexItem) {
 }
 
 func (s *codexStream) itemCompleted(item codexItem) {
+	if item.asksUser() {
+		askQuestions(s.t, item.Arguments)
+		return
+	}
 	switch item.Type {
 	case "reasoning":
 		s.t.thinking(item.Text)
@@ -201,6 +219,10 @@ func (s *codexStream) toolOutput(item codexItem) string {
 
 func (s *codexStream) relative(text string) string {
 	return strings.ReplaceAll(text, s.projectDir+"/", "")
+}
+
+func (item codexItem) asksUser() bool {
+	return item.Type == "mcp_tool_call" && item.Server == askuser.ServerName && item.Tool == askuser.ToolName
 }
 
 func codexFailed(item codexItem) bool {

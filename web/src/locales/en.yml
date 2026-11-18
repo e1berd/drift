@@ -77,6 +77,7 @@ composer:
     new: 'Describe the task for {agent}…'
     reply: "Reply to {agent}…  / for commands, {'@'} for files"
     queue: '{agent} is still answering — this message goes next…'
+    afterReset: 'The limit is used up — {agent} gets this once it resets…'
   attach: 'Attach an image'
   imagesOnly: 'Up to 10 PNG, JPEG, GIF or WebP images of at most 5 MB each can be attached. Left out:'
   removeAttachment: 'Remove {name}'

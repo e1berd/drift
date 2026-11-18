@@ -69,6 +69,17 @@ const agent = computed(() => session.data.value?.agent ?? 'claude')
 const running = computed(() => session.data.value?.status === 'running')
 const { activities } = useEventStream()
 const activity = computed(() => activities.value.get(sessionId.value))
+const waitingForReset = computed(() =>
+    messages.value.some(
+        (message) => message.kind === 'limit' && message.body.status === 'scheduled',
+    ),
+)
+const placeholder = computed(() => {
+    const name = AGENTS[agent.value].name
+    if (waitingForReset.value) return t('composer.placeholder.afterReset', { agent: name })
+    if (running.value) return t('composer.placeholder.queue', { agent: name })
+    return t('composer.placeholder.reply', { agent: name })
+})
 const runningTool = computed(() => {
     const last = messages.value.at(-1)
     return last?.kind === 'tool' && last.body.status === 'running' ? last.body.name : undefined
@@ -159,11 +170,7 @@ const stop = useStopSession({
                     :draft-key="draftKey(sessionId)"
                     :agent="agent"
                     :history="history"
-                    :placeholder="
-                        running
-                            ? t('composer.placeholder.queue', { agent: AGENTS[agent].name })
-                            : t('composer.placeholder.reply', { agent: AGENTS[agent].name })
-                    "
+                    :placeholder="placeholder"
                     :busy="
                         post.isPending.value ||
                         update.isPending.value ||

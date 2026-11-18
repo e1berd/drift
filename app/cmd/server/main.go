@@ -10,6 +10,7 @@ import (
 
 	schema "github.com/e1berd/drift/app/db"
 	"github.com/e1berd/drift/app/internal/agents"
+	"github.com/e1berd/drift/app/internal/askuser"
 	"github.com/e1berd/drift/app/internal/auth"
 	"github.com/e1berd/drift/app/internal/config"
 	"github.com/e1berd/drift/app/internal/database"
@@ -30,6 +31,12 @@ import (
 )
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == askuser.Command {
+		if err := askuser.Serve(os.Stdin, os.Stdout); err != nil {
+			os.Exit(1)
+		}
+		return
+	}
 	if err := run(); err != nil {
 		slog.Error("drift stopped", "err", err)
 		os.Exit(1)

@@ -6,6 +6,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/e1berd/drift/app/internal/agents"
+	"github.com/e1berd/drift/app/internal/askuser"
 	"github.com/e1berd/drift/app/internal/db"
 	"github.com/e1berd/drift/app/internal/workspace"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -16,6 +18,10 @@ const (
 	noteFailed           = "failed"
 	noteNoSubscription   = "noSubscription"
 	noteUnsupportedAgent = "unsupportedAgent"
+	noteUsageWarning     = "usageWarning"
+
+	kindQuestion = "question"
+	kindLimit    = "limit"
 
 	toolRunning = "running"
 	toolDone    = "done"
@@ -64,6 +70,11 @@ type Activity struct {
 	Tokens    int    `json:"tokens,omitempty"`
 }
 
+type limitHit struct {
+	window agents.Window
+	text   string
+}
+
 type openTool struct {
 	id   pgtype.UUID
 	body toolBody
@@ -78,10 +89,16 @@ type transcript struct {
 
 	lastPhase    string
 	lastActivity time.Time
+
+	windows map[string]agents.Window
+	limit   *limitHit
 }
 
 func newTranscript(r *Runner, owner string, session pgtype.UUID) *transcript {
-	return &transcript{r: r, owner: owner, session: session, tools: make(map[string]*openTool)}
+	return &transcript{
+		r: r, owner: owner, session: session,
+		tools: make(map[string]*openTool), windows: make(map[string]agents.Window),
+	}
 }
 
 func (t *transcript) add(role, kind string, body any) (db.Message, bool) {
@@ -100,17 +117,7 @@ func (t *transcript) add(role, kind string, body any) (db.Message, bool) {
 }
 
 func (t *transcript) update(id pgtype.UUID, body any) {
-	raw, err := json.Marshal(body)
-	if err != nil {
-		t.r.log.Warn("encode message", "err", err)
-		return
-	}
-	m, err := t.r.q.UpdateMessageBody(t.r.ctx, db.UpdateMessageBodyParams{ID: id, Body: raw})
-	if err != nil {
-		t.r.log.Warn("update agent message", "err", err)
-		return
-	}
-	t.r.hub.Publish(t.owner, "message.updated", workspace.MessageOf(m), "")
+	t.r.updateMessage(t.owner, id, body)
 }
 
 func (t *transcript) text(text string) {
@@ -127,6 +134,18 @@ func (t *transcript) thinking(text string) {
 
 func (t *transcript) note(code, text string) {
 	t.add("system", "note", noteBody{Code: code, Text: text})
+}
+
+func (t *transcript) question(questions []askuser.Question) {
+	t.add("assistant", kindQuestion, askuser.Card{Questions: questions, Status: askuser.CardPending})
+}
+
+func (t *transcript) usage(window agents.Window) {
+	t.windows[window.ID] = window
+}
+
+func (t *transcript) limitReached(window agents.Window, text string) {
+	t.limit = &limitHit{window: window, text: text}
 }
 
 func (t *transcript) activity(phase, tool, text string, tokens int) {
@@ -175,6 +194,20 @@ func (t *transcript) closeTools(status string) {
 		t.update(tool.id, tool.body)
 	}
 	t.order = nil
+}
+
+func (r *Runner) updateMessage(owner string, id pgtype.UUID, body any) {
+	raw, err := json.Marshal(body)
+	if err != nil {
+		r.log.Warn("encode message", "err", err)
+		return
+	}
+	m, err := r.q.UpdateMessageBody(r.ctx, db.UpdateMessageBodyParams{ID: id, Body: raw})
+	if err != nil {
+		r.log.Warn("update agent message", "err", err)
+		return
+	}
+	r.hub.Publish(owner, "message.updated", workspace.MessageOf(m), "")
 }
 
 func outputLines(output string) []string {

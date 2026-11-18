@@ -3,7 +3,14 @@ package runner
 import (
 	"encoding/json"
 	"strings"
+
+	"github.com/e1berd/drift/app/internal/agents"
+	"github.com/e1berd/drift/app/internal/askuser"
 )
+
+const claudeRateLimitError = "rate_limit"
+
+var claudeAskTool = "mcp__" + askuser.ServerName + "__" + askuser.ToolName
 
 type claudeEvent struct {
 	Type            string  `json:"type"`
@@ -13,10 +20,12 @@ type claudeEvent struct {
 	Message         struct {
 		Content json.RawMessage `json:"content"`
 	} `json:"message"`
-	IsError         bool         `json:"is_error"`
-	Result          string       `json:"result"`
-	EstimatedTokens int          `json:"estimated_tokens"`
-	Event           *streamEvent `json:"event"`
+	IsError         bool                 `json:"is_error"`
+	Error           string               `json:"error"`
+	Result          string               `json:"result"`
+	EstimatedTokens int                  `json:"estimated_tokens"`
+	Event           *streamEvent         `json:"event"`
+	RateLimit       *claudeRateLimitInfo `json:"rate_limit_info"`
 }
 
 type streamEvent struct {
@@ -50,6 +59,9 @@ type transcriptSink interface {
 	finishTool(callID, output string, failed bool)
 	closeTools(status string)
 	activity(phase, tool, text string, tokens int)
+	question(questions []askuser.Question)
+	usage(window agents.Window)
+	limitReached(window agents.Window, text string)
 }
 
 type claudeStream struct {
@@ -60,6 +72,7 @@ type claudeStream struct {
 	finished       bool
 	partial        strings.Builder
 	thinkingTokens int
+	limits         claudeLimits
 }
 
 func (s *claudeStream) done() bool { return s.finished }
@@ -79,7 +92,15 @@ func (s *claudeStream) handle(line []byte) {
 		if event.Event != nil {
 			s.streamEvent(*event.Event)
 		}
+	case "rate_limit_event":
+		if event.RateLimit != nil {
+			s.limits.observe(*event.RateLimit, s.t)
+		}
 	case "assistant":
+		if event.Error == claudeRateLimitError {
+			s.limits.refusal = resultText(event.Message.Content)
+			return
+		}
 		for _, block := range blocks(event.Message.Content) {
 			s.assistantBlock(block)
 		}
@@ -94,10 +115,18 @@ func (s *claudeStream) handle(line []byte) {
 	case "result":
 		s.finished = true
 		if event.IsError || event.Subtype != "success" {
-			s.t.closeTools(toolError)
-			s.t.note(noteFailed, firstNonEmpty(event.Result, event.Subtype))
+			s.failed(firstNonEmpty(event.Result, s.limits.refusal, event.Subtype))
 		}
 	}
+}
+
+func (s *claudeStream) failed(message string) {
+	s.t.closeTools(toolError)
+	if window, ok := s.limits.exhausted(message); ok {
+		s.t.limitReached(window, message)
+		return
+	}
+	s.t.note(noteFailed, message)
 }
 
 func (s *claudeStream) systemEvent(event claudeEvent) {
@@ -136,7 +165,9 @@ func (s *claudeStream) blockStarted(block claudeBlock) {
 		s.partial.Reset()
 		s.t.activity(phaseWriting, "", "", 0)
 	case "tool_use":
-		s.t.activity(phaseTool, block.Name, "", 0)
+		if block.Name != claudeAskTool {
+			s.t.activity(phaseTool, block.Name, "", 0)
+		}
 	}
 }
 
@@ -147,6 +178,10 @@ func (s *claudeStream) assistantBlock(block claudeBlock) {
 	case "thinking":
 		s.t.thinking(block.Thinking)
 	case "tool_use":
+		if block.Name == claudeAskTool {
+			askQuestions(s.t, block.Input)
+			return
+		}
 		s.t.startTool(block.ID, block.Name, strings.ReplaceAll(toolInput(block.Input), s.projectDir+"/", ""))
 	}
 }

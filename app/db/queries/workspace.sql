@@ -112,3 +112,15 @@ WHERE s.id = $1 AND s.owner_id = $2;
 
 -- name: UpdateMessageBody :one
 UPDATE messages SET body = $2 WHERE id = $1 RETURNING *;
+
+-- name: GetSessionMessage :one
+SELECT * FROM messages WHERE id = $1 AND session_id = $2;
+
+-- name: ReplaceMessageStatus :many
+UPDATE messages SET body = jsonb_set(body, '{status}', to_jsonb(sqlc.arg(to_status)::text))
+WHERE session_id = $1 AND kind = $2 AND body ->> 'status' = sqlc.arg(from_status)::text
+RETURNING *;
+
+-- name: ListScheduledContinuations :many
+SELECT m.*, s.owner_id FROM messages m JOIN sessions s ON s.id = m.session_id
+WHERE m.kind = 'limit' AND m.body ->> 'status' = 'scheduled';

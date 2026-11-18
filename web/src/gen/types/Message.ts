@@ -18,6 +18,8 @@ export const messageKindEnum = {
   thinking: 'thinking',
   tool: 'tool',
   note: 'note',
+  question: 'question',
+  limit: 'limit',
 } as const;
 
 export type MessageKindEnumKey = (typeof messageKindEnum)[keyof typeof messageKindEnum];

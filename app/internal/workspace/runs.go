@@ -25,6 +25,9 @@ type AgentRunner interface {
 	Enqueue(RunRequest)
 	Interrupt(owner string, session pgtype.UUID) bool
 	Stop(owner string, session pgtype.UUID) bool
+	ContinueNow(owner string, session, message pgtype.UUID) error
+	ScheduleContinue(owner string, session, message pgtype.UUID) error
+	CancelContinue(owner string, session, message pgtype.UUID) error
 }
 
 var permissionModes = map[string]bool{
