@@ -62,6 +62,8 @@ type claudeStream struct {
 	thinkingTokens int
 }
 
+func (s *claudeStream) done() bool { return s.finished }
+
 func (s *claudeStream) handle(line []byte) {
 	var event claudeEvent
 	if json.Unmarshal(line, &event) != nil {

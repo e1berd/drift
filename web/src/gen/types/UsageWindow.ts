@@ -5,10 +5,15 @@
 
 export type UsageWindow = {
   /**
-   * @description five_hour, seven_day, seven_day_opus… (Claude); primary, secondary (Codex).
+   * @description five_hour, seven_day, seven_day_opus… (Claude); primary, secondary (Codex); a model slug such as gemini_4_argon (Antigravity).
    * @type string
    */
   id: string;
+  /**
+   * @description The agent's own name for the window, e.g. the model of an Antigravity quota.
+   * @type string | undefined
+   */
+  label?: string;
   usedPercent: number;
   windowMinutes?: number;
   /**

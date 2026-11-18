@@ -19,7 +19,9 @@ const windows = computed(() =>
         const left = secondsUntil(window.resetTime)
         return {
             ...window,
-            label: t(`window.${usageWindowKind(window)}`, { minutes: window.windowMinutes ?? 0 }),
+            label:
+                window.label ??
+                t(`window.${usageWindowKind(window)}`, { minutes: window.windowMinutes ?? 0 }),
             reset: left === null ? '' : t('resets', { when: formatReset(left, locale.value) }),
         }
     }),

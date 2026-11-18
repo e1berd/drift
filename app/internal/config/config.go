@@ -20,6 +20,8 @@ type Config struct {
 	AgentsRoot      string
 	ClaudeBin       string
 	CodexBin        string
+	Shell           string
+	AntigravityBin  string
 }
 
 // Load reads the configuration from environment variables, falling back to local development defaults.
@@ -44,6 +46,8 @@ func Load() (*Config, error) {
 	cfg.AgentsRoot = agentsRoot
 	cfg.ClaudeBin = env("DRIFT_CLAUDE_BIN", "claude")
 	cfg.CodexBin = env("DRIFT_CODEX_BIN", "codex")
+	cfg.Shell = os.Getenv("DRIFT_SHELL")
+	cfg.AntigravityBin = env("DRIFT_AGY_BIN", "agy")
 
 	urls := []struct {
 		dst      **url.URL

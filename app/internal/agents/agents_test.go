@@ -22,6 +22,8 @@ func TestMain(m *testing.M) {
 		fakeClaude()
 	case "codex":
 		fakeCodex()
+	case "antigravity":
+		fakeAntigravity()
 	default:
 		os.Exit(m.Run())
 	}
@@ -84,7 +86,7 @@ func fakeCLI(t *testing.T, agent string) CLI {
 	}
 	passthroughEnv = append(passthroughEnv, "DRIFT_FAKE_CLI")
 	t.Cleanup(func() { passthroughEnv = passthroughEnv[:len(passthroughEnv)-1] })
-	return CLI{Root: t.TempDir(), Claude: self, Codex: self}
+	return CLI{Root: t.TempDir(), Claude: self, Codex: self, Antigravity: self}
 }
 
 func waitLogin(t *testing.T, login *Login) error {

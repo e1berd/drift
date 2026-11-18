@@ -16,6 +16,7 @@ const usageTTL = time.Minute
 // UsageWindow is one limit window of a subscription, e.g. five hours or a week.
 type UsageWindow struct {
 	ID            string     `json:"id"`
+	Label         string     `json:"label,omitempty"`
 	UsedPercent   float64    `json:"usedPercent"`
 	WindowMinutes int        `json:"windowMinutes,omitempty"`
 	ResetTime     *time.Time `json:"resetTime,omitempty"`

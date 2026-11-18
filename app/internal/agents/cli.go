@@ -1,4 +1,4 @@
-// Package agents drives the official agent CLIs (Claude Code, Codex) on behalf of Drift:
+// Package agents drives the official agent CLIs (Claude Code, Codex, Antigravity) on behalf of Drift:
 // signing in to a subscription, reading the signed-in account and its usage limits.
 // Every subscription gets its own home folder, so several accounts of one agent can coexist.
 package agents
@@ -24,7 +24,10 @@ var passthroughEnv = []string{
 	"HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy",
 }
 
-var ansiEscape = regexp.MustCompile(`\x1b\[[0-9;?]*[A-Za-z]`)
+var (
+	ansiEscape  = regexp.MustCompile(`\x1b\[[0-9;?]*[A-Za-z]`)
+	inputPrompt = regexp.MustCompile(`^.*?(?:> |press Enter:\s*)`)
+)
 
 // Account is who a subscription is signed in as.
 type Account struct {
@@ -32,9 +35,11 @@ type Account struct {
 	Plan  string
 }
 
-// Window is one usage limit window, e.g. the five-hour or the weekly quota.
+// Window is one usage limit window, e.g. the five-hour or the weekly quota, or the quota of
+// one model; Label is the agent's own name for it when the agent names its windows.
 type Window struct {
 	ID            string
+	Label         string
 	UsedPercent   float64
 	WindowMinutes int
 	ResetTime     *time.Time
@@ -54,9 +59,10 @@ type Driver interface {
 
 // CLI locates the agent binaries and the folder that holds one home per subscription.
 type CLI struct {
-	Root   string
-	Claude string
-	Codex  string
+	Root        string
+	Claude      string
+	Codex       string
+	Antigravity string
 }
 
 // Driver returns the driver of an agent id, or false when Drift cannot sign in to it yet.
@@ -66,6 +72,8 @@ func (c CLI) Driver(agent string) (Driver, bool) {
 		return claude{c}, true
 	case "codex":
 		return codex{c}, true
+	case "antigravity":
+		return antigravity{c}, true
 	}
 	return nil, false
 }
@@ -82,6 +90,9 @@ func (c CLI) Prepare(id string) (string, error) {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return "", err
 		}
+	}
+	if err := prepareAntigravity(home); err != nil {
+		return "", err
 	}
 	return home, nil
 }
@@ -123,9 +134,7 @@ func lastMessage(output string) string {
 	lines := strings.Split(ansiEscape.ReplaceAllString(output, ""), "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
 		line := strings.TrimSpace(lines[i])
-		if _, after, found := strings.Cut(line, "> "); found {
-			line = strings.TrimSpace(after)
-		}
+		line = strings.TrimSpace(inputPrompt.ReplaceAllString(line, ""))
 		if line != "" {
 			return line
 		}

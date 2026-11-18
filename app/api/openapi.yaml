@@ -17,6 +17,7 @@ tags:
   - name: files
   - name: subscriptions
   - name: events
+  - name: terminal
 paths:
   /folders:
     get:
@@ -328,6 +329,27 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/FileContent' }
         default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/terminal:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: connectTerminal
+      tags: [terminal]
+      description: >-
+        WebSocket to the session's interactive shell, started in the session folder on first
+        connect and kept running between connections (a reconnect first receives recent output).
+        Binary frames carry raw terminal bytes both ways; text frames carry JSON:
+        TerminalControl from the client, TerminalEvent from the server.
+      parameters:
+        - { name: cols, in: query, schema: { type: integer, minimum: 1, maximum: 1000 } }
+        - { name: rows, in: query, schema: { type: integer, minimum: 1, maximum: 1000 } }
+      responses:
+        '101':
+          description: Switched to the WebSocket protocol.
+        '404':
+          description: No such session or its folder is missing.
+        '503':
+          description: Too many shells are open on the server.
   /sessions/{sessionId}/messages:
     parameters:
       - $ref: '#/components/parameters/SessionId'
@@ -815,7 +837,8 @@ components:
       type: object
       required: [id, usedPercent]
       properties:
-        id: { type: string, description: 'five_hour, seven_day, seven_day_opus… (Claude); primary, secondary (Codex).' }
+        id: { type: string, description: 'five_hour, seven_day, seven_day_opus… (Claude); primary, secondary (Codex); a model slug such as gemini_4_argon (Antigravity).' }
+        label: { type: string, description: 'The agent''s own name for the window, e.g. the model of an Antigravity quota.' }
         usedPercent: { type: number }
         windowMinutes: { type: integer }
         resetTime: { type: string, format: date-time }
@@ -845,6 +868,21 @@ components:
         tool: { type: string }
         text: { type: string }
         tokens: { type: integer }
+    TerminalControl:
+      description: Text frame from the client to the terminal WebSocket.
+      type: object
+      required: [type, cols, rows]
+      properties:
+        type: { type: string, enum: [resize] }
+        cols: { type: integer, minimum: 1, maximum: 1000 }
+        rows: { type: integer, minimum: 1, maximum: 1000 }
+    TerminalEvent:
+      description: Text frame from the terminal WebSocket; `exit` arrives once the shell has ended.
+      type: object
+      required: [type, exitCode]
+      properties:
+        type: { type: string, enum: [exit] }
+        exitCode: { type: integer }
     WireEvent:
       type: object
       required: [type]

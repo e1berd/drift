@@ -29,7 +29,7 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 		log.Warn("load session for run", "err", err)
 		return
 	}
-	if rc.Agent != "claude" {
+	if !runnable[rc.Agent] {
 		t.note(noteUnsupportedAgent, "")
 		return
 	}
@@ -54,10 +54,16 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 	}
 	defer r.release()
 
-	cmd := exec.CommandContext(ctx, r.cli.Claude, claudeArgs(req, rc.AgentSessionID)...)
+	saveSessionID := func(id string) {
+		if err := r.q.SetAgentSessionID(r.ctx, db.SetAgentSessionIDParams{ID: req.Session, AgentSessionID: id}); err != nil {
+			log.Warn("save agent session id", "err", err)
+		}
+	}
+	plan := r.plan(rc.Agent, req, rc.AgentSessionID, dir, t, saveSessionID)
+	cmd := exec.CommandContext(ctx, plan.bin, plan.args...)
 	cmd.Dir = dir
 	cmd.Env = r.cli.Env(r.cli.Home(uuidString(sub.ID)))
-	cmd.Stdin = strings.NewReader(req.Text)
+	cmd.Stdin = strings.NewReader(plan.stdin)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error { return signalGroup(cmd.Process.Pid, syscall.SIGINT) }
 	cmd.WaitDelay = stopGrace
@@ -73,11 +79,7 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 		return
 	}
 
-	stream := claudeStream{t: t, projectDir: cmd.Dir, agentSessionID: rc.AgentSessionID, saveSessionID: func(id string) {
-		if err := r.q.SetAgentSessionID(r.ctx, db.SetAgentSessionIDParams{ID: req.Session, AgentSessionID: id}); err != nil {
-			log.Warn("save agent session id", "err", err)
-		}
-	}}
+	stream := plan.stream
 	scanner := bufio.NewScanner(stdout)
 	scanner.Buffer(make([]byte, 64<<10), maxEventBytes)
 	for scanner.Scan() {
@@ -90,11 +92,41 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 	case ctx.Err() != nil:
 		t.closeTools(toolStopped)
 		t.note(noteStopped, "")
-	case waitErr != nil && !stream.finished:
+	case waitErr != nil && !stream.done():
 		t.closeTools(toolError)
 		t.note(noteFailed, lastLine(stderr.String(), waitErr.Error()))
 	default:
 		t.closeTools(toolDone)
+	}
+}
+
+var runnable = map[string]bool{"claude": true, "antigravity": true}
+
+type agentStream interface {
+	handle(line []byte)
+	done() bool
+}
+
+type runPlan struct {
+	bin    string
+	args   []string
+	stdin  string
+	stream agentStream
+}
+
+func (r *Runner) plan(agent string, req workspace.RunRequest, agentSessionID, dir string, t transcriptSink, saveSessionID func(string)) runPlan {
+	if agent == "antigravity" {
+		return runPlan{
+			bin:    r.cli.Antigravity,
+			args:   antigravityArgs(req, agentSessionID),
+			stream: &antigravityStream{t: t, projectDir: dir, conversationID: agentSessionID, saveSessionID: saveSessionID},
+		}
+	}
+	return runPlan{
+		bin:    r.cli.Claude,
+		args:   claudeArgs(req, agentSessionID),
+		stdin:  req.Text,
+		stream: &claudeStream{t: t, projectDir: dir, agentSessionID: agentSessionID, saveSessionID: saveSessionID},
 	}
 }
 

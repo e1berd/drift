@@ -1,8 +1,6 @@
 package agents
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -16,7 +14,6 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -69,75 +66,9 @@ func (d claude) command(ctx context.Context, home string, args ...string) *exec.
 // StartLogin runs `claude auth login`, which prints an authorize URL and reads the code
 // that the browser shows after sign-in from stdin.
 func (d claude) StartLogin(home string) (*Login, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), loginTimeout)
-	cmd := d.command(ctx, home, "auth", "login", "--claudeai")
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		cancel()
-		return nil, err
-	}
-	reader, writer := io.Pipe()
-	cmd.Stdout, cmd.Stderr = writer, writer
-	if err := cmd.Start(); err != nil {
-		cancel()
-		return nil, fmt.Errorf("start claude: %w", err)
-	}
-
-	login := newLogin(cancel)
-	login.NeedsCode = true
-	var mu sync.Mutex
-	login.submit = func(code string) error {
-		mu.Lock()
-		defer mu.Unlock()
-		_, err := io.WriteString(stdin, strings.TrimSpace(code)+"\n")
-		return err
-	}
-
-	found := make(chan string, 1)
-	var output bytes.Buffer
-	scanned := make(chan struct{})
-	go func() {
-		defer close(scanned)
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			line := scanner.Text()
-			output.WriteString(line + "\n")
-			if url := claudeAuthorizeURL.FindString(line); url != "" {
-				select {
-				case found <- url:
-				default:
-				}
-			}
-		}
-	}()
-	go func() {
-		err := cmd.Wait()
-		writer.Close()
-		<-scanned
-		if err != nil {
-			err = loginFailure(output.String(), err)
-		}
-		cancel()
-		login.finish(err)
-	}()
-
-	select {
-	case url := <-found:
-		login.URL = url
-		return login, nil
-	case <-login.Finished():
-		return nil, login.Result()
-	case <-time.After(commandTimeout):
-		login.Cancel()
-		return nil, errors.New("claude did not print a sign-in link")
-	}
-}
-
-func loginFailure(output string, err error) error {
-	if message := lastMessage(output); message != "" {
-		return errors.New(message)
-	}
-	return err
+	return startPasteLogin(home, claudeAuthorizeURL, func(ctx context.Context) *exec.Cmd {
+		return d.command(ctx, home, "auth", "login", "--claudeai")
+	})
 }
 
 type claudeStatus struct {

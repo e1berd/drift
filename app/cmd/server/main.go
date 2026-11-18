@@ -22,6 +22,7 @@ import (
 	"github.com/e1berd/drift/app/internal/migrate"
 	"github.com/e1berd/drift/app/internal/runner"
 	"github.com/e1berd/drift/app/internal/subscriptions"
+	"github.com/e1berd/drift/app/internal/terminal"
 	"github.com/e1berd/drift/app/internal/workspace"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -94,13 +95,16 @@ func run() error {
 	hub := events.NewHub()
 	api := e.Group("/api", identity.New(kc).Require)
 	api.GET("/events", hub.Stream)
-	cli := agents.CLI{Root: cfg.AgentsRoot, Claude: cfg.ClaudeBin, Codex: cfg.CodexBin}
+	cli := agents.CLI{Root: cfg.AgentsRoot, Claude: cfg.ClaudeBin, Codex: cfg.CodexBin, Antigravity: cfg.AntigravityBin}
 	folders := workspace.Folders{Workspace: cfg.WorkspaceRoot, Chats: cfg.ChatsRoot}
 	agentRunner, err := runner.New(ctx, pool, hub, cli, folders, log)
 	if err != nil {
 		return err
 	}
-	workspace.New(pool, hub, folders, log).WithRunner(agentRunner).Register(api)
+	workspaceHandler := workspace.New(pool, hub, folders, log).WithRunner(agentRunner)
+	terminals := terminal.New(terminal.DetectShell(cfg.Shell), workspaceHandler.SessionFolder, log)
+	workspaceHandler.WithTerminals(terminals).Register(api)
+	terminals.Register(api)
 	subs, err := subscriptions.New(ctx, pool, hub, cli, log)
 	if err != nil {
 		return err

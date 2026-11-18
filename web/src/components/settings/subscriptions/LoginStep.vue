@@ -41,7 +41,7 @@ function copyUserCode() {
     <div class="flex flex-col gap-3">
         <ol class="m-0 flex flex-col gap-3 ps-5">
             <li>
-                <span>{{ login.needsCode ? t('openClaude') : t('openCodex') }}</span>
+                <span>{{ t(`openPage.${subscription.agent}`) }}</span>
                 <div class="mt-2">
                     <Button data-variant="solid" @click="openSignIn">
                         <PhArrowSquareOut />{{ t('open') }}
@@ -61,6 +61,9 @@ function copyUserCode() {
                 <form class="flex flex-col gap-2" @submit.prevent="submit">
                     <Field>
                         <FieldLabel>{{ t('pasteCode') }}</FieldLabel>
+                        <FieldDescription v-if="subscription.agent === 'antigravity'">
+                            {{ t('pasteAddress') }}
+                        </FieldDescription>
                         <div class="flex gap-2">
                             <Input
                                 v-model="code"
@@ -93,24 +96,30 @@ function copyUserCode() {
 
 <i18n lang="yaml">
 ru:
-    openClaude: Откройте страницу входа Anthropic и войдите в аккаунт с подпиской.
-    openCodex: Откройте страницу OpenAI и войдите в аккаунт ChatGPT.
+    openPage:
+        claude: Откройте страницу входа Anthropic и войдите в аккаунт с подпиской.
+        codex: Откройте страницу OpenAI и войдите в аккаунт ChatGPT.
+        antigravity: Откройте страницу Google и войдите в аккаунт с подпиской Google AI.
     open: Открыть страницу входа
     enterCode: Введите на странице этот код
     copy: Скопировать код
     copied: Код скопирован
     pasteCode: Вставьте код, который покажет страница
+    pasteAddress: Если после входа браузер открыл пустую страницу localhost, скопируйте её адрес целиком и вставьте сюда.
     confirm: Подтвердить
     waiting: Ждём подтверждения входа…
     deviceHint: Если страница не принимает код, включите вход по коду устройства для Codex в настройках безопасности ChatGPT.
 en:
-    openClaude: Open the Anthropic sign-in page and sign in to the account with the subscription.
-    openCodex: Open the OpenAI page and sign in to your ChatGPT account.
+    openPage:
+        claude: Open the Anthropic sign-in page and sign in to the account with the subscription.
+        codex: Open the OpenAI page and sign in to your ChatGPT account.
+        antigravity: Open the Google page and sign in to the account with the Google AI subscription.
     open: Open the sign-in page
     enterCode: Enter this code on the page
     copy: Copy the code
     copied: Code copied
     pasteCode: Paste the code the page shows
+    pasteAddress: If the browser lands on an empty localhost page after sign-in, copy its whole address and paste it here.
     confirm: Confirm
     waiting: Waiting for the sign-in to finish…
     deviceHint: If the page rejects the code, enable device code sign-in for Codex in ChatGPT security settings.

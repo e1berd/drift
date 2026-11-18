@@ -20,7 +20,7 @@ const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
 const { create } = useSubscriptionActions()
 
-const SIGN_IN_AGENTS: AgentId[] = ['claude', 'codex']
+const SIGN_IN_AGENTS: AgentId[] = ['claude', 'codex', 'antigravity']
 
 const agent = ref<AgentId>('claude')
 const method = ref<'login' | 'token'>('login')
@@ -90,7 +90,7 @@ function submit() {
             <FieldDescription>{{ t('tokenHint') }}</FieldDescription>
         </Field>
         <p v-else class="m-0 text-muted">
-            {{ agent === 'claude' ? t('browserClaude') : t('browserCodex') }}
+            {{ t(`browser.${agent}`) }}
         </p>
 
         <div class="flex justify-end gap-2">
@@ -115,8 +115,10 @@ ru:
     soon: Появится позже
     tokenLabel: Токен из claude setup-token
     tokenHint: Выполните claude setup-token на своём компьютере и вставьте токен. Лимиты с таким входом не видны.
-    browserClaude: Drift запустит Claude Code на сервере и даст ссылку на вход. Вы войдёте в браузере и вставите код со страницы.
-    browserCodex: Drift запустит Codex на сервере и покажет ссылку и код. Введите код на странице OpenAI, вход завершится сам.
+    browser:
+        claude: Drift запустит Claude Code на сервере и даст ссылку на вход. Вы войдёте в браузере и вставите код со страницы.
+        codex: Drift запустит Codex на сервере и покажет ссылку и код. Введите код на странице OpenAI, вход завершится сам.
+        antigravity: Drift запустит Antigravity CLI на сервере и даст ссылку на вход Google. Вы войдёте в аккаунт с подпиской Google AI и вставите код со страницы.
     cancel: Отмена
     connect: Подключить
     signIn: Начать вход
@@ -128,8 +130,10 @@ en:
     soon: Coming later
     tokenLabel: Token from claude setup-token
     tokenHint: Run claude setup-token on your computer and paste the token. Limits are not visible with this sign-in.
-    browserClaude: Drift runs Claude Code on the server and gives you a sign-in link. Sign in in the browser and paste the code from the page.
-    browserCodex: Drift runs Codex on the server and shows a link and a code. Enter the code on the OpenAI page; the sign-in finishes by itself.
+    browser:
+        claude: Drift runs Claude Code on the server and gives you a sign-in link. Sign in in the browser and paste the code from the page.
+        codex: Drift runs Codex on the server and shows a link and a code. Enter the code on the OpenAI page; the sign-in finishes by itself.
+        antigravity: Drift runs the Antigravity CLI on the server and gives you a Google sign-in link. Sign in to the account with the Google AI subscription and paste the code from the page.
     cancel: Cancel
     connect: Connect
     signIn: Start sign-in
