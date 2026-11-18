@@ -29,13 +29,19 @@ const (
 
 // Handler owns the workspace API.
 type Handler struct {
-	pool    *pgxpool.Pool
-	q       *db.Queries
-	hub     *events.Hub
-	root    string
-	folders Folders
-	log     *slog.Logger
-	runner  AgentRunner
+	pool      *pgxpool.Pool
+	q         *db.Queries
+	hub       *events.Hub
+	root      string
+	folders   Folders
+	log       *slog.Logger
+	runner    AgentRunner
+	terminals TerminalCloser
+}
+
+// TerminalCloser ends the shell of a session when the session goes away.
+type TerminalCloser interface {
+	Close(owner, session string)
 }
 
 // New returns the handler; project paths are relative to folders.Workspace.
@@ -46,6 +52,12 @@ func New(pool *pgxpool.Pool, hub *events.Hub, folders Folders, log *slog.Logger)
 // WithRunner lets new user messages start the session's agent.
 func (h *Handler) WithRunner(runner AgentRunner) *Handler {
 	h.runner = runner
+	return h
+}
+
+// WithTerminals lets deleting a session end its shell.
+func (h *Handler) WithTerminals(terminals TerminalCloser) *Handler {
+	h.terminals = terminals
 	return h
 }
 

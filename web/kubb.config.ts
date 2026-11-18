@@ -13,12 +13,18 @@ export default defineConfig({
         pluginClient({
             output: { path: 'clients', barrel: { type: 'named' } },
             importPath: '../../shared/http/client',
-            exclude: [{ type: 'tag', pattern: 'events' }],
+            exclude: [
+                { type: 'tag', pattern: 'events' },
+                { type: 'tag', pattern: 'terminal' },
+            ],
         }),
         pluginVueQuery({
             output: { path: 'queries', barrel: { type: 'named' } },
             hooks: true,
-            exclude: [{ type: 'tag', pattern: 'events' }],
+            exclude: [
+                { type: 'tag', pattern: 'events' },
+                { type: 'tag', pattern: 'terminal' },
+            ],
             infinite: {
                 queryParam: 'page_token',
                 initialPageParam: '',

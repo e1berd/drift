@@ -31,6 +31,7 @@ import { useI18n } from 'vue-i18n'
 import { useMessages, useProjects, useSession } from '@/shared/queries'
 
 const FilesPane = defineAsyncComponent(() => import('@/components/files/FilesPane.vue'))
+const TerminalPane = defineAsyncComponent(() => import('@/components/terminal/TerminalPane.vue'))
 
 const TABS = [
     { id: 'chat', icon: PhChatCircle },
@@ -196,9 +197,9 @@ const stop = useStopSession({
         <TabsPanel value="git" class="session-pane"
             ><PanePlaceholder :icon="PhGitBranch"
         /></TabsPanel>
-        <TabsPanel value="terminal" class="session-pane"
-            ><PanePlaceholder :icon="PhTerminalWindow"
-        /></TabsPanel>
+        <TabsPanel value="terminal" class="session-pane">
+            <TerminalPane v-if="session.data.value" :session-id="sessionId" />
+        </TabsPanel>
     </Tabs>
 </template>
 

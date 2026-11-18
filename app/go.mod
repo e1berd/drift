@@ -3,6 +3,8 @@ module github.com/e1berd/drift/app
 go 1.27.4
 
 require (
+	github.com/coder/websocket v1.8.15
+	github.com/creack/pty v1.1.24
 	github.com/jackc/pgx/v5 v5.13.0
 	github.com/labstack/echo/v5 v5.4.6
 	go.yaml.in/yaml/v3 v3.0.6

@@ -218,6 +218,9 @@ func (h *Handler) deleteSession(c *echo.Context) error {
 	if _, err := h.q.DeleteSession(ctx, db.DeleteSessionParams{ID: s.ID, OwnerID: owner}); err != nil {
 		return err
 	}
+	if h.terminals != nil {
+		h.terminals.Close(owner, uuidString(s.ID))
+	}
 	if !s.ProjectID.Valid {
 		if err := h.folders.RemoveChat(s.ID); err != nil {
 			h.log.Warn("delete chat folder", "err", err)

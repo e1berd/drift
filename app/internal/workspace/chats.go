@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"os"
@@ -91,4 +92,24 @@ func (h *Handler) sessionRoot(c *echo.Context) (*os.Root, error) {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "session folder is missing")
 	}
 	return root, nil
+}
+
+// SessionFolder returns the canonical id and working folder of a session that belongs to owner.
+func (h *Handler) SessionFolder(ctx context.Context, owner, session string) (string, string, error) {
+	var id pgtype.UUID
+	if err := id.Scan(session); err != nil {
+		return "", "", echo.NewHTTPError(http.StatusNotFound, "not found")
+	}
+	rc, err := h.q.GetRunContext(ctx, db.GetRunContextParams{ID: id, OwnerID: owner})
+	if err != nil {
+		return "", "", notFound(err)
+	}
+	dir, err := h.folders.Session(rc.ProjectPath, rc.ID)
+	if err != nil {
+		return "", "", echo.NewHTTPError(http.StatusServiceUnavailable, "session folder is not available")
+	}
+	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
+		return "", "", echo.NewHTTPError(http.StatusNotFound, "session folder is missing")
+	}
+	return uuidString(rc.ID), dir, nil
 }
