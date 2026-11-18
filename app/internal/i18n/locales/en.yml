@@ -31,7 +31,6 @@ login:
   submit: Sign in
   or: or
   passkey: Sign in with a passkey (fingerprint, Face ID)
-  passkey_unsupported: This browser does not support passkeys.
 
 error:
   title: Sign-in error

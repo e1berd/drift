@@ -99,6 +99,7 @@ services:
       DSN: postgres://${POSTGRES_USER:-drift}:${POSTGRES_PASSWORD:-drift}@postgres:5432/kratos?sslmode=disable&max_conns=10&max_idle_conns=2
       SECRETS_COOKIE: ${KRATOS_SECRETS_COOKIE:-change-me-at-least-32-characters-long}
       SECRETS_CIPHER: ${KRATOS_SECRETS_CIPHER:-change-me-exactly-32-characters!}
+      SELFSERVICE_METHODS_PASSKEY_ENABLED: ${KRATOS_PASSKEY_ENABLED:-true}
       SQA_OPT_OUT: "true"
     volumes:
       - ./deploy/kratos:/etc/config/kratos:ro,z

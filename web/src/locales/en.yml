@@ -14,7 +14,6 @@ theme:
 
 passkeys:
   title: Passkeys
-  unsupported: This browser does not support passkeys.
 
 actions:
   sign_out: Sign out

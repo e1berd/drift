@@ -31,7 +31,6 @@ login:
   submit: Войти
   or: или
   passkey: Войти по ключу доступа (отпечаток, Face ID)
-  passkey_unsupported: Этот браузер не поддерживает ключи доступа.
 
 error:
   title: Ошибка входа

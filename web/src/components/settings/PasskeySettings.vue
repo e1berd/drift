@@ -12,7 +12,12 @@ import {
     type KratosFlow,
     type KratosMessage,
 } from '@/shared/kratos'
-import { attestationJSON, creationOptions, passkeysSupported } from '@/shared/webauthn'
+import {
+    attestationJSON,
+    creationOptions,
+    passkeysSupported,
+    passkeyUsable,
+} from '@/shared/webauthn'
 import { reportError } from '@/shared/errors'
 
 const { t } = useI18n()
@@ -30,9 +35,8 @@ const passkeys = computed(() =>
         })),
 )
 
-const canAdd = computed(
-    () =>
-        passkeysSupported() && !!flow.value && nodeValue(flow.value, 'passkey_create_data') !== '',
+const available = computed(
+    () => !!flow.value && passkeyUsable(nodeValue(flow.value, 'passkey_create_data')),
 )
 
 function settingsFlowURL(id: string): URL {
@@ -46,6 +50,7 @@ function collectMessages(f: KratosFlow) {
 }
 
 async function load() {
+    if (!passkeysSupported()) return
     const id = typeof route.query.flow === 'string' ? route.query.flow : ''
     const { status, body } = id
         ? await kratos<KratosFlow>(settingsFlowURL(id))
@@ -114,7 +119,7 @@ onMounted(load)
 </script>
 
 <template>
-    <section class="flex flex-col gap-4">
+    <section v-if="available" class="flex flex-col gap-4">
         <header class="flex flex-col gap-1">
             <h2 class="m-0 text-base font-semibold">{{ t('passkeys.title') }}</h2>
             <p class="text-sm text-(--ui-muted-foreground)">
@@ -152,13 +157,10 @@ onMounted(load)
                 }}</Button>
             </li>
         </ul>
-        <p v-else-if="flow" class="text-sm text-(--ui-muted-foreground)">{{ t('empty') }}</p>
+        <p v-else class="text-sm text-(--ui-muted-foreground)">{{ t('empty') }}</p>
 
         <div>
-            <Button v-if="canAdd" data-variant="solid" @click="addPasskey">{{ t('add') }}</Button>
-            <p v-else-if="!passkeysSupported()" class="text-sm text-(--ui-muted-foreground)">
-                {{ t('passkeys.unsupported') }}
-            </p>
+            <Button data-variant="solid" @click="addPasskey">{{ t('add') }}</Button>
         </div>
     </section>
 </template>

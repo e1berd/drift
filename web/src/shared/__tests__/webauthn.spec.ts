@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { creationOptions, fromBase64Url, requestOptions, toBase64Url } from '../webauthn'
+import {
+    creationOptions,
+    fromBase64Url,
+    passkeyUsable,
+    relyingPartyMatches,
+    requestOptions,
+    toBase64Url,
+} from '../webauthn'
 
 const bytes = (s: string) => new TextEncoder().encode(s)
 
@@ -62,5 +69,19 @@ describe('Kratos passkey options', () => {
         const options = requestOptions(raw)
         expect(new TextDecoder().decode(options.challenge as Uint8Array)).toBe('c')
         expect(options.allowCredentials).toBeUndefined()
+    })
+})
+
+describe('passkey availability', () => {
+    it('accepts the relying party domain and its subdomains only', () => {
+        expect(relyingPartyMatches('localhost', 'localhost')).toBe(true)
+        expect(relyingPartyMatches('example.com', 'drift.example.com')).toBe(true)
+        expect(relyingPartyMatches('localhost', '85-209-129-202.sslip.io')).toBe(false)
+        expect(relyingPartyMatches('example.com', 'badexample.com')).toBe(false)
+        expect(relyingPartyMatches(undefined, 'anything.test')).toBe(true)
+    })
+
+    it('is unavailable when Kratos sends no passkey data', () => {
+        expect(passkeyUsable('', 'localhost')).toBe(false)
     })
 })

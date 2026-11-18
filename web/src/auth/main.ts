@@ -8,7 +8,7 @@ import '@ui-sdk/web/input'
 import '@ui-sdk/web/password-input'
 import '@ui-sdk/web/select'
 
-import { passkeyAutofill, passkeyLogin } from '@/shared/webauthn'
+import { passkeyAutofill, passkeyAvailable, passkeyLogin } from '@/shared/webauthn'
 import { bindPreferenceSwitches } from './preferences'
 
 htmx.config.responseHandling = [
@@ -23,13 +23,14 @@ declare global {
         htmx: typeof htmx
         drift: {
             passkeyLogin: typeof passkeyLogin
+            passkeyAvailable: typeof passkeyAvailable
             passkeyAutofill: typeof passkeyAutofill
         }
     }
 }
 
 window.htmx = htmx
-window.drift = { passkeyLogin, passkeyAutofill }
+window.drift = { passkeyLogin, passkeyAvailable, passkeyAutofill }
 
 bindPreferenceSwitches(document)
 

@@ -28,9 +28,34 @@ export function toBase64Url(value: ArrayBuffer | null): string {
     return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '')
 }
 
-/** Whether the browser can use passkeys at all. */
+/** Whether this page can use passkeys: the browser has WebAuthn and the origin is secure. */
 export function passkeysSupported(): boolean {
-    return typeof window !== 'undefined' && 'PublicKeyCredential' in window
+    return (
+        typeof window !== 'undefined' && window.isSecureContext && 'PublicKeyCredential' in window
+    )
+}
+
+/** Whether a passkey of the relying party `rpId` works on a page served from `hostname`. */
+export function relyingPartyMatches(rpId: string | undefined, hostname: string): boolean {
+    if (!rpId) return true
+    return hostname === rpId || hostname.endsWith(`.${rpId}`)
+}
+
+function publicKeyOf(raw: string): Json | undefined {
+    const data = JSON.parse(raw) as { publicKey?: Json; credentialOptions?: { publicKey: Json } }
+    return data.credentialOptions?.publicKey ?? data.publicKey
+}
+
+/**
+ * Whether Kratos passkey data (`passkey_challenge` or `passkey_create_data`) can be used here:
+ * Kratos has the passkey method on, the browser supports it and the page is on the relying party's domain.
+ */
+export function passkeyUsable(raw: string, hostname = window.location.hostname): boolean {
+    if (!raw || !passkeysSupported()) return false
+    const publicKey = publicKeyOf(raw)
+    const rp = publicKey?.rp as { id?: string } | undefined
+    const rpId = typeof publicKey?.rpId === 'string' ? publicKey.rpId : rp?.id
+    return !!publicKey && relyingPartyMatches(rpId, hostname)
 }
 
 function decodeDescriptors(list: unknown): PublicKeyCredentialDescriptor[] | undefined {
@@ -56,8 +81,7 @@ export function creationOptions(
     raw: string,
     displayName?: string,
 ): PublicKeyCredentialCreationOptions {
-    const data = JSON.parse(raw) as { publicKey?: Json; credentialOptions?: { publicKey: Json } }
-    const publicKey = data.credentialOptions?.publicKey ?? data.publicKey
+    const publicKey = publicKeyOf(raw)
     if (!publicKey) throw new Error('passkey_create_data has no publicKey')
     const user = publicKey.user as { id: string; name?: string; displayName?: string }
     const name = displayName || user.name || ''
@@ -121,13 +145,14 @@ function submitPasskey(form: HTMLFormElement, credential: PublicKeyCredential) {
     form.submit()
 }
 
+/** Whether the login form's passkey challenge can be used on this page. */
+export function passkeyAvailable(form: HTMLFormElement): boolean {
+    return passkeyUsable(field(form, 'passkey_challenge').value)
+}
+
 /** Asks the authenticator for a passkey and submits the Kratos login form with it. */
 export async function passkeyLogin(form: HTMLFormElement): Promise<void> {
-    if (!passkeysSupported()) {
-        // The server puts the translated message on the form (login.html).
-        alert(form.dataset.passkeyUnsupported ?? 'Passkeys are not supported in this browser.')
-        return
-    }
+    if (!passkeyAvailable(form)) return
     conditional?.abort()
     conditional = undefined
     try {
@@ -143,7 +168,7 @@ export async function passkeyLogin(form: HTMLFormElement): Promise<void> {
 
 /** Offers saved passkeys in the email field's autofill (WebAuthn conditional mediation). */
 export async function passkeyAutofill(form: HTMLFormElement): Promise<void> {
-    if (!passkeysSupported() || !(await PublicKeyCredential.isConditionalMediationAvailable?.()))
+    if (!passkeyAvailable(form) || !(await PublicKeyCredential.isConditionalMediationAvailable?.()))
         return
     conditional?.abort()
     conditional = new AbortController()

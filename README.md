@@ -15,6 +15,7 @@ drift ──► Kratos admin :4434   проверка «есть ли польз
 - **Нет ни одного пользователя**: любой адрес ведёт на `/setup`. Форма отправляется через htmx, Go создаёт identity через admin API Kratos с `metadata_public.role = "superuser"`. Регистрация в Kratos выключена (`selfservice.flows.registration.enabled: false`), поэтому других путей создать пользователя нет.
 - **Пользователь есть**: `/login` рендерит login flow Kratos: email + пароль или passkey (отпечаток, Face ID, аппаратный ключ). Passkey также предлагается в автозаполнении поля email.
 - **Passkey добавляют** после первого входа в SPA на странице «Ключи доступа» (`/settings`, settings flow Kratos).
+- **Passkey необязателен.** `KRATOS_PASSKEY_ENABLED=false` выключает метод в Kratos. Кнопка входа и раздел в настройках показываются, только если Kratos прислал данные passkey, браузер поддерживает WebAuthn, страница открыта в secure context (HTTPS или localhost) и её домен совпадает с `rp.id` из `deploy/kratos/kratos.yml`; иначе их нет, а вход остаётся по паролю.
 - Kratos открыт на том же origin (`/.ory/kratos/public`), поэтому cookie, CSRF и origin для WebAuthn общие.
 - Скрипты страниц входа (htmx, _hyperscript, веб-компоненты UI SDK) собирает Vite из `web/src/auth/main.ts`. CDN нигде не используется.
 
