@@ -124,14 +124,16 @@ async function send({ text, files }: { text: string; files: File[] }) {
             <h1 class="m-0 text-2xl font-semibold">{{ t('empty.title') }}</h1>
             <p class="m-0 text-center text-muted">{{ t('empty.lead') }}</p>
 
-            <SegmentedControl v-model:value="agentValue" :aria-label="t('composer.model')">
+            <SegmentedControl
+                v-if="agents.available.value.length"
+                v-model:value="agentValue"
+                :aria-label="t('composer.model')"
+            >
                 <SegmentedControlIndicator />
                 <SegmentedControlItem
-                    v-for="item in agents.all"
+                    v-for="item in agents.available.value"
                     :key="item.id"
                     :value="item.id"
-                    :disabled="!agents.isConnected(item.id)"
-                    :title="agents.isConnected(item.id) ? undefined : t('empty.notConnected')"
                 >
                     <AgentLogo :agent="item.id" decorative />{{ item.name }}
                 </SegmentedControlItem>

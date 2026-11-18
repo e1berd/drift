@@ -17,6 +17,15 @@ export function useAgents() {
         ),
     ])
     const isConnected = (id: AgentId) => connected.value.includes(id)
+    const available = computed(() => Object.values(AGENTS).filter((agent) => isConnected(agent.id)))
     const ready = computed(() => query.isSuccess.value)
-    return { all: Object.values(AGENTS), subscriptions, connected, isConnected, ready, query }
+    return {
+        all: Object.values(AGENTS),
+        available,
+        subscriptions,
+        connected,
+        isConnected,
+        ready,
+        query,
+    }
 }

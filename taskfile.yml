@@ -39,6 +39,59 @@ tasks:
       - task: web:build
       - task: app:build
 
+  release:
+    desc: Выпустить релиз из master — тег-дата vГГГГ.ММДД.N, сборку и публикацию делает GitHub Actions
+    preconditions:
+      - sh: gh auth status >/dev/null 2>&1
+        msg: 'gh не залогинен: gh auth login'
+      - sh: test "$(git branch --show-current)" = master
+        msg: Релиз выпускается только из master
+      - sh: test -z "$(git status --porcelain)"
+        msg: В рабочей копии есть незакоммиченные изменения
+    cmds:
+      - git fetch --quiet --tags origin master
+      - cmd: git merge-base --is-ancestor origin/master HEAD || { echo "origin/master впереди локального master — сделай git pull"; exit 1; }
+        silent: true
+      - cmd: |
+          if tag=$(git describe --exact-match --tags --match 'v*' HEAD 2>/dev/null); then
+            echo "HEAD уже выпущен как $tag"; exit 1
+          fi
+        silent: true
+      - git tag -a {{.VERSION}} -m {{.VERSION}}
+      - git push --atomic origin HEAD:master refs/tags/{{.VERSION}}
+      - task: release:watch
+        vars: {VERSION: '{{.VERSION}}'}
+    vars:
+      VERSION:
+        sh: &next-version |
+          prefix="v$(date -u +%Y).$(date -u +%m%d | sed 's/^0//')"
+          last=$(git ls-remote --tags --refs origin "refs/tags/$prefix.*" | awk -F. '{print $NF}' | sort -n | tail -n 1)
+          echo "$prefix.$(( ${last:--1} + 1 ))"
+
+  release:next:
+    desc: Показать версию, которую получит следующий релиз
+    silent: true
+    vars:
+      VERSION:
+        sh: *next-version
+    cmds:
+      - echo {{.VERSION}}
+
+  release:watch:
+    internal: true
+    silent: true
+    cmds:
+      - |
+        echo "Жду workflow release для {{.VERSION}}…"
+        for i in $(seq 30); do
+          run=$(gh run list --workflow release.yml --branch {{.VERSION}} --limit 1 --json databaseId --jq '.[0].databaseId')
+          [ -n "$run" ] && break
+          sleep 2
+        done
+        [ -n "$run" ] || { echo "Workflow не запустился, см. https://github.com/e1berd/drift/actions"; exit 1; }
+        gh run watch "$run" --exit-status --interval 10
+        gh release view {{.VERSION}} --json url --jq .url
+
   test:
     desc: Запустить Go- и Vue-тесты
     cmds:

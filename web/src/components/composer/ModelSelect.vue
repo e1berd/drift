@@ -30,8 +30,11 @@ const SEPARATOR = '/'
 const optionValue = (agent: AgentId, model: string) => `${agent}${SEPARATOR}${model}`
 const itemLabel = (model: AgentModel) => model.label ?? t('models.default')
 
+const families = computed(() =>
+    agents.all.filter((family) => family.id === props.agent || agents.isConnected(family.id)),
+)
 const items = computed(() =>
-    agents.all.flatMap((family) =>
+    families.value.flatMap((family) =>
         family.models.map((model) => ({
             value: optionValue(family.id, model.id),
             label: `${family.name} ${itemLabel(model)}`,
@@ -66,7 +69,7 @@ const value = computed({
             <span class="composer-select-label">{{ triggerLabel }}</span>
         </SelectTrigger>
         <SelectContent side="top" align="end">
-            <template v-for="(family, index) in agents.all" :key="family.id">
+            <template v-for="(family, index) in families" :key="family.id">
                 <SelectSeparator v-if="index > 0" />
                 <SelectGroup>
                     <SelectGroupLabel class="flex items-center gap-2">
