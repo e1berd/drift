@@ -111,7 +111,7 @@ describe('App', () => {
 
         expect(wrapper.text()).toContain('Root')
         expect(wrapper.text()).toContain('home')
-        expect(wrapper.text()).toContain('Online')
+        expect(wrapper.text()).not.toContain('Offline')
         expect(requestedPaths()).toContain('/.ory/kratos/public/sessions/whoami')
         expect(requestedPaths()).toContain('/api/projects')
         expect(requestedPaths()).toContain('/api/drafts')

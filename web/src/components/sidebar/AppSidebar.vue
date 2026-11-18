@@ -40,8 +40,12 @@ function startNewChat() {
                 >
                 <DeliveryVersion />
             </span>
-            <Button class="flex-none" @click="startNewChat"
-                ><PhPlus />{{ t('nav.newChat') }}</Button
+            <Button
+                class="flex-none"
+                :aria-label="t('nav.newChat')"
+                :title="t('nav.newChat')"
+                @click="startNewChat"
+                ><PhPlus /><span class="new-chat-label">{{ t('nav.newChat') }}</span></Button
             >
         </div>
 
@@ -77,5 +81,12 @@ function startNewChat() {
     flex: none;
     padding: 0 10px 0 14px;
     border-bottom: 1px solid var(--ui-border);
+    container-type: inline-size;
+}
+
+@container (max-width: 300px) {
+    .new-chat-label {
+        display: none;
+    }
 }
 </style>

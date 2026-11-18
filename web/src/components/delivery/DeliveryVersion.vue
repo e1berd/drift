@@ -59,12 +59,10 @@ function showUpdate() {
 }
 
 .version-label {
-    min-width: 0;
-    overflow: hidden;
+    flex: none;
     color: var(--ui-muted-foreground);
     font-family: var(--ui-font-mono);
     font-size: 0.75rem;
-    text-overflow: ellipsis;
     white-space: nowrap;
 
     &:hover {
