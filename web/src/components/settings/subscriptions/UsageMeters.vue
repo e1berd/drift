@@ -4,7 +4,7 @@ import { Meter, MeterIndicator, MeterLabel, MeterTrack, MeterValue } from '@ui-s
 import { useI18n } from 'vue-i18n'
 
 import { useGetSubscriptionUsage } from '@/gen'
-import { formatReset, secondsUntil, usageWindowKind } from '@/shared/usage'
+import { formatReset, secondsUntil, usageLevel, usageWindowKind } from '@/shared/usage'
 
 const props = defineProps<{ subscriptionId: string }>()
 const { t, locale } = useI18n()
@@ -34,7 +34,13 @@ const windows = computed(() =>
         {{ t(`unavailable.${usage.data.value.unavailable}`) }}
     </p>
     <div v-else-if="windows.length" class="usage-grid">
-        <Meter v-for="window in windows" :key="window.id" :value="window.usedPercent" :max="100">
+        <Meter
+            v-for="window in windows"
+            :key="window.id"
+            :value="window.usedPercent"
+            :max="100"
+            :data-level="usageLevel(window.usedPercent)"
+        >
             <MeterLabel>{{ window.label }}</MeterLabel>
             <MeterValue />
             <MeterTrack><MeterIndicator /></MeterTrack>
@@ -49,6 +55,18 @@ const windows = computed(() =>
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
     gap: calc(var(--ui-spacing) * 3);
+}
+
+[data-level='normal'] [data-slot='meter-indicator'] {
+    background: var(--usage-normal);
+}
+
+[data-level='high'] [data-slot='meter-indicator'] {
+    background: var(--usage-high);
+}
+
+[data-level='critical'] [data-slot='meter-indicator'] {
+    background: var(--usage-critical);
 }
 
 .usage-reset {

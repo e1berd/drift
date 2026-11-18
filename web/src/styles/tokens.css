@@ -27,3 +27,9 @@
     --ui-input: light-dark(oklch(0.82 0 0), oklch(0.42 0 0));
     --ui-ring: light-dark(oklch(0.913 0 0), oklch(0.35 0 0));
 }
+
+:root {
+    --usage-normal: var(--ui-primary);
+    --usage-high: light-dark(oklch(0.62 0.15 65), oklch(0.8 0.14 75));
+    --usage-critical: var(--ui-destructive);
+}

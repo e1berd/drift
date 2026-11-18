@@ -46,3 +46,33 @@ export function formatResetClock(iso: string, lang: string, now = Date.now()): s
           : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }
     return new Intl.DateTimeFormat(lang, options).format(reset)
 }
+
+export type UsageLevel = 'normal' | 'high' | 'critical'
+
+export function usageLevel(usedPercent: number): UsageLevel {
+    if (usedPercent >= 90) return 'critical'
+    if (usedPercent >= 75) return 'high'
+    return 'normal'
+}
+
+const MODEL_WEEKS: Partial<Record<string, UsageWindowKind>> = {
+    opus: 'weekOpus',
+    sonnet: 'weekSonnet',
+}
+
+export function headlineWindows<
+    Window extends Pick<UsageWindow, 'id' | 'windowMinutes' | 'usedPercent'>,
+>(windows: Window[], model: string): { session?: Window; week?: Window } {
+    const weekKinds: UsageWindowKind[] = ['week']
+    const modelWeek = MODEL_WEEKS[model]
+    if (modelWeek) weekKinds.push(modelWeek)
+    const session = windows.find((window) => usageWindowKind(window) === 'session')
+    const week = windows
+        .filter((window) => weekKinds.includes(usageWindowKind(window)))
+        .reduce<Window | undefined>(
+            (tightest, window) =>
+                !tightest || window.usedPercent > tightest.usedPercent ? window : tightest,
+            undefined,
+        )
+    return { session, week }
+}

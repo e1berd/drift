@@ -16,6 +16,7 @@ import AttachmentChip from '@/components/composer/AttachmentChip.vue'
 import ModeSelect from '@/components/composer/ModeSelect.vue'
 import ModelSelect from '@/components/composer/ModelSelect.vue'
 import PromptEditor from '@/components/composer/PromptEditor.vue'
+import UsageIndicator from '@/components/composer/usage/UsageIndicator.vue'
 import ImagePreview from '@/components/composer/ImagePreview.vue'
 import { useAttachmentUpload } from '@/composables/useAttachmentUpload'
 import { useDraft } from '@/composables/useDrafts'
@@ -226,6 +227,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                     </slot>
                 </div>
                 <div class="flex items-center gap-1">
+                    <UsageIndicator :agent="agent" :running="running" />
                     <ModelSelect
                         :agent="agent"
                         @switch-agent="(choice) => emit('switchAgent', choice)"
