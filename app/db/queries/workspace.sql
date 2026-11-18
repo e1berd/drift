@@ -40,6 +40,7 @@ INSERT INTO sessions (project_id, owner_id, title, agent) VALUES ($1, $2, $3, $4
 UPDATE sessions
 SET title = coalesce(sqlc.narg(title), title),
     agent = coalesce(sqlc.narg(agent), agent),
+    agent_session_id = CASE WHEN coalesce(sqlc.narg(agent), agent) = agent THEN agent_session_id ELSE '' END,
     updated_at = now()
 WHERE id = $1 AND owner_id = $2
 RETURNING *;
@@ -78,3 +79,19 @@ DELETE FROM drafts WHERE owner_id = $1 AND key = 'new:' || sqlc.arg(project_id):
 
 -- name: DeleteDraftsForSession :exec
 DELETE FROM drafts WHERE owner_id = $1 AND key = 'session:' || sqlc.arg(session_id)::text;
+
+-- name: SetSessionStatus :one
+UPDATE sessions SET status = $2, updated_at = now() WHERE id = $1 RETURNING *;
+
+-- name: SetAgentSessionID :exec
+UPDATE sessions SET agent_session_id = $2 WHERE id = $1;
+
+-- name: ResetRunningSessions :exec
+UPDATE sessions SET status = 'idle' WHERE status = 'running';
+
+-- name: GetRunContext :one
+SELECT s.*, p.path AS project_path FROM sessions s JOIN projects p ON p.id = s.project_id
+WHERE s.id = $1 AND s.owner_id = $2;
+
+-- name: UpdateMessageBody :one
+UPDATE messages SET body = $2 WHERE id = $1 RETURNING *;

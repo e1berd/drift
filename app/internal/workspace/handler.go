@@ -29,16 +29,23 @@ const (
 
 // Handler owns the workspace API.
 type Handler struct {
-	pool *pgxpool.Pool
-	q    *db.Queries
-	hub  *events.Hub
-	root string
-	log  *slog.Logger
+	pool   *pgxpool.Pool
+	q      *db.Queries
+	hub    *events.Hub
+	root   string
+	log    *slog.Logger
+	runner AgentRunner
 }
 
 // New returns the handler. root is the directory that project paths are relative to.
 func New(pool *pgxpool.Pool, hub *events.Hub, root string, log *slog.Logger) *Handler {
 	return &Handler{pool: pool, q: db.New(pool), hub: hub, root: root, log: log}
+}
+
+// WithRunner lets new user messages start the session's agent.
+func (h *Handler) WithRunner(runner AgentRunner) *Handler {
+	h.runner = runner
+	return h
 }
 
 // Register mounts the routes on a group that already requires a signed-in identity.
@@ -57,6 +64,7 @@ func (h *Handler) Register(g *echo.Group) {
 
 	g.GET("/sessions/:session", h.getSession)
 	g.PATCH("/sessions/:session", h.updateSession)
+	g.POST("/sessions/:session", h.sessionCustomMethod)
 	g.DELETE("/sessions/:session", h.deleteSession)
 	g.GET("/sessions/:session/messages", h.listMessages)
 	g.POST("/sessions/:session/messages", h.createMessage)

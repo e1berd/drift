@@ -44,11 +44,12 @@ function toggleFull() {
                         <template v-if="status === 'running'"
                             ><RunSpinner :size="13" fast />{{ t('chat.running') }}</template
                         >
-                        <span
-                            v-else-if="status === 'stopped' || status === 'error'"
-                            class="text-danger"
-                            >{{ t('chat.stopped') }}</span
-                        >
+                        <span v-else-if="status === 'stopped'" class="text-danger">{{
+                            t('chat.stopped')
+                        }}</span>
+                        <span v-else-if="status === 'error'" class="text-danger">{{
+                            t('chat.failed')
+                        }}</span>
                         <template v-else>{{ body.meta }}<PhCheck /></template>
                     </span>
                 </span>

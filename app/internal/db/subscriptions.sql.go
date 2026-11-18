@@ -93,6 +93,34 @@ func (q *Queries) FailInterruptedLogins(ctx context.Context) error {
 	return err
 }
 
+const getCurrentSubscription = `-- name: GetCurrentSubscription :one
+SELECT id, owner_id, agent, method, state, account, plan, error, is_current, created_at, updated_at FROM subscriptions WHERE owner_id = $1 AND agent = $2 AND is_current AND state = 'active'
+`
+
+type GetCurrentSubscriptionParams struct {
+	OwnerID string `json:"owner_id"`
+	Agent   string `json:"agent"`
+}
+
+func (q *Queries) GetCurrentSubscription(ctx context.Context, arg GetCurrentSubscriptionParams) (Subscription, error) {
+	row := q.db.QueryRow(ctx, getCurrentSubscription, arg.OwnerID, arg.Agent)
+	var i Subscription
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Agent,
+		&i.Method,
+		&i.State,
+		&i.Account,
+		&i.Plan,
+		&i.Error,
+		&i.IsCurrent,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getSubscription = `-- name: GetSubscription :one
 SELECT id, owner_id, agent, method, state, account, plan, error, is_current, created_at, updated_at FROM subscriptions WHERE id = $1 AND owner_id = $2
 `

@@ -51,6 +51,7 @@ func (h *Handler) listSessions(c *echo.Context) error {
 }
 
 type sessionInput struct {
+	runOptions
 	Title string `json:"title"`
 	Agent string `json:"agent"`
 	Text  string `json:"text"`
@@ -81,6 +82,9 @@ func (h *Handler) createSession(c *echo.Context) error {
 	if !agents[in.Agent] {
 		return badRequest("unknown agent")
 	}
+	if err := in.validate(); err != nil {
+		return err
+	}
 	text := strings.TrimSpace(in.Text)
 	if len(text) > maxMessageBytes {
 		return badRequest("message is too long")
@@ -96,6 +100,7 @@ func (h *Handler) createSession(c *echo.Context) error {
 	owner := identity.From(c)
 	ctx := c.Request().Context()
 	var out createSessionResponse
+	var sessionID pgtype.UUID
 	var draftsDeleted int64
 	err = pgx.BeginFunc(ctx, h.pool, func(tx pgx.Tx) error {
 		q := h.q.WithTx(tx)
@@ -104,6 +109,7 @@ func (h *Handler) createSession(c *echo.Context) error {
 			return err
 		}
 		out.Session = sessionDTO(s)
+		sessionID = s.ID
 		if text != "" {
 			m, err := q.CreateMessage(ctx, db.CreateMessageParams{SessionID: s.ID, Role: "user", Kind: "text", Body: textBody(text)})
 			if err != nil {
@@ -126,6 +132,7 @@ func (h *Handler) createSession(c *echo.Context) error {
 	if draftsDeleted > 0 {
 		h.publish(c, "draft.deleted", deleted{Key: "new:" + uuidString(p.ID)})
 	}
+	h.startRun(c, sessionID, text, in.runOptions)
 	return c.JSON(http.StatusCreated, out)
 }
 
@@ -245,6 +252,7 @@ func (h *Handler) listMessages(c *echo.Context) error {
 }
 
 type messageInput struct {
+	runOptions
 	Text string `json:"text"`
 }
 
@@ -260,6 +268,9 @@ func (h *Handler) createMessage(c *echo.Context) error {
 	text := strings.TrimSpace(in.Text)
 	if text == "" || len(text) > maxMessageBytes {
 		return badRequest("text must be 1 byte to 256 KiB")
+	}
+	if err := in.validate(); err != nil {
+		return err
 	}
 	owner := identity.From(c)
 	ctx := c.Request().Context()
@@ -292,6 +303,7 @@ func (h *Handler) createMessage(c *echo.Context) error {
 	if draftsDeleted > 0 {
 		h.publish(c, "draft.deleted", deleted{Key: "session:" + uuidString(s.ID)})
 	}
+	h.startRun(c, s.ID, text, in.runOptions)
 	return c.JSON(http.StatusCreated, msg)
 }
 

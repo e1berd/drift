@@ -20,6 +20,7 @@ import (
 	"github.com/e1berd/drift/app/internal/identity"
 	"github.com/e1berd/drift/app/internal/kratos"
 	"github.com/e1berd/drift/app/internal/migrate"
+	"github.com/e1berd/drift/app/internal/runner"
 	"github.com/e1berd/drift/app/internal/subscriptions"
 	"github.com/e1berd/drift/app/internal/workspace"
 	"github.com/labstack/echo/v5"
@@ -93,8 +94,12 @@ func run() error {
 	hub := events.NewHub()
 	api := e.Group("/api", identity.New(kc).Require)
 	api.GET("/events", hub.Stream)
-	workspace.New(pool, hub, cfg.WorkspaceRoot, log).Register(api)
 	cli := agents.CLI{Root: cfg.AgentsRoot, Claude: cfg.ClaudeBin, Codex: cfg.CodexBin}
+	agentRunner, err := runner.New(ctx, pool, hub, cli, cfg.WorkspaceRoot, log)
+	if err != nil {
+		return err
+	}
+	workspace.New(pool, hub, cfg.WorkspaceRoot, log).WithRunner(agentRunner).Register(api)
 	subs, err := subscriptions.New(ctx, pool, hub, cli, log)
 	if err != nil {
 		return err

@@ -52,3 +52,6 @@ RETURNING *;
 
 -- name: DeleteSubscription :one
 DELETE FROM subscriptions WHERE id = $1 AND owner_id = $2 RETURNING *;
+
+-- name: GetCurrentSubscription :one
+SELECT * FROM subscriptions WHERE owner_id = $1 AND agent = $2 AND is_current AND state = 'active';

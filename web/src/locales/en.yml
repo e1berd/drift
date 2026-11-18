@@ -62,7 +62,7 @@ tabs:
   files: 'Files'
   git: 'Git'
   terminal: 'Terminal'
-  soon: 'Arrives together with running agents on the server.'
+  soon: 'Not supported yet.'
 composer:
   unavailable: '{agent} is not connected, so you cannot chat with it.'
   setUp: 'Set up a subscription'
@@ -106,6 +106,13 @@ chat:
   thinking: 'Thinking…'
   running: 'running'
   stopped: 'stopped'
+  failed: 'failed'
+  notes:
+    stopped: 'The agent was stopped.'
+    failed: 'The agent exited with an error.'
+    noSubscription: 'The agent has no active subscription.'
+    unsupportedAgent: 'This agent cannot run on the server yet.'
+    openSettings: 'Open settings'
   expand: 'Expand the whole command'
   collapse: 'Collapse the command'
   showAll: 'Show all {count} lines'

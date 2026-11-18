@@ -216,6 +216,18 @@ paths:
       responses:
         '204': { description: Deleted. }
         default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}:stop:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: stopSession
+      description: >-
+        Custom method (AIP-136): stops the running agent of the session and drops the
+        messages still waiting for it.
+      tags: [sessions]
+      responses:
+        '204': { description: Stopped, or nothing was running. }
+        default: { $ref: '#/components/responses/Error' }
   /sessions/{sessionId}/messages:
     parameters:
       - $ref: '#/components/parameters/SessionId'
@@ -497,13 +509,20 @@ components:
           enum: [idle, running]
         createTime: { type: string, format: date-time }
         updateTime: { type: string, format: date-time }
+    PermissionMode:
+      description: Permission mode the agent runs with, named as in Claude Code.
+      type: string
+      enum: [default, acceptEdits, auto, plan, bypassPermissions]
     SessionInput:
+      description: Creating a session with text also starts its agent.
       type: object
       required: [agent]
       properties:
         agent: { $ref: '#/components/schemas/AgentId' }
         title: { type: string, maxLength: 200 }
         text: { type: string }
+        model: { type: string, maxLength: 100 }
+        mode: { $ref: '#/components/schemas/PermissionMode' }
     SessionUpdate:
       description: >-
         Partial update (AIP-134): only the fields present are changed. Changing `agent`
@@ -548,6 +567,10 @@ components:
           type: string
           enum: [running, done, stopped, error]
         meta: { type: string }
+        code:
+          description: Why a system note was written; the client words it.
+          type: string
+          enum: [stopped, failed, noSubscription, unsupportedAgent]
         attachments:
           type: array
           items: { $ref: '#/components/schemas/Attachment' }
@@ -566,10 +589,15 @@ components:
         body: { $ref: '#/components/schemas/MessageBody' }
         createTime: { type: string, format: date-time }
     MessageInput:
+      description: >-
+        A user message starts the session's agent; while it runs, messages queue and
+        reach it together as the next prompt.
       type: object
       required: [text]
       properties:
         text: { type: string, minLength: 1 }
+        model: { type: string, maxLength: 100 }
+        mode: { $ref: '#/components/schemas/PermissionMode' }
     ListMessagesResponse:
       type: object
       required: [messages]
@@ -714,6 +742,7 @@ components:
             - session.updated
             - session.deleted
             - message.created
+            - message.updated
             - draft.updated
             - draft.deleted
             - subscription.created

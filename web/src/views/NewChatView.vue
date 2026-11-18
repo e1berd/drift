@@ -85,7 +85,15 @@ function send({ text, files }: { text: string; files: File[] }) {
     if (!agents.isConnected(agent.value)) return
     announceUnsupportedAttachments(files)
     if (text)
-        create.mutate({ path: { projectId: projectId.value }, body: { agent: agent.value, text } })
+        create.mutate({
+            path: { projectId: projectId.value },
+            body: {
+                agent: agent.value,
+                text,
+                model: settings.modelFor(agent.value),
+                mode: settings.mode(),
+            },
+        })
 }
 </script>
 

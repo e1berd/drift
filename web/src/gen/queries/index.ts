@@ -36,6 +36,7 @@ export { listSubscriptionsQueryKey, listSubscriptionsQueryOptions, useListSubscr
 export { listTreeQueryKey, listTreeQueryOptions, useListTree } from './useListTree'
 export { readFileQueryKey, readFileQueryOptions, useReadFile } from './useReadFile'
 export { startSubscriptionLoginMutationKey, useStartSubscriptionLogin } from './useStartSubscriptionLogin'
+export { stopSessionMutationKey, useStopSession } from './useStopSession'
 export { updateDraftMutationKey, useUpdateDraft } from './useUpdateDraft'
 export { updateFileMutationKey, useUpdateFile } from './useUpdateFile'
 export { updateProjectMutationKey, useUpdateProject } from './useUpdateProject'

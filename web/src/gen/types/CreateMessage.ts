@@ -20,6 +20,10 @@ export type CreateMessageStatus201 = Message;
 
 export type CreateMessageStatusDefault = Error;
 
+/**
+ * @description A user message starts the session's agent; while it runs, messages queue and reach it together as the next prompt.
+ * @type object
+ */
 export type CreateMessageBody = MessageInput;
 
 export type CreateMessageOptions = {

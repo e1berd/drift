@@ -24,7 +24,9 @@ type Querier interface {
 	DeleteSession(ctx context.Context, arg DeleteSessionParams) (int64, error)
 	DeleteSubscription(ctx context.Context, arg DeleteSubscriptionParams) (Subscription, error)
 	FailInterruptedLogins(ctx context.Context) error
+	GetCurrentSubscription(ctx context.Context, arg GetCurrentSubscriptionParams) (Subscription, error)
 	GetProject(ctx context.Context, arg GetProjectParams) (Project, error)
+	GetRunContext(ctx context.Context, arg GetRunContextParams) (GetRunContextRow, error)
 	GetSession(ctx context.Context, arg GetSessionParams) (Session, error)
 	GetSubscription(ctx context.Context, arg GetSubscriptionParams) (Subscription, error)
 	ListDrafts(ctx context.Context, ownerID string) ([]Draft, error)
@@ -37,8 +39,12 @@ type Querier interface {
 	MarkSubscriptionPending(ctx context.Context, arg MarkSubscriptionPendingParams) (Subscription, error)
 	PromoteNextSubscription(ctx context.Context, arg PromoteNextSubscriptionParams) (Subscription, error)
 	RenameProject(ctx context.Context, arg RenameProjectParams) (Project, error)
+	ResetRunningSessions(ctx context.Context) error
+	SetAgentSessionID(ctx context.Context, arg SetAgentSessionIDParams) error
 	SetCurrentSubscription(ctx context.Context, arg SetCurrentSubscriptionParams) (Subscription, error)
+	SetSessionStatus(ctx context.Context, arg SetSessionStatusParams) (Session, error)
 	TouchSession(ctx context.Context, id pgtype.UUID) error
+	UpdateMessageBody(ctx context.Context, arg UpdateMessageBodyParams) (Message, error)
 	UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error)
 	UpsertDraft(ctx context.Context, arg UpsertDraftParams) (Draft, error)
 }

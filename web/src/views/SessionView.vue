@@ -2,11 +2,13 @@
 import { computed, defineAsyncComponent, useTemplateRef } from 'vue'
 import {
     PhChatCircle,
+    PhStop,
     PhFile,
     PhGitBranch,
     PhTerminal,
     PhTerminalWindow,
 } from '@phosphor-icons/vue'
+import { Button } from '@ui-sdk/vue/button'
 import { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from '@ui-sdk/vue/tabs'
 import { toast } from '@ui-sdk/vue/toast'
 import { useRoute, useRouter } from 'vue-router'
@@ -19,7 +21,7 @@ import SwitchFamilyDialog from '@/components/composer/SwitchFamilyDialog.vue'
 import PanePlaceholder from '@/components/PanePlaceholder.vue'
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
-import { useCreateMessage, useUpdateSession } from '@/gen'
+import { useCreateMessage, useStopSession, useUpdateSession } from '@/gen'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
 import type { AgentId } from '@/shared/agents'
@@ -91,8 +93,16 @@ function announceUnsupportedAttachments(files: File[]) {
 
 function send({ text, files }: { text: string; files: File[] }) {
     announceUnsupportedAttachments(files)
-    if (text) post.mutate({ path: { sessionId: sessionId.value }, body: { text } })
+    if (!text) return
+    post.mutate({
+        path: { sessionId: sessionId.value },
+        body: { text, model: settings.modelFor(agent.value), mode: settings.mode() },
+    })
 }
+
+const stop = useStopSession({
+    mutation: { onError: (error) => toast.error(errorMessage(error)) },
+})
 </script>
 
 <template>
@@ -136,7 +146,19 @@ function send({ text, files }: { text: string; files: File[] }) {
                     autofocus
                     @send="send"
                     @switch-agent="switchAgent"
-                />
+                >
+                    <template v-if="running" #action>
+                        <Button
+                            data-variant="solid"
+                            :disabled="stop.isPending.value"
+                            :aria-label="t('composer.stop')"
+                            :title="t('composer.stop')"
+                            @click="stop.mutate({ path: { sessionId } })"
+                        >
+                            <PhStop weight="fill" />
+                        </Button>
+                    </template>
+                </PromptComposer>
                 <SwitchFamilyDialog ref="switchDialog" />
             </div>
         </TabsPanel>

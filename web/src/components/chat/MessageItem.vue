@@ -3,6 +3,7 @@ import { PhFile } from '@phosphor-icons/vue'
 
 import AgentLogo from '@/components/AgentLogo.vue'
 import ThinkingBlock from '@/components/chat/ThinkingBlock.vue'
+import SystemNote from '@/components/chat/SystemNote.vue'
 import ToolCall from '@/components/chat/ToolCall.vue'
 import type { Message } from '@/gen'
 import type { AgentId } from '@/shared/agents'
@@ -32,9 +33,7 @@ defineProps<{ message: Message; agent: AgentId }>()
     <ThinkingBlock v-else-if="message.kind === 'thinking'" :body="message.body" />
     <ToolCall v-else-if="message.kind === 'tool'" :body="message.body" />
 
-    <p v-else-if="message.kind === 'note'" class="m-0 self-center text-muted">
-        {{ message.body.text }}
-    </p>
+    <SystemNote v-else-if="message.kind === 'note'" :body="message.body" />
 
     <div v-else class="grid grid-cols-[20px_minmax(0,1fr)] gap-4">
         <AgentLogo :agent="agent" :size="20" decorative />

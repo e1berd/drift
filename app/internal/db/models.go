@@ -35,14 +35,15 @@ type Project struct {
 }
 
 type Session struct {
-	ID        pgtype.UUID        `json:"id"`
-	ProjectID pgtype.UUID        `json:"project_id"`
-	OwnerID   string             `json:"owner_id"`
-	Title     string             `json:"title"`
-	Agent     string             `json:"agent"`
-	Status    string             `json:"status"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID             pgtype.UUID        `json:"id"`
+	ProjectID      pgtype.UUID        `json:"project_id"`
+	OwnerID        string             `json:"owner_id"`
+	Title          string             `json:"title"`
+	Agent          string             `json:"agent"`
+	Status         string             `json:"status"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	AgentSessionID string             `json:"agent_session_id"`
 }
 
 type Subscription struct {

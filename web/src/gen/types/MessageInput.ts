@@ -3,10 +3,26 @@
 * Do not edit manually.
 */
 
+import type { PermissionModeKey } from './PermissionMode'
+
+/**
+ * @description A user message starts the session's agent; while it runs, messages queue and reach it together as the next prompt.
+ * @type object
+ */
 export type MessageInput = {
   /**
    * @minLength 1
    * @type string
    */
   text: string;
+  /**
+   * @maxLength 100
+   * @type string | undefined
+   */
+  model?: string;
+  /**
+   * @description Permission mode the agent runs with, named as in Claude Code.
+   * @type string | undefined
+   */
+  mode?: PermissionModeKey;
 };

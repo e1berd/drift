@@ -14,6 +14,15 @@ export const messageBodyStatusEnum = {
 
 export type MessageBodyStatusEnumKey = (typeof messageBodyStatusEnum)[keyof typeof messageBodyStatusEnum];
 
+export const messageBodyCodeEnum = {
+  stopped: 'stopped',
+  failed: 'failed',
+  noSubscription: 'noSubscription',
+  unsupportedAgent: 'unsupportedAgent',
+} as const;
+
+export type MessageBodyCodeEnumKey = (typeof messageBodyCodeEnum)[keyof typeof messageBodyCodeEnum];
+
 export type MessageBody = {
   text?: string;
   name?: string;
@@ -21,5 +30,10 @@ export type MessageBody = {
   output?: string[];
   status?: MessageBodyStatusEnumKey;
   meta?: string;
+  /**
+   * @description Why a system note was written; the client words it.
+   * @type string | undefined
+   */
+  code?: MessageBodyCodeEnumKey;
   attachments?: Attachment[];
 };

@@ -4,7 +4,12 @@
 */
 
 import type { AgentIdKey } from './AgentId'
+import type { PermissionModeKey } from './PermissionMode'
 
+/**
+ * @description Creating a session with text also starts its agent.
+ * @type object
+ */
 export type SessionInput = {
   agent: AgentIdKey;
   /**
@@ -13,4 +18,14 @@ export type SessionInput = {
    */
   title?: string;
   text?: string;
+  /**
+   * @maxLength 100
+   * @type string | undefined
+   */
+  model?: string;
+  /**
+   * @description Permission mode the agent runs with, named as in Claude Code.
+   * @type string | undefined
+   */
+  mode?: PermissionModeKey;
 };

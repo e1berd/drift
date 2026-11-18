@@ -20,6 +20,10 @@ export type CreateSessionStatus201 = CreateSessionResponse;
 
 export type CreateSessionStatusDefault = Error;
 
+/**
+ * @description Creating a session with text also starts its agent.
+ * @type object
+ */
 export type CreateSessionBody = SessionInput;
 
 export type CreateSessionOptions = {

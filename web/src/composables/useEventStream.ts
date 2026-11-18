@@ -147,6 +147,19 @@ function onMessageCreated(qc: QueryClient, message: Message) {
     )
 }
 
+function onMessageUpdated(qc: QueryClient, message: Message) {
+    qc.setQueryData<Pages<ListMessagesResponse>>(
+        listMessagesInfiniteQueryKey({ path: { sessionId: message.sessionId } }),
+        (data) =>
+            mapPages(
+                data,
+                (page) => page.messages,
+                (page, messages) => ({ ...page, messages }),
+                (items) => items.map((item) => (item.id === message.id ? message : item)),
+            ),
+    )
+}
+
 function resync(qc: QueryClient) {
     void qc.invalidateQueries()
     loadDrafts().catch(reportError)
@@ -170,6 +183,8 @@ function apply(qc: QueryClient, event: WireEvent) {
             return onSessionDeleted(qc, event.data as { id: string; projectId: string })
         case 'message.created':
             return onMessageCreated(qc, event.data as Message)
+        case 'message.updated':
+            return onMessageUpdated(qc, event.data as Message)
         case 'draft.updated':
         case 'draft.deleted':
             return applyDraftEvent(event.type, event.data as Partial<Draft>, event.origin)
