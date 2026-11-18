@@ -4,12 +4,10 @@ import { PhFilePlus, PhFolderPlus, PhFolderSimple } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { useI18n } from 'vue-i18n'
 
-import type { Project } from '@/gen'
-
 import FileTree from '@/components/files/FileTree.vue'
 import NewEntryForm from '@/components/files/NewEntryForm.vue'
 
-defineProps<{ project: Project }>()
+defineProps<{ sessionId: string; title: string; hint?: string }>()
 const { t } = useI18n()
 const creating = ref<'file' | 'dir' | null>(null)
 
@@ -24,7 +22,7 @@ function toggle(kind: 'file' | 'dir') {
     >
         <div class="files-head">
             <PhFolderSimple class="shrink-0 text-fg" />
-            <b class="truncate font-medium text-fg" :title="project.path">{{ project.name }}</b>
+            <b class="truncate font-medium text-fg" :title="hint">{{ title }}</b>
             <div class="ml-auto flex shrink-0 gap-0.5">
                 <Button
                     :aria-label="t('newFile')"
@@ -47,7 +45,7 @@ function toggle(kind: 'file' | 'dir') {
         <NewEntryForm
             v-if="creating"
             :key="creating"
-            :project-id="project.id"
+            :session-id="sessionId"
             :dir="creating === 'dir'"
             @done="creating = null"
         />

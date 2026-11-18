@@ -16,6 +16,7 @@ type Config struct {
 	KratosAdminURL  *url.URL
 	ViteDevURL      *url.URL
 	WorkspaceRoot   string
+	ChatsRoot       string
 	AgentsRoot      string
 	ClaudeBin       string
 	CodexBin        string
@@ -31,6 +32,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("DRIFT_WORKSPACE_ROOT: %w", err)
 	}
 	cfg.WorkspaceRoot = root
+	chatsRoot, err := filepath.Abs(os.ExpandEnv(env("DRIFT_CHATS_DIR", filepath.Join(root, ".chats"))))
+	if err != nil {
+		return nil, fmt.Errorf("DRIFT_CHATS_DIR: %w", err)
+	}
+	cfg.ChatsRoot = chatsRoot
 	agentsRoot, err := filepath.Abs(os.ExpandEnv(env("DRIFT_AGENTS_DIR", "data/agents")))
 	if err != nil {
 		return nil, fmt.Errorf("DRIFT_AGENTS_DIR: %w", err)

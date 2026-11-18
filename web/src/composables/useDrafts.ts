@@ -74,10 +74,13 @@ export function applyDraftEvent(
     markRemoteTyping(key)
 }
 
-/** Draft key of a session, or of a new chat inside a project. */
+/** Draft of a new chat that belongs to no project. */
+export const STANDALONE_DRAFT_KEY = 'new:chat'
+
+/** Draft key of a session, of a new chat inside a project, or of a new standalone chat. */
 export function draftKey(sessionId?: string, projectId?: string): string {
     if (sessionId) return `session:${sessionId}`
-    return projectId ? `new:${projectId}` : ''
+    return projectId ? `new:${projectId}` : STANDALONE_DRAFT_KEY
 }
 
 function isFromOtherDevice(draft: Draft | undefined): boolean {

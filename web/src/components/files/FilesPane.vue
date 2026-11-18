@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import type { Project } from '@/gen'
-
 import FileEditor from '@/components/files/FileEditor.vue'
 import FilesSidebar from '@/components/files/FilesSidebar.vue'
-import { provideProjectFiles } from '@/composables/useProjectFiles'
+import { provideSessionFiles } from '@/composables/useSessionFiles'
 
-const props = defineProps<{ project: Project }>()
-provideProjectFiles(() => props.project.id)
+const props = defineProps<{ sessionId: string; title: string; hint?: string }>()
+provideSessionFiles(() => props.sessionId)
 </script>
 
 <template>
     <div class="split">
-        <FilesSidebar :project="project" />
-        <FileEditor :project-id="project.id" />
+        <FilesSidebar :session-id="sessionId" :title="title" :hint="hint" />
+        <FileEditor :session-id="sessionId" />
     </div>
 </template>
 

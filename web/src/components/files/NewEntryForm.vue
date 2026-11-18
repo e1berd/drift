@@ -6,20 +6,20 @@ import { useI18n } from 'vue-i18n'
 
 import type { TreeEntry } from '@/gen'
 
-import { folderOf, useProjectFiles } from '@/composables/useProjectFiles'
-import { useCreateTreeEntry } from '@/gen'
+import { folderOf, useSessionFiles } from '@/composables/useSessionFiles'
+import { useCreateSessionTreeEntry } from '@/gen'
 import { errorMessage, reportError } from '@/shared/errors'
 
-const props = defineProps<{ projectId: string; dir: boolean }>()
+const props = defineProps<{ sessionId: string; dir: boolean }>()
 const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()
-const { selected, reveal } = useProjectFiles()
+const { selected, reveal } = useSessionFiles()
 
 const startFolder = folderOf(selected.value)
 const path = ref(startFolder ? `${startFolder}/` : '')
 const form = useTemplateRef<HTMLFormElement>('form')
 
-const create = useCreateTreeEntry({
+const create = useCreateSessionTreeEntry({
     mutation: {
         onSuccess: (entry: TreeEntry) => {
             emit('done')
@@ -32,7 +32,7 @@ function submit() {
     const value = path.value.trim().replace(/\/+$/, '')
     if (value)
         create.mutate({
-            path: { projectId: props.projectId },
+            path: { sessionId: props.sessionId },
             body: { path: value, dir: props.dir },
         })
 }

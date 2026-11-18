@@ -30,6 +30,14 @@ WHERE project_id = $1 AND owner_id = $2
 ORDER BY updated_at DESC, id DESC
 LIMIT $3;
 
+-- name: ListStandaloneSessions :many
+SELECT * FROM sessions
+WHERE owner_id = $1 AND project_id IS NULL
+  AND (sqlc.narg(before_updated)::timestamptz IS NULL
+       OR (updated_at, id) < (sqlc.narg(before_updated)::timestamptz, sqlc.narg(before_id)::uuid))
+ORDER BY updated_at DESC, id DESC
+LIMIT $2;
+
 -- name: GetSession :one
 SELECT * FROM sessions WHERE id = $1 AND owner_id = $2;
 
@@ -90,7 +98,7 @@ UPDATE sessions SET agent_session_id = $2 WHERE id = $1;
 UPDATE sessions SET status = 'idle' WHERE status = 'running';
 
 -- name: GetRunContext :one
-SELECT s.*, p.path AS project_path FROM sessions s JOIN projects p ON p.id = s.project_id
+SELECT s.*, p.path AS project_path FROM sessions s LEFT JOIN projects p ON p.id = s.project_id
 WHERE s.id = $1 AND s.owner_id = $2;
 
 -- name: UpdateMessageBody :one

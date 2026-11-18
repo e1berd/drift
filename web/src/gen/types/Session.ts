@@ -20,11 +20,12 @@ export type Session = {
    */
   id: string;
   /**
-   * @description
+   * @description Absent for a standalone session.
+   *
    * Format: `uuid`
-   * @type string
+   * @type string | undefined
    */
-  projectId: string;
+  projectId?: string;
   title: string;
   agent: AgentIdKey;
   status: SessionStatusEnumKey;

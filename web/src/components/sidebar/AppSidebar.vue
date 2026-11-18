@@ -9,6 +9,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import BrandMark from '@/components/BrandMark.vue'
 import NewProjectForm from '@/components/sidebar/NewProjectForm.vue'
 import ProjectItem from '@/components/sidebar/ProjectItem.vue'
+import StandaloneChats from '@/components/sidebar/StandaloneChats.vue'
 import SidebarFooter from '@/components/sidebar/SidebarFooter.vue'
 import { useShell } from '@/composables/useShell'
 import { useProjects } from '@/shared/queries'
@@ -46,41 +47,44 @@ function startNewChat() {
             />
         </div>
 
-        <div class="flex items-center justify-between px-3 pt-3 pb-1 text-muted">
-            <span>{{ t('nav.projects') }}</span>
-            <Button
-                :aria-label="t('nav.newProject')"
-                :title="t('nav.newProject')"
-                :aria-expanded="creating"
-                @click="creating = !creating"
-            >
-                <PhPlus />
-            </Button>
-        </div>
+        <div class="min-h-0 flex-1 overflow-auto">
+            <StandaloneChats :filter="filter" />
 
-        <div class="grid-reveal px-3" :data-open="creating || undefined">
-            <div>
-                <NewProjectForm v-if="creating" @done="creating = false" />
+            <div class="flex items-center justify-between px-3 pt-3 pb-1 text-muted">
+                <span>{{ t('nav.projects') }}</span>
+                <Button
+                    :aria-label="t('nav.newProject')"
+                    :title="t('nav.newProject')"
+                    :aria-expanded="creating"
+                    @click="creating = !creating"
+                >
+                    <PhPlus />
+                </Button>
             </div>
-        </div>
 
-        <nav class="min-h-0 flex-1 overflow-auto px-2 pb-2" :aria-label="t('nav.projects')">
-            <div v-if="isPending" class="flex flex-col gap-1 pt-1">
-                <div v-for="row in 3" :key="row" class="skeleton h-8" />
+            <div class="grid-reveal px-3" :data-open="creating || undefined">
+                <div>
+                    <NewProjectForm v-if="creating" @done="creating = false" />
+                </div>
             </div>
-            <p v-else-if="!projects.length && !creating" class="px-2 py-2 text-muted">
-                {{ t('nav.noProjects') }}
-            </p>
-            <div v-auto-animate>
-                <ProjectItem
-                    v-for="(project, index) in projects"
-                    :key="project.id"
-                    :project="project"
-                    :filter="filter"
-                    :is-default="index === 0"
-                />
-            </div>
-        </nav>
+
+            <nav class="px-2 pb-2" :aria-label="t('nav.projects')">
+                <div v-if="isPending" class="flex flex-col gap-1 pt-1">
+                    <div v-for="row in 3" :key="row" class="skeleton h-8" />
+                </div>
+                <p v-else-if="!projects.length && !creating" class="px-2 py-2 text-muted">
+                    {{ t('nav.noProjects') }}
+                </p>
+                <div v-auto-animate>
+                    <ProjectItem
+                        v-for="project in projects"
+                        :key="project.id"
+                        :project="project"
+                        :filter="filter"
+                    />
+                </div>
+            </nav>
+        </div>
 
         <SidebarFooter />
     </div>

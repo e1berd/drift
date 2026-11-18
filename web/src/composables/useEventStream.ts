@@ -17,6 +17,7 @@ import {
     listMessagesInfiniteQueryKey,
     listProjectsInfiniteQueryKey,
     listSessionsInfiniteQueryKey,
+    listStandaloneSessionsInfiniteQueryKey,
     listSubscriptionsQueryKey,
 } from '@/gen'
 import { applyDraftEvent, loadDrafts } from '@/composables/useDrafts'
@@ -70,7 +71,8 @@ function upsertProject(qc: QueryClient, project: Project) {
     })
 }
 
-function bumpSessionCount(qc: QueryClient, projectId: string, delta: number) {
+function bumpSessionCount(qc: QueryClient, projectId: string | undefined, delta: number) {
+    if (!projectId) return
     updateProjects(qc, (items) =>
         items.map((item) =>
             item.id === projectId
@@ -80,13 +82,15 @@ function bumpSessionCount(qc: QueryClient, projectId: string, delta: number) {
     )
 }
 
-function sessionsKey(projectId: string) {
-    return listSessionsInfiniteQueryKey({ path: { projectId } })
+function sessionsKey(projectId: string | undefined) {
+    return projectId
+        ? listSessionsInfiniteQueryKey({ path: { projectId } })
+        : listStandaloneSessionsInfiniteQueryKey()
 }
 
 function updateSessions(
     qc: QueryClient,
-    projectId: string,
+    projectId: string | undefined,
     change: (items: Session[], index: number) => Session[],
 ) {
     qc.setQueryData<Pages<ListSessionsResponse>>(sessionsKey(projectId), (data) =>
@@ -120,7 +124,7 @@ function onSessionCreated(qc: QueryClient, session: Session, mine: boolean) {
     if (!mine) freshSessions.value = new Set(freshSessions.value).add(session.id)
 }
 
-function onSessionDeleted(qc: QueryClient, { id, projectId }: { id: string; projectId: string }) {
+function onSessionDeleted(qc: QueryClient, { id, projectId }: { id: string; projectId?: string }) {
     updateSessions(qc, projectId, (items) => items.filter((item) => item.id !== id))
     qc.removeQueries({ queryKey: getSessionQueryKey({ path: { sessionId: id } }) })
     bumpSessionCount(qc, projectId, -1)
@@ -180,7 +184,7 @@ function apply(qc: QueryClient, event: WireEvent) {
         case 'session.updated':
             return putSessionFirst(qc, event.data as Session)
         case 'session.deleted':
-            return onSessionDeleted(qc, event.data as { id: string; projectId: string })
+            return onSessionDeleted(qc, event.data as { id: string; projectId?: string })
         case 'message.created':
             return onMessageCreated(qc, event.data as Message)
         case 'message.updated':

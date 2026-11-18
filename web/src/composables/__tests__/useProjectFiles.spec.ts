@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { ancestorsOf, folderOf } from '@/composables/useProjectFiles'
+import { ancestorsOf, folderOf } from '@/composables/useSessionFiles'
 
 describe('ancestorsOf', () => {
     it('lists parent folders outermost first', () => {

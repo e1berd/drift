@@ -109,8 +109,10 @@ const stop = useStopSession({
     <Tabs v-model:value="tab" class="flex min-h-0 flex-1 flex-col">
         <TopBar>
             <template #start>
-                <span class="shrink-0 whitespace-nowrap text-muted">{{ project?.name }}</span>
-                <span class="text-muted">/</span>
+                <template v-if="project">
+                    <span class="shrink-0 whitespace-nowrap text-muted">{{ project.name }}</span>
+                    <span class="text-muted">/</span>
+                </template>
                 <span class="truncate font-medium">{{ session.data.value?.title }}</span>
             </template>
             <template #center>
@@ -166,7 +168,12 @@ const stop = useStopSession({
             ><PanePlaceholder :icon="PhTerminal"
         /></TabsPanel>
         <TabsPanel value="files" class="session-pane">
-            <FilesPane v-if="project" :project="project" />
+            <FilesPane
+                v-if="session.data.value"
+                :session-id="sessionId"
+                :title="project?.name ?? t('files.noProjectFolder')"
+                :hint="project?.path"
+            />
         </TabsPanel>
         <TabsPanel value="git" class="session-pane"
             ><PanePlaceholder :icon="PhGitBranch"

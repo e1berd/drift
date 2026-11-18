@@ -24,7 +24,8 @@ import PromptComposer from '@/components/composer/PromptComposer.vue'
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
 import { useAgents } from '@/composables/useAgents'
-import { useCreateSession } from '@/gen'
+import { useCreateSession, useCreateStandaloneSession } from '@/gen'
+import type { CreateSessionResponse } from '@/gen'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
 import type { AgentId } from '@/shared/agents'
@@ -39,18 +40,24 @@ const agents = useAgents()
 const settings = useComposerSettings()
 
 const agent = ref<AgentId>(agents.connected.value.at(0) ?? 'claude')
-const projectId = computed({
-    get: () =>
-        typeof route.query.project === 'string'
-            ? route.query.project
-            : (projects.value.at(0)?.id ?? ''),
+const NO_PROJECT = 'none'
+
+const projectId = computed(() =>
+    typeof route.query.project === 'string' ? route.query.project : '',
+)
+const projectChoice = computed({
+    get: () => projectId.value || NO_PROJECT,
     set: (id: string | null) => {
-        if (id) void router.replace({ name: 'new', query: { project: id } })
+        if (!id) return
+        void router.replace(
+            id === NO_PROJECT ? { name: 'new' } : { name: 'new', query: { project: id } },
+        )
     },
 })
-const projectItems = computed(() =>
-    projects.value.map((project) => ({ value: project.id, label: project.name })),
-)
+const projectItems = computed(() => [
+    { value: NO_PROJECT, label: t('composer.noProject') },
+    ...projects.value.map((project) => ({ value: project.id, label: project.name })),
+])
 const agentValue = computed({
     get: () => agent.value,
     set: (value: string | null) => {
@@ -63,13 +70,16 @@ watch(agents.connected, (list) => {
     if (!list.includes(agent.value) && first) agent.value = first
 })
 
-const create = useCreateSession({
+const created = {
     mutation: {
-        onSuccess: ({ session }) =>
+        onSuccess: ({ session }: CreateSessionResponse) =>
             router.push({ name: 'session', params: { sessionId: session.id } }),
-        onError: (error) => toast.error(errorMessage(error)),
+        onError: (error: unknown) => toast.error(errorMessage(error)),
     },
-})
+}
+const createInProject = useCreateSession(created)
+const createStandalone = useCreateStandaloneSession(created)
+const creating = computed(() => createInProject.isPending.value || createStandalone.isPending.value)
 
 function announceUnsupportedAttachments(files: File[]) {
     if (files.length)
@@ -84,16 +94,15 @@ function switchAgent(choice: { agent: AgentId; model: string }) {
 function send({ text, files }: { text: string; files: File[] }) {
     if (!agents.isConnected(agent.value)) return
     announceUnsupportedAttachments(files)
-    if (text)
-        create.mutate({
-            path: { projectId: projectId.value },
-            body: {
-                agent: agent.value,
-                text,
-                model: settings.modelFor(agent.value),
-                mode: settings.mode(),
-            },
-        })
+    if (!text) return
+    const body = {
+        agent: agent.value,
+        text,
+        model: settings.modelFor(agent.value),
+        mode: settings.mode(),
+    }
+    if (projectId.value) createInProject.mutate({ path: { projectId: projectId.value }, body })
+    else createStandalone.mutate({ body })
 }
 </script>
 
@@ -122,29 +131,27 @@ function send({ text, files }: { text: string; files: File[] }) {
                 </SegmentedControlItem>
             </SegmentedControl>
 
-            <p v-if="!projects.length" class="m-0 text-muted">{{ t('empty.noProject') }}</p>
             <PromptComposer
-                v-else
                 :draft-key="draftKey(undefined, projectId)"
                 :agent="agent"
                 :placeholder="t('composer.placeholder.new', { agent: AGENTS[agent].name })"
-                :busy="create.isPending.value"
+                :busy="creating"
                 autofocus
                 @send="send"
                 @switch-agent="switchAgent"
             >
                 <template #start>
-                    <Select v-model:value="projectId" :items="projectItems">
+                    <Select v-model:value="projectChoice" :items="projectItems">
                         <SelectTrigger class="composer-select" :aria-label="t('composer.project')"
                             ><SelectValue
                         /></SelectTrigger>
                         <SelectContent side="top" align="start">
                             <SelectItem
-                                v-for="project in projects"
-                                :key="project.id"
-                                :value="project.id"
+                                v-for="item in projectItems"
+                                :key="item.value"
+                                :value="item.value"
                             >
-                                <SelectItemText>{{ project.name }}</SelectItemText>
+                                <SelectItemText>{{ item.label }}</SelectItemText>
                                 <SelectItemIndicator />
                             </SelectItem>
                         </SelectContent>

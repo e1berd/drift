@@ -6,11 +6,11 @@ import type { TreeItemData } from '@ui-sdk/vue/tree'
 import type { TreeEntry } from '@/gen'
 
 import FileRows from '@/components/files/FileRows.vue'
-import { useProjectFiles } from '@/composables/useProjectFiles'
+import { useSessionFiles } from '@/composables/useSessionFiles'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const { root, children, expanded, selected, loadChildren } = useProjectFiles()
+const { root, children, expanded, selected, loadChildren } = useSessionFiles()
 
 function toTreeItems(entries: TreeEntry[]): TreeItemData[] {
     return entries.map((entry) => ({

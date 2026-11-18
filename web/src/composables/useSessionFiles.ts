@@ -3,32 +3,32 @@ import { computed, inject, provide, reactive, ref, toValue, watch } from 'vue'
 import type { InjectionKey, MaybeRefOrGetter } from 'vue'
 import type { TreeEntry } from '@/gen'
 
-import { listTree, useListTree } from '@/gen'
+import { listSessionTree, useListSessionTree } from '@/gen'
 
-/** Ancestor folders of a project-relative path, outermost first: `a/b/c.ts` → `a`, `a/b`. */
+/** Ancestor folders of a folder-relative path, outermost first: `a/b/c.ts` → `a`, `a/b`. */
 export function ancestorsOf(entryPath: string): string[] {
     const parts = entryPath.split('/').slice(0, -1)
     return parts.map((_, index) => parts.slice(0, index + 1).join('/'))
 }
 
-/** Folder that holds a project-relative path, `''` for the project root. */
+/** Folder that holds a folder-relative path, `''` for the root. */
 export function folderOf(entryPath: string | null): string {
     return entryPath ? (ancestorsOf(entryPath).at(-1) ?? '') : ''
 }
 
-function createProjectFiles(projectId: MaybeRefOrGetter<string>) {
+function createSessionFiles(sessionId: MaybeRefOrGetter<string>) {
     const children = reactive(new Map<string, TreeEntry[]>())
     const expanded = ref<string[]>([])
     const selected = ref<string | null>(null)
     const drafts = reactive(new Map<string, string>())
 
-    const root = useListTree({
-        path: computed(() => ({ projectId: toValue(projectId) })),
+    const root = useListSessionTree({
+        path: computed(() => ({ sessionId: toValue(sessionId) })),
         query: { path: '.' },
     })
 
     watch(
-        () => toValue(projectId),
+        () => toValue(sessionId),
         () => {
             children.clear()
             drafts.clear()
@@ -38,8 +38,8 @@ function createProjectFiles(projectId: MaybeRefOrGetter<string>) {
     )
 
     async function loadChildren(folder: string, options: { signal?: AbortSignal } = {}) {
-        const { data } = await listTree({
-            path: { projectId: toValue(projectId) },
+        const { data } = await listSessionTree({
+            path: { sessionId: toValue(sessionId) },
             query: { path: folder },
             signal: options.signal,
         })
@@ -56,20 +56,20 @@ function createProjectFiles(projectId: MaybeRefOrGetter<string>) {
     return { root, children, expanded, selected, drafts, loadChildren, reveal }
 }
 
-export type ProjectFiles = ReturnType<typeof createProjectFiles>
+export type SessionFiles = ReturnType<typeof createSessionFiles>
 
-const KEY: InjectionKey<ProjectFiles> = Symbol('drift.projectFiles')
+const KEY: InjectionKey<SessionFiles> = Symbol('drift.sessionFiles')
 
-/** Tree, selection and unsaved edits of one project's files; created once by FilesPane. */
-export function provideProjectFiles(projectId: MaybeRefOrGetter<string>): ProjectFiles {
-    const files = createProjectFiles(projectId)
+/** Tree, selection and unsaved edits of the folder a session's agent works in; created once by FilesPane. */
+export function provideSessionFiles(sessionId: MaybeRefOrGetter<string>): SessionFiles {
+    const files = createSessionFiles(sessionId)
     provide(KEY, files)
     return files
 }
 
 /** Files state for components inside FilesPane. */
-export function useProjectFiles(): ProjectFiles {
+export function useSessionFiles(): SessionFiles {
     const files = inject(KEY)
-    if (!files) throw new Error('useProjectFiles() called outside FilesPane')
+    if (!files) throw new Error('useSessionFiles() called outside FilesPane')
     return files
 }

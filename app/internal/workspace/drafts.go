@@ -12,7 +12,7 @@ import (
 
 const maxDraftBytes = 64 << 10
 
-var draftKey = regexp.MustCompile(`^(session|new):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+var draftKey = regexp.MustCompile(`^((session|new):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|` + standaloneDraftKey + `)$`)
 
 type listDraftsResponse struct {
 	Drafts []Draft `json:"drafts"`

@@ -75,6 +75,10 @@ func (h *Handler) createSession(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+	return h.insertSession(c, p.ID, "new:"+uuidString(p.ID))
+}
+
+func (h *Handler) insertSession(c *echo.Context, projectID pgtype.UUID, newDraftKey string) error {
 	var in sessionInput
 	if err := c.Bind(&in); err != nil {
 		return badRequest("invalid body")
@@ -102,9 +106,9 @@ func (h *Handler) createSession(c *echo.Context) error {
 	var out createSessionResponse
 	var sessionID pgtype.UUID
 	var draftsDeleted int64
-	err = pgx.BeginFunc(ctx, h.pool, func(tx pgx.Tx) error {
+	err := pgx.BeginFunc(ctx, h.pool, func(tx pgx.Tx) error {
 		q := h.q.WithTx(tx)
-		s, err := q.CreateSession(ctx, db.CreateSessionParams{ProjectID: p.ID, OwnerID: owner, Title: title, Agent: in.Agent})
+		s, err := q.CreateSession(ctx, db.CreateSessionParams{ProjectID: projectID, OwnerID: owner, Title: title, Agent: in.Agent})
 		if err != nil {
 			return err
 		}
@@ -118,7 +122,7 @@ func (h *Handler) createSession(c *echo.Context) error {
 			dto := messageDTO(m)
 			out.Message = &dto
 		}
-		draftsDeleted, err = q.DeleteDraft(ctx, db.DeleteDraftParams{OwnerID: owner, Key: "new:" + uuidString(p.ID)})
+		draftsDeleted, err = q.DeleteDraft(ctx, db.DeleteDraftParams{OwnerID: owner, Key: newDraftKey})
 		return err
 	})
 	if err != nil {
@@ -130,7 +134,7 @@ func (h *Handler) createSession(c *echo.Context) error {
 		h.publish(c, "message.created", out.Message)
 	}
 	if draftsDeleted > 0 {
-		h.publish(c, "draft.deleted", deleted{Key: "new:" + uuidString(p.ID)})
+		h.publish(c, "draft.deleted", deleted{Key: newDraftKey})
 	}
 	h.startRun(c, sessionID, text, in.runOptions)
 	return c.JSON(http.StatusCreated, out)
@@ -208,8 +212,16 @@ func (h *Handler) deleteSession(c *echo.Context) error {
 	}
 	owner := identity.From(c)
 	ctx := c.Request().Context()
+	if h.runner != nil {
+		h.runner.Stop(owner, s.ID)
+	}
 	if _, err := h.q.DeleteSession(ctx, db.DeleteSessionParams{ID: s.ID, OwnerID: owner}); err != nil {
 		return err
+	}
+	if !s.ProjectID.Valid {
+		if err := h.folders.RemoveChat(s.ID); err != nil {
+			h.log.Warn("delete chat folder", "err", err)
+		}
 	}
 	if err := h.q.DeleteDraftsForSession(ctx, db.DeleteDraftsForSessionParams{OwnerID: owner, SessionID: uuidString(s.ID)}); err != nil {
 		h.log.Warn("delete session drafts", "err", err)

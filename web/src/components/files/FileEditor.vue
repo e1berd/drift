@@ -9,20 +9,20 @@ import { useI18n } from 'vue-i18n'
 import type { FileContent } from '@/gen'
 
 import CodeView from '@/components/files/CodeView.vue'
-import { useProjectFiles } from '@/composables/useProjectFiles'
-import { readFileQueryKey, useReadFile, useUpdateFile } from '@/gen'
+import { useSessionFiles } from '@/composables/useSessionFiles'
+import { readSessionFileQueryKey, useReadSessionFile, useUpdateSessionFile } from '@/gen'
 import { errorMessage } from '@/shared/errors'
 
-const props = defineProps<{ projectId: string }>()
+const props = defineProps<{ sessionId: string }>()
 const { t } = useI18n()
 const qc = useQueryClient()
-const { selected, drafts } = useProjectFiles()
+const { selected, drafts } = useSessionFiles()
 
 const target = computed(() => ({
-    path: { projectId: props.projectId },
+    path: { sessionId: props.sessionId },
     query: { path: selected.value ?? '' },
 }))
-const file = useReadFile(
+const file = useReadSessionFile(
     { path: () => target.value.path, query: () => target.value.query },
     { query: { enabled: () => !!selected.value } },
 )
@@ -33,12 +33,12 @@ const content = computed(() => draft.value ?? file.data.value?.content ?? '')
 const dirty = computed(() => draft.value !== undefined && draft.value !== file.data.value?.content)
 const lineCount = computed(() => content.value.split('\n').length)
 
-const save = useUpdateFile({
+const save = useUpdateSessionFile({
     mutation: {
         onSuccess: (saved: FileContent) => {
             qc.setQueryData(
-                readFileQueryKey({
-                    path: { projectId: props.projectId },
+                readSessionFileQueryKey({
+                    path: { sessionId: props.sessionId },
                     query: { path: saved.path },
                 }),
                 saved,

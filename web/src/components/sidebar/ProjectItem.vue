@@ -20,7 +20,7 @@ import { errorMessage } from '@/shared/errors'
 import { useI18n } from 'vue-i18n'
 import { useSessions } from '@/shared/queries'
 
-const props = defineProps<{ project: Project; filter: string; isDefault?: boolean }>()
+const props = defineProps<{ project: Project; filter: string }>()
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
@@ -38,11 +38,7 @@ const { sessions, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = 
 )
 
 const newKey = computed(() => draftKey(undefined, props.project.id))
-const viewingNew = computed(() => {
-    if (route.name !== 'new') return false
-    const requested = route.query.project
-    return typeof requested === 'string' ? requested === props.project.id : !!props.isDefault
-})
+const viewingNew = computed(() => route.name === 'new' && route.query.project === props.project.id)
 const showDraft = computed(() => drafts.has(newKey.value) && !viewingNew.value)
 
 const visible = computed(() => {

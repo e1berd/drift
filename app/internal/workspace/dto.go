@@ -20,7 +20,7 @@ type Project struct {
 // Session is one agent conversation inside a project.
 type Session struct {
 	ID         string    `json:"id"`
-	ProjectID  string    `json:"projectId"`
+	ProjectID  string    `json:"projectId,omitempty"`
 	Title      string    `json:"title"`
 	Agent      string    `json:"agent"`
 	Status     string    `json:"status"`
@@ -38,7 +38,7 @@ type Message struct {
 	CreateTime time.Time       `json:"createTime"`
 }
 
-// Draft is unsent composer text, keyed by "session:<id>" or "new:<project id>".
+// Draft is unsent composer text, keyed by "session:<id>", "new:<project id>" or "new:chat".
 type Draft struct {
 	Key        string    `json:"key"`
 	Text       string    `json:"text"`

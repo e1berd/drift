@@ -182,6 +182,39 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/FileContent' }
         default: { $ref: '#/components/responses/Error' }
+  /sessions:
+    get:
+      operationId: listStandaloneSessions
+      description: Sessions that belong to no project, latest activity first (AIP-158 pagination).
+      tags: [sessions]
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200':
+          description: A page of standalone sessions.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListSessionsResponse' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createStandaloneSession
+      description: >-
+        Creates a session without a project (AIP-133). Its agent works in a private empty
+        folder that is deleted together with the session.
+      tags: [sessions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessionInput' }
+      responses:
+        '201':
+          description: The created session and its first message.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreateSessionResponse' }
+        default: { $ref: '#/components/responses/Error' }
   /sessions/{sessionId}:
     parameters:
       - $ref: '#/components/parameters/SessionId'
@@ -227,6 +260,73 @@ paths:
       tags: [sessions]
       responses:
         '204': { description: Stopped, or nothing was running. }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/tree:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: listSessionTree
+      description: >-
+        Files of the folder the session's agent works in: its project, or the private
+        folder of a standalone session.
+      tags: [files]
+      parameters:
+        - $ref: '#/components/parameters/FilePath'
+      responses:
+        '200':
+          description: Entries of one folder, folders first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreeResponse' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createSessionTreeEntry
+      tags: [files]
+      description: Creates an empty file or a folder, with missing parent folders (AIP-133).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TreeEntryInput' }
+      responses:
+        '201':
+          description: The created entry. 409 when the path is taken.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreeEntry' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/file:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: readSessionFile
+      tags: [files]
+      parameters:
+        - $ref: '#/components/parameters/FilePath'
+      responses:
+        '200':
+          description: Text content up to 1 MiB, or a binary marker.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FileContent' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      operationId: updateSessionFile
+      tags: [files]
+      description: Replaces the text of an existing file; content is its only mutable field (AIP-134).
+      parameters:
+        - $ref: '#/components/parameters/FilePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FileInput' }
+      responses:
+        '200':
+          description: The saved file.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FileContent' }
         default: { $ref: '#/components/responses/Error' }
   /sessions/{sessionId}/messages:
     parameters:
@@ -498,10 +598,13 @@ components:
       enum: [claude, codex, antigravity]
     Session:
       type: object
-      required: [id, projectId, title, agent, status, createTime, updateTime]
+      required: [id, title, agent, status, createTime, updateTime]
       properties:
         id: { type: string, format: uuid }
-        projectId: { type: string, format: uuid }
+        projectId:
+          description: Absent for a standalone session.
+          type: string
+          format: uuid
         title: { type: string }
         agent: { $ref: '#/components/schemas/AgentId' }
         status:

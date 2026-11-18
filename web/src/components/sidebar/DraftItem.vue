@@ -7,7 +7,7 @@ import { useDraftIndex } from '@/composables/useDrafts'
 import { useShell } from '@/composables/useShell'
 import { useI18n } from 'vue-i18n'
 
-const props = defineProps<{ draftKey: string; projectId: string }>()
+const props = defineProps<{ draftKey: string; projectId?: string }>()
 const { t } = useI18n()
 const drafts = useDraftIndex()
 const { closeOnNarrow } = useShell()
@@ -19,7 +19,7 @@ const fromOther = computed(() => drafts.fromOther(props.draftKey))
 
 <template>
     <RouterLink
-        :to="{ name: 'new', query: { project: projectId } }"
+        :to="projectId ? { name: 'new', query: { project: projectId } } : { name: 'new' }"
         class="nav-row motion-enter no-underline"
         data-draft
         :title="text"

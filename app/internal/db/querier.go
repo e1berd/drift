@@ -33,6 +33,7 @@ type Querier interface {
 	ListMessages(ctx context.Context, arg ListMessagesParams) ([]Message, error)
 	ListProjects(ctx context.Context, arg ListProjectsParams) ([]ListProjectsRow, error)
 	ListSessions(ctx context.Context, arg ListSessionsParams) ([]Session, error)
+	ListStandaloneSessions(ctx context.Context, arg ListStandaloneSessionsParams) ([]Session, error)
 	ListSubscriptions(ctx context.Context, ownerID string) ([]Subscription, error)
 	MarkSubscriptionActive(ctx context.Context, arg MarkSubscriptionActiveParams) (Subscription, error)
 	MarkSubscriptionFailed(ctx context.Context, arg MarkSubscriptionFailedParams) (Subscription, error)

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -44,8 +43,9 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 		t.note(noteFailed, err.Error())
 		return
 	}
-	if !filepath.IsLocal(rc.ProjectPath) && rc.ProjectPath != "." {
-		t.note(noteFailed, "project path is outside the workspace")
+	dir, err := r.folders.Session(rc.ProjectPath, rc.ID)
+	if err != nil {
+		t.note(noteFailed, err.Error())
 		return
 	}
 	if !r.acquire(ctx) {
@@ -55,7 +55,7 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 	defer r.release()
 
 	cmd := exec.CommandContext(ctx, r.cli.Claude, claudeArgs(req, rc.AgentSessionID)...)
-	cmd.Dir = filepath.Join(r.root, rc.ProjectPath)
+	cmd.Dir = dir
 	cmd.Env = r.cli.Env(r.cli.Home(uuidString(sub.ID)))
 	cmd.Stdin = strings.NewReader(req.Text)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}

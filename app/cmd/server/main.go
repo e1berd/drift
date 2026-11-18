@@ -95,11 +95,12 @@ func run() error {
 	api := e.Group("/api", identity.New(kc).Require)
 	api.GET("/events", hub.Stream)
 	cli := agents.CLI{Root: cfg.AgentsRoot, Claude: cfg.ClaudeBin, Codex: cfg.CodexBin}
-	agentRunner, err := runner.New(ctx, pool, hub, cli, cfg.WorkspaceRoot, log)
+	folders := workspace.Folders{Workspace: cfg.WorkspaceRoot, Chats: cfg.ChatsRoot}
+	agentRunner, err := runner.New(ctx, pool, hub, cli, folders, log)
 	if err != nil {
 		return err
 	}
-	workspace.New(pool, hub, cfg.WorkspaceRoot, log).WithRunner(agentRunner).Register(api)
+	workspace.New(pool, hub, folders, log).WithRunner(agentRunner).Register(api)
 	subs, err := subscriptions.New(ctx, pool, hub, cli, log)
 	if err != nil {
 		return err

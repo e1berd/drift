@@ -21,12 +21,12 @@ const maxParallelRuns = 2
 
 // Runner owns the running agent processes.
 type Runner struct {
-	ctx  context.Context
-	q    *db.Queries
-	hub  *events.Hub
-	cli  agents.CLI
-	root string
-	log  *slog.Logger
+	ctx     context.Context
+	q       *db.Queries
+	hub     *events.Hub
+	cli     agents.CLI
+	folders workspace.Folders
+	log     *slog.Logger
 
 	slots chan struct{}
 	mu    sync.Mutex
@@ -40,13 +40,13 @@ type run struct {
 
 // New returns a runner whose processes live as long as ctx, and marks sessions left
 // running by a previous shutdown as idle.
-func New(ctx context.Context, pool *pgxpool.Pool, hub *events.Hub, cli agents.CLI, root string, log *slog.Logger) (*Runner, error) {
+func New(ctx context.Context, pool *pgxpool.Pool, hub *events.Hub, cli agents.CLI, folders workspace.Folders, log *slog.Logger) (*Runner, error) {
 	q := db.New(pool)
 	if err := q.ResetRunningSessions(ctx); err != nil {
 		return nil, err
 	}
 	return &Runner{
-		ctx: ctx, q: q, hub: hub, cli: cli, root: root, log: log,
+		ctx: ctx, q: q, hub: hub, cli: cli, folders: folders, log: log,
 		slots: make(chan struct{}, maxParallelRuns),
 		runs:  make(map[pgtype.UUID]*run),
 	}, nil

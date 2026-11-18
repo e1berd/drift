@@ -7,6 +7,7 @@ import {
     useListMessagesInfinite,
     useListProjectsInfinite,
     useListSessionsInfinite,
+    useListStandaloneSessionsInfinite,
 } from '@/gen'
 
 /** All projects across loaded pages, oldest first. */
@@ -25,6 +26,13 @@ export function useSessions(
         { path: computed(() => ({ projectId: toValue(projectId) })) },
         { query: { enabled: () => toValue(enabled) } },
     )
+    const sessions = computed(() => query.data.value?.pages.flatMap((page) => page.sessions) ?? [])
+    return { ...query, sessions }
+}
+
+/** Sessions without a project, latest activity first. */
+export function useStandaloneSessions() {
+    const query = useListStandaloneSessionsInfinite()
     const sessions = computed(() => query.data.value?.pages.flatMap((page) => page.sessions) ?? [])
     return { ...query, sessions }
 }

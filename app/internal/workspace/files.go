@@ -46,6 +46,9 @@ type File struct {
 }
 
 func (h *Handler) projectRoot(c *echo.Context) (*os.Root, error) {
+	if c.Param("project") == "" {
+		return h.sessionRoot(c)
+	}
 	p, err := h.project(c)
 	if err != nil {
 		return nil, err

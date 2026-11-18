@@ -212,7 +212,7 @@ func (q *Queries) GetProject(ctx context.Context, arg GetProjectParams) (Project
 }
 
 const getRunContext = `-- name: GetRunContext :one
-SELECT s.id, s.project_id, s.owner_id, s.title, s.agent, s.status, s.created_at, s.updated_at, s.agent_session_id, p.path AS project_path FROM sessions s JOIN projects p ON p.id = s.project_id
+SELECT s.id, s.project_id, s.owner_id, s.title, s.agent, s.status, s.created_at, s.updated_at, s.agent_session_id, p.path AS project_path FROM sessions s LEFT JOIN projects p ON p.id = s.project_id
 WHERE s.id = $1 AND s.owner_id = $2
 `
 
@@ -231,7 +231,7 @@ type GetRunContextRow struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 	AgentSessionID string             `json:"agent_session_id"`
-	ProjectPath    string             `json:"project_path"`
+	ProjectPath    pgtype.Text        `json:"project_path"`
 }
 
 func (q *Queries) GetRunContext(ctx context.Context, arg GetRunContextParams) (GetRunContextRow, error) {
@@ -436,6 +436,57 @@ type ListSessionsParams struct {
 func (q *Queries) ListSessions(ctx context.Context, arg ListSessionsParams) ([]Session, error) {
 	rows, err := q.db.Query(ctx, listSessions,
 		arg.ProjectID,
+		arg.OwnerID,
+		arg.Limit,
+		arg.BeforeUpdated,
+		arg.BeforeID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Session
+	for rows.Next() {
+		var i Session
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.OwnerID,
+			&i.Title,
+			&i.Agent,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AgentSessionID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStandaloneSessions = `-- name: ListStandaloneSessions :many
+SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id FROM sessions
+WHERE owner_id = $1 AND project_id IS NULL
+  AND ($3::timestamptz IS NULL
+       OR (updated_at, id) < ($3::timestamptz, $4::uuid))
+ORDER BY updated_at DESC, id DESC
+LIMIT $2
+`
+
+type ListStandaloneSessionsParams struct {
+	OwnerID       string             `json:"owner_id"`
+	Limit         int32              `json:"limit"`
+	BeforeUpdated pgtype.Timestamptz `json:"before_updated"`
+	BeforeID      pgtype.UUID        `json:"before_id"`
+}
+
+func (q *Queries) ListStandaloneSessions(ctx context.Context, arg ListStandaloneSessionsParams) ([]Session, error) {
+	rows, err := q.db.Query(ctx, listStandaloneSessions,
 		arg.OwnerID,
 		arg.Limit,
 		arg.BeforeUpdated,
