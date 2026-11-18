@@ -57,6 +57,18 @@ Drift не ходит в API провайдеров сам, а запускае�
 
 Текущая подписка — одна на агента (`is_current`, уникальный индекс), первая подключённая становится текущей сама, при удалении текущей текущей становится последняя из оставшихся. Агент доступен в новом чате, если у него есть активная подписка. Незавершённые входы живут в памяти процесса (до 15 минут, не больше 4 одновременно); после перезапуска они помечаются как неудачные, и вход начинают заново. Лимиты кешируются на минуту. Контейнеру `drift` в `compose.yml` дано 1.5 ГБ памяти — CLI агентов тяжёлые.
 
+### Запуск агентов
+
+Сообщение пользователя запускает CLI агента в папке сессии с окружением текущей подписки; пока агент работает, новые сообщения копятся и уходят следующим промптом вместе с картинками. Одновременно — не больше двух запусков.
+
+| Агент | Команда | Режимы разрешений |
+| --- | --- | --- |
+| Claude Code | `claude -p --output-format stream-json [--resume id]`, промпт в stdin; с картинками — `--input-format stream-json` и блоки `image` (base64) | `--permission-mode` как есть, `default` — без флага (инструменты, которым нужно подтверждение, отклоняются) |
+| Codex | `codex exec [resume <thread id>] --json --skip-git-repo-check -c approval_policy="never" [--image=…] -- -`, промпт в stdin, id треда из `thread.started` | `default` и `plan` — `sandbox_mode="read-only"`, `acceptEdits` и `auto` — `"workspace-write"`, `bypassPermissions` — `--dangerously-bypass-approvals-and-sandbox` |
+| Antigravity | `agy --output-format stream-json [--conversation id] --prompt=…`; картинки — пути к временным файлам в конце промпта | `--mode accept-edits\|auto\|plan`, `bypassPermissions` — `--dangerously-skip-permissions` |
+
+**Картинки** (`POST /api/attachments`, тело — байты файла, `?name=`): PNG, JPEG, GIF или WebP до 5 МБ (тип определяется по содержимому), до 10 на сообщение. Хранятся в Postgres (`attachments.data`), отдаются по `GET /api/attachments/{id}/content`. Загрузка ни к чему не привязана, пока её id не придёт в `attachmentIds` нового сообщения или сессии; непривязанные удаляются через сутки. Для Codex и Antigravity картинки на время запуска пишутся во временную папку.
+
 ### API и realtime
 
 JSON API под `/api` требует сессию Kratos (идентичность кешируется на 30 с). Имена по Google API design guide: `page_size`/`page_token` → `nextPageToken` (AIP-158), `createTime`/`updateTime` (AIP-142).
@@ -73,7 +85,8 @@ JSON API под `/api` требует сессию Kratos (идентичнос�
 | `POST` | `/api/subscriptions/{id}:activate`, `:startLogin`, `:completeLogin` (AIP-136) |
 | `GET` | `/api/subscriptions/{id}/usage` (AIP-156) |
 | `GET`, `PATCH`, `DELETE` | `/api/sessions/{id}` |
-| `GET`, `POST` | `/api/sessions/{id}/messages` |
+| `GET`, `POST` | `/api/sessions/{id}/messages` (POST принимает `text` и/или `attachmentIds`) |
+| `POST` | `/api/attachments?name=` (тело — картинка); `GET` `/api/attachments/{id}/content` |
 | `GET` | `/api/drafts`; `PUT`, `DELETE` `/api/drafts/{key}` |
 | `GET` | `/api/events` — Server-Sent Events |
 

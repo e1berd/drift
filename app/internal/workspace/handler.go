@@ -89,6 +89,9 @@ func (h *Handler) Register(g *echo.Group) {
 	g.GET("/sessions/:session/messages", h.listMessages)
 	g.POST("/sessions/:session/messages", h.createMessage)
 
+	g.POST("/attachments", h.uploadAttachment)
+	g.GET("/attachments/:attachment/content", h.attachmentContent)
+
 	g.GET("/drafts", h.listDrafts)
 	g.PUT("/drafts/:key", h.putDraft)
 	g.DELETE("/drafts/:key", h.deleteDraft)

@@ -56,9 +56,10 @@ func (h *Handler) listSessions(c *echo.Context) error {
 
 type sessionInput struct {
 	runOptions
-	Title string `json:"title"`
-	Agent string `json:"agent"`
-	Text  string `json:"text"`
+	Title         string   `json:"title"`
+	Agent         string   `json:"agent"`
+	Text          string   `json:"text"`
+	AttachmentIDs []string `json:"attachmentIds"`
 }
 
 type createSessionResponse struct {
@@ -97,9 +98,16 @@ func (h *Handler) insertSession(c *echo.Context, projectID pgtype.UUID, newDraft
 	if len(text) > maxMessageBytes {
 		return badRequest("message is too long")
 	}
+	attachmentIDs, err := parseAttachmentIDs(in.AttachmentIDs)
+	if err != nil {
+		return err
+	}
 	title := strings.TrimSpace(in.Title)
 	if title == "" {
 		title = titleFrom(text)
+	}
+	if title == "" && len(attachmentIDs) > 0 {
+		title = defaultAttachmentName
 	}
 	if title, ok := cleanName(title, 200); !ok || title == "" {
 		return badRequest("title or text is required")
@@ -110,7 +118,7 @@ func (h *Handler) insertSession(c *echo.Context, projectID pgtype.UUID, newDraft
 	var out createSessionResponse
 	var sessionID pgtype.UUID
 	var draftsDeleted int64
-	err := pgx.BeginFunc(ctx, h.pool, func(tx pgx.Tx) error {
+	err = pgx.BeginFunc(ctx, h.pool, func(tx pgx.Tx) error {
 		q := h.q.WithTx(tx)
 		s, err := q.CreateSession(ctx, db.CreateSessionParams{ProjectID: projectID, OwnerID: owner, Title: title, Agent: in.Agent})
 		if err != nil {
@@ -118,9 +126,12 @@ func (h *Handler) insertSession(c *echo.Context, projectID pgtype.UUID, newDraft
 		}
 		out.Session = sessionDTO(s)
 		sessionID = s.ID
-		if text != "" {
+		if text != "" || len(attachmentIDs) > 0 {
 			m, err := q.CreateMessage(ctx, db.CreateMessageParams{SessionID: s.ID, Role: "user", Kind: "text", Body: textBody(text)})
 			if err != nil {
+				return err
+			}
+			if m, err = claimAttachments(ctx, q, owner, m, text, attachmentIDs); err != nil {
 				return err
 			}
 			dto := messageDTO(m)
@@ -140,7 +151,7 @@ func (h *Handler) insertSession(c *echo.Context, projectID pgtype.UUID, newDraft
 	if draftsDeleted > 0 {
 		h.publish(c, "draft.deleted", deleted{Key: newDraftKey})
 	}
-	h.startRun(c, sessionID, text, in.runOptions)
+	h.startRun(c, sessionID, text, attachmentIDs, in.runOptions)
 	return c.JSON(http.StatusCreated, out)
 }
 
@@ -272,7 +283,8 @@ func (h *Handler) listMessages(c *echo.Context) error {
 
 type messageInput struct {
 	runOptions
-	Text string `json:"text"`
+	Text          string   `json:"text"`
+	AttachmentIDs []string `json:"attachmentIds"`
 }
 
 func (h *Handler) createMessage(c *echo.Context) error {
@@ -285,8 +297,12 @@ func (h *Handler) createMessage(c *echo.Context) error {
 		return badRequest("invalid body")
 	}
 	text := strings.TrimSpace(in.Text)
-	if text == "" || len(text) > maxMessageBytes {
-		return badRequest("text must be 1 byte to 256 KiB")
+	attachmentIDs, err := parseAttachmentIDs(in.AttachmentIDs)
+	if err != nil {
+		return err
+	}
+	if text == "" && len(attachmentIDs) == 0 || len(text) > maxMessageBytes {
+		return badRequest("text must be 1 byte to 256 KiB or come with attachments")
 	}
 	if err := in.validate(); err != nil {
 		return err
@@ -300,6 +316,9 @@ func (h *Handler) createMessage(c *echo.Context) error {
 		q := h.q.WithTx(tx)
 		m, err := q.CreateMessage(ctx, db.CreateMessageParams{SessionID: s.ID, Role: "user", Kind: "text", Body: textBody(text)})
 		if err != nil {
+			return err
+		}
+		if m, err = claimAttachments(ctx, q, owner, m, text, attachmentIDs); err != nil {
 			return err
 		}
 		msg = messageDTO(m)
@@ -322,11 +341,11 @@ func (h *Handler) createMessage(c *echo.Context) error {
 	if draftsDeleted > 0 {
 		h.publish(c, "draft.deleted", deleted{Key: "session:" + uuidString(s.ID)})
 	}
-	h.startRun(c, s.ID, text, in.runOptions)
+	h.startRun(c, s.ID, text, attachmentIDs, in.runOptions)
 	return c.JSON(http.StatusCreated, msg)
 }
 
 func textBody(text string) []byte {
-	b, _ := json.Marshal(map[string]string{"text": text})
+	b, _ := json.Marshal(userMessageBody{Text: text})
 	return b
 }

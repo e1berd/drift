@@ -14,6 +14,7 @@ tags:
   - name: projects
   - name: sessions
   - name: drafts
+  - name: attachments
   - name: files
   - name: subscriptions
   - name: events
@@ -404,6 +405,50 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Message' }
         default: { $ref: '#/components/responses/Error' }
+  /attachments:
+    post:
+      operationId: uploadAttachment
+      description: >-
+        Uploads an image for a message that is about to be sent (AIP-133 create with a raw
+        media body). PNG, JPEG, GIF or WebP up to 5 MB, detected from the bytes. The upload
+        belongs to no message until `attachmentIds` of a new message or session claims it;
+        unclaimed uploads are deleted after a day.
+      tags: [attachments]
+      parameters:
+        - name: name
+          in: query
+          description: Original file name; only its base name is kept.
+          schema: { type: string, maxLength: 255 }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '201':
+          description: The stored image.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Attachment' }
+        '413':
+          description: The image is larger than 5 MB.
+        '415':
+          description: Not a PNG, JPEG, GIF or WebP image.
+        default: { $ref: '#/components/responses/Error' }
+  /attachments/{attachmentId}/content:
+    parameters:
+      - $ref: '#/components/parameters/AttachmentId'
+    get:
+      operationId: getAttachmentContent
+      description: The image bytes (media download), cacheable forever since attachments never change.
+      tags: [attachments]
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/*:
+              schema: { type: string, format: binary }
+        default: { $ref: '#/components/responses/Error' }
   /drafts:
     get:
       operationId: listDrafts
@@ -586,6 +631,11 @@ components:
       required: true
       description: '"session:<session id>" or "new:<project id>".'
       schema: { type: string }
+    AttachmentId:
+      name: attachmentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     SubscriptionId:
       name: subscriptionId
       in: path
@@ -669,8 +719,14 @@ components:
         agent: { $ref: '#/components/schemas/AgentId' }
         title: { type: string, maxLength: 200 }
         text: { type: string }
+        attachmentIds: { $ref: '#/components/schemas/AttachmentIds' }
         model: { type: string, maxLength: 100 }
         mode: { $ref: '#/components/schemas/PermissionMode' }
+    AttachmentIds:
+      description: Uploaded images (see uploadAttachment) that go with the message, in order.
+      type: array
+      maxItems: 10
+      items: { type: string, format: uuid }
     SessionUpdate:
       description: >-
         Partial update (AIP-134): only the fields present are changed. Changing `agent`
@@ -696,9 +752,11 @@ components:
         session: { $ref: '#/components/schemas/Session' }
         message: { $ref: '#/components/schemas/Message' }
     Attachment:
+      description: An image attached to a user message; its bytes are at `/attachments/{id}/content`.
       type: object
-      required: [name, size, type]
+      required: [id, name, size, type]
       properties:
+        id: { type: string, format: uuid }
         name: { type: string }
         size: { type: integer }
         type: { type: string }
@@ -739,11 +797,11 @@ components:
     MessageInput:
       description: >-
         A user message starts the session's agent; while it runs, messages queue and
-        reach it together as the next prompt.
+        reach it together as the next prompt. Needs text, attachments or both.
       type: object
-      required: [text]
       properties:
-        text: { type: string, minLength: 1 }
+        text: { type: string }
+        attachmentIds: { $ref: '#/components/schemas/AttachmentIds' }
         model: { type: string, maxLength: 100 }
         mode: { $ref: '#/components/schemas/PermissionMode' }
     ListMessagesResponse:

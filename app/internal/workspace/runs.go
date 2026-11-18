@@ -12,11 +12,12 @@ import (
 
 // RunRequest asks the agent of a session to answer the user's latest message.
 type RunRequest struct {
-	Owner   string
-	Session pgtype.UUID
-	Text    string
-	Model   string
-	Mode    string
+	Owner       string
+	Session     pgtype.UUID
+	Text        string
+	Attachments []pgtype.UUID
+	Model       string
+	Mode        string
 }
 
 // AgentRunner runs agent CLIs for sessions; requests for a busy session wait in its queue.
@@ -48,12 +49,13 @@ func (o runOptions) validate() error {
 	return nil
 }
 
-func (h *Handler) startRun(c *echo.Context, session pgtype.UUID, text string, opts runOptions) {
-	if h.runner == nil || text == "" {
+func (h *Handler) startRun(c *echo.Context, session pgtype.UUID, text string, attachments []pgtype.UUID, opts runOptions) {
+	if h.runner == nil || text == "" && len(attachments) == 0 {
 		return
 	}
 	h.runner.Enqueue(RunRequest{
-		Owner: identity.From(c), Session: session, Text: text, Model: opts.Model, Mode: opts.Mode,
+		Owner: identity.From(c), Session: session, Text: text, Attachments: attachments,
+		Model: opts.Model, Mode: opts.Mode,
 	})
 }
 

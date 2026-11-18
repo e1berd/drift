@@ -59,7 +59,13 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 			log.Warn("save agent session id", "err", err)
 		}
 	}
-	plan := r.plan(rc.Agent, req, rc.AgentSessionID, dir, t, saveSessionID)
+	plan, err := r.plan(rc.Agent, req, rc.AgentSessionID, dir, t, saveSessionID)
+	if err != nil {
+		log.Warn("prepare agent run", "err", err)
+		t.note(noteFailed, err.Error())
+		return
+	}
+	defer plan.cleanup()
 	cmd := exec.CommandContext(ctx, plan.bin, plan.args...)
 	cmd.Dir = dir
 	cmd.Env = r.cli.Env(r.cli.Home(uuidString(sub.ID)))
@@ -100,48 +106,9 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 	}
 }
 
-var runnable = map[string]bool{"claude": true, "antigravity": true}
-
 type agentStream interface {
 	handle(line []byte)
 	done() bool
-}
-
-type runPlan struct {
-	bin    string
-	args   []string
-	stdin  string
-	stream agentStream
-}
-
-func (r *Runner) plan(agent string, req workspace.RunRequest, agentSessionID, dir string, t transcriptSink, saveSessionID func(string)) runPlan {
-	if agent == "antigravity" {
-		return runPlan{
-			bin:    r.cli.Antigravity,
-			args:   antigravityArgs(req, agentSessionID),
-			stream: &antigravityStream{t: t, projectDir: dir, conversationID: agentSessionID, saveSessionID: saveSessionID},
-		}
-	}
-	return runPlan{
-		bin:    r.cli.Claude,
-		args:   claudeArgs(req, agentSessionID),
-		stdin:  req.Text,
-		stream: &claudeStream{t: t, projectDir: dir, agentSessionID: agentSessionID, saveSessionID: saveSessionID},
-	}
-}
-
-func claudeArgs(req workspace.RunRequest, agentSessionID string) []string {
-	args := []string{"-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"}
-	if req.Model != "" && req.Model != "default" {
-		args = append(args, "--model", req.Model)
-	}
-	if req.Mode != "" && req.Mode != "default" {
-		args = append(args, "--permission-mode", req.Mode)
-	}
-	if agentSessionID != "" {
-		args = append(args, "--resume", agentSessionID)
-	}
-	return args
 }
 
 func signalGroup(pid int, signal syscall.Signal) error {

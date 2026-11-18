@@ -11,8 +11,10 @@ import (
 )
 
 type Querier interface {
+	ClaimAttachments(ctx context.Context, arg ClaimAttachmentsParams) ([]ClaimAttachmentsRow, error)
 	ClearCurrentSubscription(ctx context.Context, arg ClearCurrentSubscriptionParams) error
 	CountSessions(ctx context.Context, projectID pgtype.UUID) (int64, error)
+	CreateAttachment(ctx context.Context, arg CreateAttachmentParams) (CreateAttachmentRow, error)
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
@@ -22,13 +24,16 @@ type Querier interface {
 	DeleteDraftsForSession(ctx context.Context, arg DeleteDraftsForSessionParams) error
 	DeleteProject(ctx context.Context, arg DeleteProjectParams) (int64, error)
 	DeleteSession(ctx context.Context, arg DeleteSessionParams) (int64, error)
+	DeleteStaleAttachments(ctx context.Context) (int64, error)
 	DeleteSubscription(ctx context.Context, arg DeleteSubscriptionParams) (Subscription, error)
 	FailInterruptedLogins(ctx context.Context) error
+	GetAttachmentContent(ctx context.Context, arg GetAttachmentContentParams) (GetAttachmentContentRow, error)
 	GetCurrentSubscription(ctx context.Context, arg GetCurrentSubscriptionParams) (Subscription, error)
 	GetProject(ctx context.Context, arg GetProjectParams) (Project, error)
 	GetRunContext(ctx context.Context, arg GetRunContextParams) (GetRunContextRow, error)
 	GetSession(ctx context.Context, arg GetSessionParams) (Session, error)
 	GetSubscription(ctx context.Context, arg GetSubscriptionParams) (Subscription, error)
+	ListAttachmentData(ctx context.Context, arg ListAttachmentDataParams) ([]ListAttachmentDataRow, error)
 	ListDrafts(ctx context.Context, ownerID string) ([]Draft, error)
 	ListMessages(ctx context.Context, arg ListMessagesParams) ([]Message, error)
 	ListProjects(ctx context.Context, arg ListProjectsParams) ([]ListProjectsRow, error)

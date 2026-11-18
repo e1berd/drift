@@ -4,6 +4,7 @@
 */
 
 import type { AgentIdKey } from './AgentId'
+import type { AttachmentIds } from './AttachmentIds'
 import type { PermissionModeKey } from './PermissionMode'
 
 /**
@@ -18,6 +19,11 @@ export type SessionInput = {
    */
   title?: string;
   text?: string;
+  /**
+   * @description Uploaded images (see uploadAttachment) that go with the message, in order.
+   * @type array | undefined
+   */
+  attachmentIds?: AttachmentIds;
   /**
    * @maxLength 100
    * @type string | undefined

@@ -3,7 +3,17 @@
 * Do not edit manually.
 */
 
+/**
+ * @description An image attached to a user message; its bytes are at `/attachments/{id}/content`.
+ * @type object
+ */
 export type Attachment = {
+  /**
+   * @description
+   * Format: `uuid`
+   * @type string
+   */
+  id: string;
   name: string;
   size: number;
   type: string;

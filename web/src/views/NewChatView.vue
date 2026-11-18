@@ -21,6 +21,7 @@ import AgentLogo from '@/components/AgentLogo.vue'
 import BrandMark from '@/components/BrandMark.vue'
 import TopBar from '@/components/TopBar.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
+import { useAttachmentUpload } from '@/composables/useAttachmentUpload'
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
 import { useAgents } from '@/composables/useAgents'
@@ -79,25 +80,28 @@ const created = {
 }
 const createInProject = useCreateSession(created)
 const createStandalone = useCreateStandaloneSession(created)
-const creating = computed(() => createInProject.isPending.value || createStandalone.isPending.value)
-
-function announceUnsupportedAttachments(files: File[]) {
-    if (files.length)
-        toast.info(t('tabs.soon'), { description: files.map((file) => file.name).join(', ') })
-}
+const attachments = useAttachmentUpload()
+const creating = computed(
+    () =>
+        createInProject.isPending.value ||
+        createStandalone.isPending.value ||
+        attachments.uploading.value,
+)
 
 function switchAgent(choice: { agent: AgentId; model: string }) {
     settings.setModel(choice.agent, choice.model)
     agent.value = choice.agent
 }
 
-function send({ text, files }: { text: string; files: File[] }) {
+async function send({ text, files }: { text: string; files: File[] }) {
     if (!agents.isConnected(agent.value)) return
-    announceUnsupportedAttachments(files)
-    if (!text) return
+    const attachmentIds = await attachments.upload(files)
+    if (!attachmentIds || (!text && !attachmentIds.length)) return
     const body = {
         agent: agent.value,
         text,
+        title: text ? undefined : files.at(0)?.name.slice(0, 200),
+        attachmentIds,
         model: settings.modelFor(agent.value),
         mode: settings.mode(),
     }

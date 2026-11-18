@@ -105,10 +105,15 @@ func (r *Runner) drain(owner string, session pgtype.UUID, current *run) {
 func merge(queue []workspace.RunRequest) workspace.RunRequest {
 	last := queue[len(queue)-1]
 	texts := make([]string, 0, len(queue))
+	var attachments []pgtype.UUID
 	for _, req := range queue {
-		texts = append(texts, req.Text)
+		if req.Text != "" {
+			texts = append(texts, req.Text)
+		}
+		attachments = append(attachments, req.Attachments...)
 	}
 	last.Text = strings.Join(texts, "\n\n")
+	last.Attachments = attachments
 	return last
 }
 

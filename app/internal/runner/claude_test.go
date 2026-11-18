@@ -86,11 +86,11 @@ func TestClaudeStreamReportsFailedResult(t *testing.T) {
 }
 
 func TestClaudeArgsResumeAndModes(t *testing.T) {
-	args := strings.Join(claudeArgs(runRequest("opus", "acceptEdits"), "abc"), " ")
+	args := strings.Join(claudeArgs(runRequest("opus", "acceptEdits"), "abc", false), " ")
 	if args != "-p --output-format stream-json --verbose --include-partial-messages --model opus --permission-mode acceptEdits --resume abc" {
 		t.Errorf("args %q", args)
 	}
-	args = strings.Join(claudeArgs(runRequest("default", "default"), ""), " ")
+	args = strings.Join(claudeArgs(runRequest("default", "default"), "", false), " ")
 	if args != "-p --output-format stream-json --verbose --include-partial-messages" {
 		t.Errorf("args %q", args)
 	}

@@ -76,7 +76,8 @@ composer:
   placeholder:
     new: 'Describe the task for {agent}…'
     reply: "Reply to {agent}…  / for commands, {'@'} for files"
-  attach: 'Attach a file'
+  attach: 'Attach an image'
+  imagesOnly: 'Up to 10 PNG, JPEG, GIF or WebP images of at most 5 MB each can be attached. Left out:'
   removeAttachment: 'Remove {name}'
   historyBack: 'Previous message'
   historyForward: 'Next message'

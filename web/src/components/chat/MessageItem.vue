@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { PhFile } from '@phosphor-icons/vue'
-
 import AgentLogo from '@/components/AgentLogo.vue'
+import MessageAttachments from '@/components/chat/MessageAttachments.vue'
 import ThinkingBlock from '@/components/chat/ThinkingBlock.vue'
 import SystemNote from '@/components/chat/SystemNote.vue'
 import ToolCall from '@/components/chat/ToolCall.vue'
@@ -13,15 +12,10 @@ defineProps<{ message: Message; agent: AgentId }>()
 
 <template>
     <div v-if="message.role === 'user'" class="flex flex-col items-end gap-2">
-        <div v-if="message.body.attachments?.length" class="flex flex-wrap justify-end gap-2">
-            <span
-                v-for="attachment in message.body.attachments"
-                :key="attachment.name"
-                class="status-tag"
-            >
-                <PhFile />{{ attachment.name }}
-            </span>
-        </div>
+        <MessageAttachments
+            v-if="message.body.attachments?.length"
+            :attachments="message.body.attachments"
+        />
         <div
             v-if="message.body.text"
             class="max-w-[82%] rounded-(--ui-radius) bg-surface px-3 py-2 whitespace-pre-wrap"

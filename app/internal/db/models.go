@@ -8,6 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Attachment struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   string             `json:"owner_id"`
+	MessageID pgtype.UUID        `json:"message_id"`
+	Name      string             `json:"name"`
+	MediaType string             `json:"media_type"`
+	Size      int32              `json:"size"`
+	Data      []byte             `json:"data"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Draft struct {
 	OwnerID   string             `json:"owner_id"`
 	Key       string             `json:"key"`

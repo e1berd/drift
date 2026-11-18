@@ -20,6 +20,7 @@ import ChatThread from '@/components/chat/ChatThread.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
 import SwitchFamilyDialog from '@/components/composer/SwitchFamilyDialog.vue'
 import PanePlaceholder from '@/components/PanePlaceholder.vue'
+import { useAttachmentUpload } from '@/composables/useAttachmentUpload'
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
 import { useEventStream } from '@/composables/useEventStream'
@@ -95,17 +96,14 @@ async function switchAgent({ agent: next, model }: { agent: AgentId; model: stri
     update.mutate({ path: { sessionId: sessionId.value }, body: { agent: next } })
 }
 
-function announceUnsupportedAttachments(files: File[]) {
-    if (files.length)
-        toast.info(t('tabs.soon'), { description: files.map((file) => file.name).join(', ') })
-}
+const attachments = useAttachmentUpload()
 
-function send({ text, files }: { text: string; files: File[] }) {
-    announceUnsupportedAttachments(files)
-    if (!text) return
+async function send({ text, files }: { text: string; files: File[] }) {
+    const attachmentIds = await attachments.upload(files)
+    if (!attachmentIds || (!text && !attachmentIds.length)) return
     post.mutate({
         path: { sessionId: sessionId.value },
-        body: { text, model: settings.modelFor(agent.value), mode: settings.mode() },
+        body: { text, attachmentIds, model: settings.modelFor(agent.value), mode: settings.mode() },
     })
 }
 
@@ -163,7 +161,11 @@ const stop = useStopSession({
                     :agent="agent"
                     :history="history"
                     :placeholder="t('composer.placeholder.reply', { agent: AGENTS[agent].name })"
-                    :busy="post.isPending.value || update.isPending.value"
+                    :busy="
+                        post.isPending.value ||
+                        update.isPending.value ||
+                        attachments.uploading.value
+                    "
                     autofocus
                     @send="send"
                     @switch-agent="switchAgent"

@@ -16,10 +16,17 @@ import ModeSelect from '@/components/composer/ModeSelect.vue'
 import ModelSelect from '@/components/composer/ModelSelect.vue'
 import PromptEditor from '@/components/composer/PromptEditor.vue'
 import ImagePreview from '@/components/composer/ImagePreview.vue'
+import { useAttachmentUpload } from '@/composables/useAttachmentUpload'
 import { useDraft } from '@/composables/useDrafts'
 import { useAgents } from '@/composables/useAgents'
 import type { AgentId } from '@/shared/agents'
 import { AGENTS } from '@/shared/agents'
+import {
+    ATTACHMENT_MAX_BYTES,
+    ATTACHMENT_MAX_COUNT,
+    ATTACHMENT_TYPES,
+    partitionAttachable,
+} from '@/shared/attachments'
 import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
@@ -43,6 +50,7 @@ const { t } = useI18n()
 const agents = useAgents()
 const unavailable = computed(() => agents.ready.value && !agents.isConnected(props.agent))
 
+const { announceRejected } = useAttachmentUpload()
 const draft = useDraft(() => props.draftKey)
 const files = ref<File[]>([])
 const historyIndex = ref(-1)
@@ -88,7 +96,9 @@ function forward() {
 }
 
 function addFiles(added: File[]) {
-    files.value = [...files.value, ...added]
+    const { accepted, rejected } = partitionAttachable([...files.value, ...added])
+    files.value = accepted
+    announceRejected(rejected)
 }
 
 function onInput(value: string) {
@@ -115,7 +125,10 @@ defineExpose({ focus: () => editor.value?.focus() })
         class="max-w-none"
         multiple
         :disabled="unavailable"
-        :max-size="25 * 1024 * 1024"
+        :accept="ATTACHMENT_TYPES"
+        :max-size="ATTACHMENT_MAX_BYTES"
+        :max-files="ATTACHMENT_MAX_COUNT"
+        @reject="(rejected) => announceRejected(rejected.map((item) => item.file))"
     >
         <div
             class="composer"

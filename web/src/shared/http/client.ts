@@ -81,16 +81,24 @@ function buildURL(config: RequestConfig): URL {
     return url
 }
 
+function requestBody(config: RequestConfig, headers: Headers): BodyInit | null {
+    if (config.body === undefined) return null
+    if (config.body instanceof Blob) {
+        if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/octet-stream')
+        return config.body
+    }
+    if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
+    return JSON.stringify(config.body)
+}
+
 function buildRequest(config: RequestConfig): Request {
     const headers = new Headers(config.headers as HeadersInit | undefined)
     headers.set('Accept', 'application/json')
     headers.set('X-Drift-Device', deviceId())
-    const hasBody = config.body !== undefined
-    if (hasBody && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
     return new Request(buildURL(config), {
         method: config.method,
         headers,
-        body: hasBody ? JSON.stringify(config.body) : null,
+        body: requestBody(config, headers),
         signal: config.signal,
         keepalive: config.keepalive,
         credentials: 'same-origin',

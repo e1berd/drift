@@ -3,18 +3,20 @@
 * Do not edit manually.
 */
 
+import type { AttachmentIds } from './AttachmentIds'
 import type { PermissionModeKey } from './PermissionMode'
 
 /**
- * @description A user message starts the session's agent; while it runs, messages queue and reach it together as the next prompt.
+ * @description A user message starts the session's agent; while it runs, messages queue and reach it together as the next prompt. Needs text, attachments or both.
  * @type object
  */
 export type MessageInput = {
+  text?: string;
   /**
-   * @minLength 1
-   * @type string
+   * @description Uploaded images (see uploadAttachment) that go with the message, in order.
+   * @type array | undefined
    */
-  text: string;
+  attachmentIds?: AttachmentIds;
   /**
    * @maxLength 100
    * @type string | undefined
