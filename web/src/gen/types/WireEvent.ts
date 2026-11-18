@@ -14,6 +14,9 @@ export const wireEventTypeEnum = {
   'message.created': 'message.created',
   'draft.updated': 'draft.updated',
   'draft.deleted': 'draft.deleted',
+  'subscription.created': 'subscription.created',
+  'subscription.updated': 'subscription.updated',
+  'subscription.deleted': 'subscription.deleted',
 } as const;
 
 export type WireEventTypeEnumKey = (typeof wireEventTypeEnum)[keyof typeof wireEventTypeEnum];

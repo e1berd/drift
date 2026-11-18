@@ -16,6 +16,9 @@ type Config struct {
 	KratosAdminURL  *url.URL
 	ViteDevURL      *url.URL
 	WorkspaceRoot   string
+	AgentsRoot      string
+	ClaudeBin       string
+	CodexBin        string
 }
 
 // Load reads the configuration from environment variables, falling back to local development defaults.
@@ -28,6 +31,13 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("DRIFT_WORKSPACE_ROOT: %w", err)
 	}
 	cfg.WorkspaceRoot = root
+	agentsRoot, err := filepath.Abs(os.ExpandEnv(env("DRIFT_AGENTS_DIR", "data/agents")))
+	if err != nil {
+		return nil, fmt.Errorf("DRIFT_AGENTS_DIR: %w", err)
+	}
+	cfg.AgentsRoot = agentsRoot
+	cfg.ClaudeBin = env("DRIFT_CLAUDE_BIN", "claude")
+	cfg.CodexBin = env("DRIFT_CODEX_BIN", "codex")
 
 	urls := []struct {
 		dst      **url.URL

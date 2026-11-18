@@ -44,3 +44,17 @@ type Session struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
+
+type Subscription struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   string             `json:"owner_id"`
+	Agent     string             `json:"agent"`
+	Method    string             `json:"method"`
+	State     string             `json:"state"`
+	Account   string             `json:"account"`
+	Plan      string             `json:"plan"`
+	Error     string             `json:"error"`
+	IsCurrent bool               `json:"is_current"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}

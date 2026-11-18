@@ -11,22 +11,33 @@ import (
 )
 
 type Querier interface {
+	ClearCurrentSubscription(ctx context.Context, arg ClearCurrentSubscriptionParams) error
 	CountSessions(ctx context.Context, projectID pgtype.UUID) (int64, error)
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
+	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	DeleteDraft(ctx context.Context, arg DeleteDraftParams) (int64, error)
 	DeleteDraftsForProject(ctx context.Context, arg DeleteDraftsForProjectParams) error
 	DeleteDraftsForSession(ctx context.Context, arg DeleteDraftsForSessionParams) error
 	DeleteProject(ctx context.Context, arg DeleteProjectParams) (int64, error)
 	DeleteSession(ctx context.Context, arg DeleteSessionParams) (int64, error)
+	DeleteSubscription(ctx context.Context, arg DeleteSubscriptionParams) (Subscription, error)
+	FailInterruptedLogins(ctx context.Context) error
 	GetProject(ctx context.Context, arg GetProjectParams) (Project, error)
 	GetSession(ctx context.Context, arg GetSessionParams) (Session, error)
+	GetSubscription(ctx context.Context, arg GetSubscriptionParams) (Subscription, error)
 	ListDrafts(ctx context.Context, ownerID string) ([]Draft, error)
 	ListMessages(ctx context.Context, arg ListMessagesParams) ([]Message, error)
 	ListProjects(ctx context.Context, arg ListProjectsParams) ([]ListProjectsRow, error)
 	ListSessions(ctx context.Context, arg ListSessionsParams) ([]Session, error)
+	ListSubscriptions(ctx context.Context, ownerID string) ([]Subscription, error)
+	MarkSubscriptionActive(ctx context.Context, arg MarkSubscriptionActiveParams) (Subscription, error)
+	MarkSubscriptionFailed(ctx context.Context, arg MarkSubscriptionFailedParams) (Subscription, error)
+	MarkSubscriptionPending(ctx context.Context, arg MarkSubscriptionPendingParams) (Subscription, error)
+	PromoteNextSubscription(ctx context.Context, arg PromoteNextSubscriptionParams) (Subscription, error)
 	RenameProject(ctx context.Context, arg RenameProjectParams) (Project, error)
+	SetCurrentSubscription(ctx context.Context, arg SetCurrentSubscriptionParams) (Subscription, error)
 	TouchSession(ctx context.Context, id pgtype.UUID) error
 	UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error)
 	UpsertDraft(ctx context.Context, arg UpsertDraftParams) (Draft, error)

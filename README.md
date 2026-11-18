@@ -37,9 +37,22 @@ SPA (`web/src`) — оболочка для работы с агентами: п
 - **Проекты** — папки внутри `DRIFT_WORKSPACE_ROOT`. По умолчанию это `./workspace` в корне репозитория (рядом с `app/` и `web/`, в `.gitignore`); сервер создаёт папку при старте, если её нет. Без переменной бинарник берёт `workspace` в текущей рабочей папке, в образе — `/workspace`. `compose.yml` монтирует `./workspace` в `/workspace`, а данные Postgres — в `./data/postgres`; у обоих сервисов `userns_mode: keep-id`, поэтому файлы на хосте принадлежат вашему пользователю. Удаление проекта удаляет только записи в БД, файлы остаются.
 - **Боковая панель** — `Resizable` из ui-sdk: ширина и свёрнутое состояние сохраняются в `localStorage` (`ui-sdk-resizable:drift-shell`), сторона (слева/справа), тема и язык — через `createPreference` (`data-sidebar-side`, `data-color-scheme`, `data-locale` на `<html>`). Меняются в «Настройках».
 - **Черновики** поля ввода хранятся на сервере (ключ `session:<id>` или `new:<project id>`), сохраняются через 400 мс после последнего нажатия и сразу при уходе со страницы. Другие устройства видят текст и пометку «печатает».
-- **Файлы** — дерево `Tree` из ui-sdk с ленивой загрузкой папок и просмотр в CodeMirror 6 (только чтение, до 1 МБ).
+- **Файлы** — дерево `Tree` из ui-sdk с ленивой загрузкой папок; кнопки «Новый файл» / «Новая папка» в шапке дерева (путь вида `src/app/x.ts`, недостающие папки создаются). Файл открывается в CodeMirror 6, правка сохраняется по Ctrl+S (до 1 МБ; больше — только чтение). Несохранённые правки живут в памяти вкладки по пути файла.
+- **ИИ-провайдеры** (`/settings`) — список подписок агентов, см. ниже.
 - **Анимации** — токены `--dur-*`/`--ease-*` в `web/src/styles/motion.css`; раскрытие блоков через `grid-template-rows: 0fr → 1fr`, списки — глобальная директива `v-auto-animate` с теми же длительностями.
 - Вкладки CLI, Git и Терминал и запуск агентов — следующий этап.
+
+### Подписки агентов
+
+Drift не ходит в API провайдеров сам, а запускает официальные CLI: `claude` (Claude Code) и `codex` лежат в образе (`/usr/local/bin`, версии — `ARG` в `Containerfile`). У каждой подписки своя папка `DRIFT_AGENTS_DIR/<id>` (в compose — `./data/agents`, в `.gitignore`) — это `HOME`, `CLAUDE_CONFIG_DIR=<home>/.claude` и `CODEX_HOME=<home>/.codex` для процессов агента, поэтому аккаунтов одного агента может быть несколько. Учётные данные лежат только там и удаляются вместе с подпиской.
+
+| Агент | Вход | Лимиты |
+| --- | --- | --- |
+| Claude Code | `claude auth login --claudeai`: Drift показывает ссылку, страница Anthropic выдаёт код, его вставляют в Drift (уходит в stdin CLI). Запасной путь — токен из `claude setup-token` (`CLAUDE_CODE_OAUTH_TOKEN`, проверяется через `GET /v1/models`) | `GET api.anthropic.com/api/oauth/usage` с токеном из `.credentials.json` — недокументированный эндпоинт панели `/usage`, может сломаться. С токеном из `setup-token` недоступны (нет scope `user:profile`) |
+| Codex | `codex app-server`, `account/login/start` с `chatgptDeviceCode`: ссылка и код, вход завершается сам (`account/login/completed`). В ChatGPT должен быть разрешён вход по коду устройства | `account/rateLimits/read` того же app-server |
+| Antigravity | пока нет: `agy` без графического окружения требует keyring/D-Bus | — |
+
+Текущая подписка — одна на агента (`is_current`, уникальный индекс), первая подключённая становится текущей сама, при удалении текущей текущей становится последняя из оставшихся. Агент доступен в новом чате, если у него есть активная подписка. Незавершённые входы живут в памяти процесса (до 15 минут, не больше 4 одновременно); после перезапуска они помечаются как неудачные, и вход начинают заново. Лимиты кешируются на минуту. Контейнеру `drift` в `compose.yml` дано 1.5 ГБ памяти — CLI агентов тяжёлые.
 
 ### API и realtime
 
@@ -50,7 +63,12 @@ JSON API под `/api` требует сессию Kratos (идентичнос�
 | `GET`, `POST` | `/api/projects` |
 | `PATCH`, `DELETE` | `/api/projects/{id}` |
 | `GET`, `POST` | `/api/projects/{id}/sessions` (POST создаёт сессию и первое сообщение) |
-| `GET` | `/api/projects/{id}/tree?path=`, `/api/projects/{id}/file?path=` |
+| `GET`, `POST` | `/api/projects/{id}/tree?path=` (POST создаёт пустой файл или папку, AIP-133) |
+| `GET`, `PATCH` | `/api/projects/{id}/file?path=` (PATCH сохраняет текст, AIP-134) |
+| `GET`, `POST` | `/api/subscriptions` (POST начинает вход или принимает токен) |
+| `DELETE` | `/api/subscriptions/{id}` |
+| `POST` | `/api/subscriptions/{id}:activate`, `:startLogin`, `:completeLogin` (AIP-136) |
+| `GET` | `/api/subscriptions/{id}/usage` (AIP-156) |
 | `GET`, `PATCH`, `DELETE` | `/api/sessions/{id}` |
 | `GET`, `POST` | `/api/sessions/{id}/messages` |
 | `GET` | `/api/drafts`; `PUT`, `DELETE` `/api/drafts/{key}` |

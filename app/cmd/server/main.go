@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	schema "github.com/e1berd/drift/app/db"
+	"github.com/e1berd/drift/app/internal/agents"
 	"github.com/e1berd/drift/app/internal/auth"
 	"github.com/e1berd/drift/app/internal/config"
 	"github.com/e1berd/drift/app/internal/database"
@@ -19,6 +20,7 @@ import (
 	"github.com/e1berd/drift/app/internal/identity"
 	"github.com/e1berd/drift/app/internal/kratos"
 	"github.com/e1berd/drift/app/internal/migrate"
+	"github.com/e1berd/drift/app/internal/subscriptions"
 	"github.com/e1berd/drift/app/internal/workspace"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -44,6 +46,9 @@ func run() error {
 
 	if err := os.MkdirAll(cfg.WorkspaceRoot, 0o755); err != nil {
 		return fmt.Errorf("create workspace root: %w", err)
+	}
+	if err := os.MkdirAll(cfg.AgentsRoot, 0o700); err != nil {
+		return fmt.Errorf("create agents folder: %w", err)
 	}
 
 	pool, err := database.Connect(ctx, cfg.DatabaseURL)
@@ -89,6 +94,12 @@ func run() error {
 	api := e.Group("/api", identity.New(kc).Require)
 	api.GET("/events", hub.Stream)
 	workspace.New(pool, hub, cfg.WorkspaceRoot, log).Register(api)
+	cli := agents.CLI{Root: cfg.AgentsRoot, Claude: cfg.ClaudeBin, Codex: cfg.CodexBin}
+	subs, err := subscriptions.New(ctx, pool, hub, cli, log)
+	if err != nil {
+		return err
+	}
+	subs.Register(api)
 
 	e.Any("/*", echo.WrapHandler(fe), authHandler.RequireSession)
 

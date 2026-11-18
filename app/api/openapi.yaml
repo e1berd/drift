@@ -15,6 +15,7 @@ tags:
   - name: sessions
   - name: drafts
   - name: files
+  - name: subscriptions
   - name: events
 paths:
   /folders:
@@ -283,6 +284,107 @@ paths:
       responses:
         '204': { description: Deleted. }
         default: { $ref: '#/components/responses/Error' }
+  /subscriptions:
+    get:
+      operationId: listSubscriptions
+      tags: [subscriptions]
+      responses:
+        '200':
+          description: All agent subscriptions of the user, oldest first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListSubscriptionsResponse' }
+        default: { $ref: '#/components/responses/Error' }
+    post:
+      operationId: createSubscription
+      tags: [subscriptions]
+      description: >-
+        Adds a subscription (AIP-133). Without a token it starts the agent CLI sign-in and
+        returns the step to finish in the browser in `login`; with a `claude setup-token`
+        token it is active at once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubscriptionInput' }
+      responses:
+        '201':
+          description: The new subscription.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Subscription' }
+        default: { $ref: '#/components/responses/Error' }
+  /subscriptions/{subscriptionId}:
+    parameters:
+      - $ref: '#/components/parameters/SubscriptionId'
+    delete:
+      operationId: deleteSubscription
+      tags: [subscriptions]
+      description: Signs out by removing the subscription and its stored credentials.
+      responses:
+        '204': { description: Removed. }
+        default: { $ref: '#/components/responses/Error' }
+  /subscriptions/{subscriptionId}:activate:
+    parameters:
+      - $ref: '#/components/parameters/SubscriptionId'
+    post:
+      operationId: activateSubscription
+      tags: [subscriptions]
+      description: Makes the subscription the current one of its agent (AIP-136 custom method).
+      responses:
+        '200':
+          description: The current subscription.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Subscription' }
+        default: { $ref: '#/components/responses/Error' }
+  /subscriptions/{subscriptionId}:startLogin:
+    parameters:
+      - $ref: '#/components/parameters/SubscriptionId'
+    post:
+      operationId: startSubscriptionLogin
+      tags: [subscriptions]
+      description: Starts the CLI sign-in again, e.g. after a failed or expired one (AIP-136).
+      responses:
+        '200':
+          description: The subscription with a new `login` step.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Subscription' }
+        default: { $ref: '#/components/responses/Error' }
+  /subscriptions/{subscriptionId}:completeLogin:
+    parameters:
+      - $ref: '#/components/parameters/SubscriptionId'
+    post:
+      operationId: completeSubscriptionLogin
+      tags: [subscriptions]
+      description: Passes the code shown by the browser to the CLI and waits for its answer (AIP-136).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginCodeInput' }
+      responses:
+        '200':
+          description: The subscription, active or failed with `error`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Subscription' }
+        default: { $ref: '#/components/responses/Error' }
+  /subscriptions/{subscriptionId}/usage:
+    parameters:
+      - $ref: '#/components/parameters/SubscriptionId'
+    get:
+      operationId: getSubscriptionUsage
+      tags: [subscriptions]
+      description: Usage limits as the agent reports them, cached for a minute (AIP-156 singleton).
+      responses:
+        '200':
+          description: Limit windows, or the reason they are unavailable.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubscriptionUsage' }
+        default: { $ref: '#/components/responses/Error' }
   /events:
     get:
       operationId: streamEvents
@@ -327,6 +429,11 @@ components:
       required: true
       description: '"session:<session id>" or "new:<project id>".'
       schema: { type: string }
+    SubscriptionId:
+      name: subscriptionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     FilePath:
       name: path
       in: query
@@ -528,6 +635,70 @@ components:
       required: [content]
       properties:
         content: { type: string, maxLength: 1048576 }
+    SubscriptionInput:
+      type: object
+      required: [agent]
+      properties:
+        agent: { $ref: '#/components/schemas/AgentId' }
+        token: { type: string, description: Long-lived token from `claude setup-token`. }
+    LoginCodeInput:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, minLength: 1 }
+    SubscriptionLogin:
+      type: object
+      required: [url, needsCode]
+      properties:
+        url: { type: string, format: uri }
+        userCode: { type: string, description: Code to enter on the page (device flow). }
+        needsCode: { type: boolean, description: The page shows a code to paste back into Drift. }
+    Subscription:
+      type: object
+      description: An agent account Drift is signed in to through the agent CLI (AIP-121 resource).
+      required: [id, agent, method, state, account, plan, current, createTime, updateTime]
+      properties:
+        id: { type: string, format: uuid }
+        agent: { $ref: '#/components/schemas/AgentId' }
+        method:
+          type: string
+          enum: [login, token]
+        state:
+          type: string
+          enum: [pending, active, failed]
+        account: { type: string }
+        plan: { type: string }
+        error: { type: string }
+        current: { type: boolean }
+        login: { $ref: '#/components/schemas/SubscriptionLogin' }
+        createTime: { type: string, format: date-time }
+        updateTime: { type: string, format: date-time }
+    ListSubscriptionsResponse:
+      type: object
+      required: [subscriptions]
+      properties:
+        subscriptions:
+          type: array
+          items: { $ref: '#/components/schemas/Subscription' }
+    UsageWindow:
+      type: object
+      required: [id, usedPercent]
+      properties:
+        id: { type: string, description: 'five_hour, seven_day, seven_day_opus… (Claude); primary, secondary (Codex).' }
+        usedPercent: { type: number }
+        windowMinutes: { type: integer }
+        resetTime: { type: string, format: date-time }
+    SubscriptionUsage:
+      type: object
+      required: [windows, readTime]
+      properties:
+        windows:
+          type: array
+          items: { $ref: '#/components/schemas/UsageWindow' }
+        unavailable:
+          type: string
+          enum: [signed_out, expired, token_login, unsupported, error]
+        readTime: { type: string, format: date-time }
     WireEvent:
       type: object
       required: [type]
@@ -545,5 +716,8 @@ components:
             - message.created
             - draft.updated
             - draft.deleted
+            - subscription.created
+            - subscription.updated
+            - subscription.deleted
         data: {}
         origin: { type: string }

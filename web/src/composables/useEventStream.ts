@@ -17,6 +17,7 @@ import {
     listMessagesInfiniteQueryKey,
     listProjectsInfiniteQueryKey,
     listSessionsInfiniteQueryKey,
+    listSubscriptionsQueryKey,
 } from '@/gen'
 import { applyDraftEvent, loadDrafts } from '@/composables/useDrafts'
 import { deviceId } from '@/shared/device'
@@ -172,6 +173,10 @@ function apply(qc: QueryClient, event: WireEvent) {
         case 'draft.updated':
         case 'draft.deleted':
             return applyDraftEvent(event.type, event.data as Partial<Draft>, event.origin)
+        case 'subscription.created':
+        case 'subscription.updated':
+        case 'subscription.deleted':
+            return void qc.invalidateQueries({ queryKey: listSubscriptionsQueryKey() })
     }
 }
 

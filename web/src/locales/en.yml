@@ -127,8 +127,8 @@ settings:
   sidebarRight: 'Right'
   theme: 'Theme'
   language: 'Language'
-  agents: 'Agents'
-  agentsLead: 'Connected agents are offered in a new chat.'
+  agents: 'AI providers'
+  agentsLead: 'Subscriptions the agents run on. An agent uses its current subscription in new chats.'
   passkeys: 'Passkeys'
 lang:
   switch: 'Interface language'

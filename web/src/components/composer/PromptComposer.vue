@@ -41,7 +41,7 @@ const emit = defineEmits<{
 }>()
 const { t } = useI18n()
 const agents = useAgents()
-const unavailable = computed(() => !agents.isConnected(props.agent))
+const unavailable = computed(() => agents.ready.value && !agents.isConnected(props.agent))
 
 const draft = useDraft(() => props.draftKey)
 const files = ref<File[]>([])
