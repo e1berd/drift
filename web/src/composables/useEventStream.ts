@@ -9,6 +9,7 @@ import type {
     Message,
     Project,
     Session,
+    SessionActivity,
     WireEvent,
 } from '@/gen'
 
@@ -30,6 +31,7 @@ type Pages<T> = InfiniteData<T, string>
 
 const connected = ref(true)
 const freshSessions = ref(new Set<string>())
+const activities = ref(new Map<string, SessionActivity>())
 const listeners = new Set<Listener>()
 let source: EventSource | null = null
 
@@ -164,6 +166,24 @@ function onMessageUpdated(qc: QueryClient, message: Message) {
     )
 }
 
+function setActivity(sessionId: string, activity: SessionActivity | null) {
+    const next = new Map(activities.value)
+    if (activity) next.set(sessionId, activity)
+    else next.delete(sessionId)
+    activities.value = next
+}
+
+function onSessionUpdated(qc: QueryClient, session: Session) {
+    if (session.status !== 'running' && activities.value.has(session.id))
+        setActivity(session.id, null)
+    putSessionFirst(qc, session)
+}
+
+function onAgentMessage(message: Message) {
+    if (message.role === 'assistant' && message.kind === 'text')
+        setActivity(message.sessionId, { sessionId: message.sessionId, phase: 'thinking' })
+}
+
 function resync(qc: QueryClient) {
     void qc.invalidateQueries()
     loadDrafts().catch(reportError)
@@ -182,10 +202,15 @@ function apply(qc: QueryClient, event: WireEvent) {
         case 'session.created':
             return onSessionCreated(qc, event.data as Session, mine)
         case 'session.updated':
-            return putSessionFirst(qc, event.data as Session)
+            return onSessionUpdated(qc, event.data as Session)
+        case 'session.activity': {
+            const activity = event.data as SessionActivity
+            return setActivity(activity.sessionId, activity)
+        }
         case 'session.deleted':
             return onSessionDeleted(qc, event.data as { id: string; projectId?: string })
         case 'message.created':
+            onAgentMessage(event.data as Message)
             return onMessageCreated(qc, event.data as Message)
         case 'message.updated':
             return onMessageUpdated(qc, event.data as Message)
@@ -222,11 +247,11 @@ export function startEventStream(qc: QueryClient) {
     })
 }
 
-/** Connection state plus sessions created elsewhere since this tab opened. */
+/** Connection state, sessions created elsewhere since this tab opened, and live agent activity per session. */
 export function useEventStream() {
     function on(listener: Listener) {
         listeners.add(listener)
         return () => listeners.delete(listener)
     }
-    return { connected, freshSessions, on }
+    return { connected, freshSessions, activities, on }
 }

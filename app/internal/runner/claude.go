@@ -13,8 +13,19 @@ type claudeEvent struct {
 	Message         struct {
 		Content json.RawMessage `json:"content"`
 	} `json:"message"`
-	IsError bool   `json:"is_error"`
-	Result  string `json:"result"`
+	IsError         bool         `json:"is_error"`
+	Result          string       `json:"result"`
+	EstimatedTokens int          `json:"estimated_tokens"`
+	Event           *streamEvent `json:"event"`
+}
+
+type streamEvent struct {
+	Type         string       `json:"type"`
+	ContentBlock *claudeBlock `json:"content_block"`
+	Delta        struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	} `json:"delta"`
 }
 
 type claudeBlock struct {
@@ -38,6 +49,7 @@ type transcriptSink interface {
 	startTool(callID, name, input string)
 	finishTool(callID, output string, failed bool)
 	closeTools(status string)
+	activity(phase, tool, text string, tokens int)
 }
 
 type claudeStream struct {
@@ -46,6 +58,8 @@ type claudeStream struct {
 	agentSessionID string
 	saveSessionID  func(string)
 	finished       bool
+	partial        strings.Builder
+	thinkingTokens int
 }
 
 func (s *claudeStream) handle(line []byte) {
@@ -58,9 +72,10 @@ func (s *claudeStream) handle(line []byte) {
 	}
 	switch event.Type {
 	case "system":
-		if event.Subtype == "init" && event.SessionID != "" && event.SessionID != s.agentSessionID {
-			s.agentSessionID = event.SessionID
-			s.saveSessionID(event.SessionID)
+		s.systemEvent(event)
+	case "stream_event":
+		if event.Event != nil {
+			s.streamEvent(*event.Event)
 		}
 	case "assistant":
 		for _, block := range blocks(event.Message.Content) {
@@ -70,6 +85,8 @@ func (s *claudeStream) handle(line []byte) {
 		for _, block := range blocks(event.Message.Content) {
 			if block.Type == "tool_result" {
 				s.t.finishTool(block.ToolUseID, resultText(block.Content), block.IsError)
+				s.thinkingTokens = 0
+				s.t.activity(phaseThinking, "", "", 0)
 			}
 		}
 	case "result":
@@ -78,6 +95,46 @@ func (s *claudeStream) handle(line []byte) {
 			s.t.closeTools(toolError)
 			s.t.note(noteFailed, firstNonEmpty(event.Result, event.Subtype))
 		}
+	}
+}
+
+func (s *claudeStream) systemEvent(event claudeEvent) {
+	switch event.Subtype {
+	case "init":
+		if event.SessionID != "" && event.SessionID != s.agentSessionID {
+			s.agentSessionID = event.SessionID
+			s.saveSessionID(event.SessionID)
+		}
+	case "thinking_tokens":
+		s.thinkingTokens = event.EstimatedTokens
+		s.t.activity(phaseThinking, "", "", s.thinkingTokens)
+	}
+}
+
+func (s *claudeStream) streamEvent(event streamEvent) {
+	switch event.Type {
+	case "content_block_start":
+		if event.ContentBlock != nil {
+			s.blockStarted(*event.ContentBlock)
+		}
+	case "content_block_delta":
+		if event.Delta.Type == "text_delta" {
+			s.partial.WriteString(event.Delta.Text)
+			s.t.activity(phaseWriting, "", s.partial.String(), 0)
+		}
+	}
+}
+
+func (s *claudeStream) blockStarted(block claudeBlock) {
+	switch block.Type {
+	case "thinking":
+		s.thinkingTokens = 0
+		s.t.activity(phaseThinking, "", "", 0)
+	case "text":
+		s.partial.Reset()
+		s.t.activity(phaseWriting, "", "", 0)
+	case "tool_use":
+		s.t.activity(phaseTool, block.Name, "", 0)
 	}
 }
 

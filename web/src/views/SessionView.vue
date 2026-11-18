@@ -15,12 +15,14 @@ import { useRoute, useRouter } from 'vue-router'
 
 import RunSpinner from '@/components/RunSpinner.vue'
 import TopBar from '@/components/TopBar.vue'
+import AgentActivity from '@/components/chat/AgentActivity.vue'
 import ChatThread from '@/components/chat/ChatThread.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
 import SwitchFamilyDialog from '@/components/composer/SwitchFamilyDialog.vue'
 import PanePlaceholder from '@/components/PanePlaceholder.vue'
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
+import { useEventStream } from '@/composables/useEventStream'
 import { useCreateMessage, useStopSession, useUpdateSession } from '@/gen'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
@@ -64,6 +66,12 @@ const { messages, hasNextPage, isFetchingNextPage, fetchNextPage } = useMessages
 
 const agent = computed(() => session.data.value?.agent ?? 'claude')
 const running = computed(() => session.data.value?.status === 'running')
+const { activities } = useEventStream()
+const activity = computed(() => activities.value.get(sessionId.value))
+const runningTool = computed(() => {
+    const last = messages.value.at(-1)
+    return last?.kind === 'tool' && last.body.status === 'running' ? last.body.name : undefined
+})
 const history = computed(() =>
     messages.value.flatMap((message) =>
         message.role === 'user' && message.body.text ? [message.body.text] : [],
@@ -137,7 +145,17 @@ const stop = useStopSession({
                 :has-older="!!hasNextPage"
                 :loading-older="isFetchingNextPage"
                 @load-older="fetchNextPage()"
-            />
+            >
+                <template #after>
+                    <AgentActivity
+                        v-if="running && session.data.value"
+                        :agent="agent"
+                        :activity="activity"
+                        :running-tool="runningTool"
+                        :since="session.data.value.updateTime"
+                    />
+                </template>
+            </ChatThread>
             <div class="flex-none px-6 pb-4 max-md:px-3 max-md:pb-3">
                 <PromptComposer
                     :draft-key="draftKey(sessionId)"

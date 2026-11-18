@@ -11,6 +11,7 @@ export const wireEventTypeEnum = {
   'session.created': 'session.created',
   'session.updated': 'session.updated',
   'session.deleted': 'session.deleted',
+  'session.activity': 'session.activity',
   'message.created': 'message.created',
   'message.updated': 'message.updated',
   'draft.updated': 'draft.updated',

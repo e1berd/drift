@@ -830,6 +830,21 @@ components:
           type: string
           enum: [signed_out, expired, token_login, unsupported, error]
         readTime: { type: string, format: date-time }
+    SessionActivity:
+      description: >-
+        What a running agent is doing right now, sent as the `session.activity` event and
+        never stored: thinking (with estimated tokens), writing (the reply so far) or
+        preparing a tool call.
+      type: object
+      required: [sessionId, phase]
+      properties:
+        sessionId: { type: string, format: uuid }
+        phase:
+          type: string
+          enum: [thinking, writing, tool]
+        tool: { type: string }
+        text: { type: string }
+        tokens: { type: integer }
     WireEvent:
       type: object
       required: [type]
@@ -844,6 +859,7 @@ components:
             - session.created
             - session.updated
             - session.deleted
+            - session.activity
             - message.created
             - message.updated
             - draft.updated

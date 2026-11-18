@@ -11,7 +11,11 @@ type recorded struct {
 	kind, a, b string
 }
 
-type fakeSink struct{ got []recorded }
+type fakeSink struct {
+	got        []recorded
+	activities []recorded
+	tokens     int
+}
 
 func (f *fakeSink) text(text string)       { f.got = append(f.got, recorded{"text", text, ""}) }
 func (f *fakeSink) thinking(text string)   { f.got = append(f.got, recorded{"thinking", text, ""}) }
@@ -27,6 +31,10 @@ func (f *fakeSink) finishTool(callID, output string, failed bool) {
 	f.got = append(f.got, recorded{"result", callID, status + " " + output})
 }
 func (f *fakeSink) closeTools(status string) { f.got = append(f.got, recorded{"close", status, ""}) }
+func (f *fakeSink) activity(phase, tool, text string, tokens int) {
+	f.activities = append(f.activities, recorded{phase, tool, text})
+	f.tokens = tokens
+}
 
 const sampleRun = `{"type":"system","subtype":"init","session_id":"abc"}
 {"type":"rate_limit_event"}
@@ -79,15 +87,49 @@ func TestClaudeStreamReportsFailedResult(t *testing.T) {
 
 func TestClaudeArgsResumeAndModes(t *testing.T) {
 	args := strings.Join(claudeArgs(runRequest("opus", "acceptEdits"), "abc"), " ")
-	if args != "-p --output-format stream-json --verbose --model opus --permission-mode acceptEdits --resume abc" {
+	if args != "-p --output-format stream-json --verbose --include-partial-messages --model opus --permission-mode acceptEdits --resume abc" {
 		t.Errorf("args %q", args)
 	}
 	args = strings.Join(claudeArgs(runRequest("default", "default"), ""), " ")
-	if args != "-p --output-format stream-json --verbose" {
+	if args != "-p --output-format stream-json --verbose --include-partial-messages" {
 		t.Errorf("args %q", args)
 	}
 }
 
 func runRequest(model, mode string) workspace.RunRequest {
 	return workspace.RunRequest{Model: model, Mode: mode}
+}
+
+const partialRun = `{"type":"stream_event","event":{"type":"content_block_start","content_block":{"type":"thinking","thinking":""}},"parent_tool_use_id":null}
+{"type":"system","subtype":"thinking_tokens","estimated_tokens":238}
+{"type":"stream_event","event":{"type":"content_block_start","content_block":{"type":"tool_use","id":"t1","name":"Bash","input":{}}},"parent_tool_use_id":null}
+{"type":"user","message":{"content":[{"tool_use_id":"t1","type":"tool_result","content":"ok"}]},"parent_tool_use_id":null}
+{"type":"stream_event","event":{"type":"content_block_start","content_block":{"type":"text","text":""}},"parent_tool_use_id":null}
+{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":"При"}},"parent_tool_use_id":null}
+{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":"вет"}},"parent_tool_use_id":null}
+{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":"inner"}},"parent_tool_use_id":"t9"}`
+
+func TestClaudeStreamReportsLiveActivity(t *testing.T) {
+	sink := &fakeSink{}
+	stream := claudeStream{t: sink, saveSessionID: func(string) {}}
+	for line := range strings.SplitSeq(partialRun, "\n") {
+		stream.handle([]byte(line))
+	}
+	want := []recorded{
+		{"thinking", "", ""},
+		{"thinking", "", ""},
+		{"tool", "Bash", ""},
+		{"thinking", "", ""},
+		{"writing", "", ""},
+		{"writing", "", "При"},
+		{"writing", "", "Привет"},
+	}
+	if len(sink.activities) != len(want) {
+		t.Fatalf("got %v, want %v", sink.activities, want)
+	}
+	for i := range want {
+		if sink.activities[i] != want[i] {
+			t.Errorf("activity %d: got %v, want %v", i, sink.activities[i], want[i])
+		}
+	}
 }

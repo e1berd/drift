@@ -99,7 +99,7 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 }
 
 func claudeArgs(req workspace.RunRequest, agentSessionID string) []string {
-	args := []string{"-p", "--output-format", "stream-json", "--verbose"}
+	args := []string{"-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"}
 	if req.Model != "" && req.Model != "default" {
 		args = append(args, "--model", req.Model)
 	}

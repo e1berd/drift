@@ -3,6 +3,7 @@ package runner
 import (
 	"encoding/json"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/e1berd/drift/app/internal/db"
@@ -20,6 +21,12 @@ const (
 	toolDone    = "done"
 	toolError   = "error"
 	toolStopped = "stopped"
+
+	phaseThinking = "thinking"
+	phaseWriting  = "writing"
+	phaseTool     = "tool"
+
+	activityInterval = 120 * time.Millisecond
 
 	maxOutputLines = 400
 	maxLineRunes   = 2000
@@ -48,6 +55,15 @@ type toolBody struct {
 	Meta   string   `json:"meta,omitempty"`
 }
 
+// Activity is what the agent is doing right now; it is sent to clients and never stored.
+type Activity struct {
+	SessionID string `json:"sessionId"`
+	Phase     string `json:"phase"`
+	Tool      string `json:"tool,omitempty"`
+	Text      string `json:"text,omitempty"`
+	Tokens    int    `json:"tokens,omitempty"`
+}
+
 type openTool struct {
 	id   pgtype.UUID
 	body toolBody
@@ -59,6 +75,9 @@ type transcript struct {
 	session pgtype.UUID
 	tools   map[string]*openTool
 	order   []string
+
+	lastPhase    string
+	lastActivity time.Time
 }
 
 func newTranscript(r *Runner, owner string, session pgtype.UUID) *transcript {
@@ -108,6 +127,17 @@ func (t *transcript) thinking(text string) {
 
 func (t *transcript) note(code, text string) {
 	t.add("system", "note", noteBody{Code: code, Text: text})
+}
+
+func (t *transcript) activity(phase, tool, text string, tokens int) {
+	now := time.Now()
+	if phase == t.lastPhase && phase != phaseTool && now.Sub(t.lastActivity) < activityInterval {
+		return
+	}
+	t.lastPhase, t.lastActivity = phase, now
+	t.r.hub.Publish(t.owner, "session.activity", Activity{
+		SessionID: uuidString(t.session), Phase: phase, Tool: tool, Text: text, Tokens: tokens,
+	}, "")
 }
 
 func (t *transcript) startTool(callID, name, input string) {
