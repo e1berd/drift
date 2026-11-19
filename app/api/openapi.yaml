@@ -815,6 +815,11 @@ paths:
       operationId: getSubscriptionUsage
       tags: [subscriptions]
       description: Usage limits as the agent reports them, cached for a minute (AIP-156 singleton).
+      parameters:
+        - name: refresh
+          in: query
+          description: Bypass the cached response and read the current limits from the agent.
+          schema: { type: boolean, default: false }
       responses:
         '200':
           description: Limit windows, or the reason they are unavailable.

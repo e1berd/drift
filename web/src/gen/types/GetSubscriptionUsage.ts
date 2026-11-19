@@ -15,6 +15,15 @@ export type GetSubscriptionUsagePath = {
   subscriptionId: string;
 };
 
+export type GetSubscriptionUsageQuery = {
+  /**
+   * @description Bypass the cached response and read the current limits from the agent.
+   * @default false
+   * @type boolean | undefined
+   */
+  refresh?: boolean;
+};
+
 export type GetSubscriptionUsageStatus200 = SubscriptionUsage;
 
 export type GetSubscriptionUsageStatusDefault = Error;
@@ -22,7 +31,7 @@ export type GetSubscriptionUsageStatusDefault = Error;
 export type GetSubscriptionUsageOptions = {
   body?: never;
   path: GetSubscriptionUsagePath;
-  query?: never;
+  query?: GetSubscriptionUsageQuery;
   headers?: never;
 };
 

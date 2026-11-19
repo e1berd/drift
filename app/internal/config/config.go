@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -52,8 +53,8 @@ func Load() (*Config, error) {
 	cfg.CodexBin = env("DRIFT_CODEX_BIN", "codex")
 	cfg.Shell = os.Getenv("DRIFT_SHELL")
 	cfg.AntigravityBin = env("DRIFT_AGY_BIN", "agy")
-	cfg.KimiBin = env("DRIFT_KIMI_BIN", "kimi")
-	cfg.MimoBin = env("DRIFT_MIMO_BIN", "mimo")
+	cfg.KimiBin = agentBinary("DRIFT_KIMI_BIN", "kimi", ".kimi-code", "bin", "kimi")
+	cfg.MimoBin = agentBinary("DRIFT_MIMO_BIN", "mimo", ".mimocode", "bin", "mimo")
 	cfg.DeliveryRepo = env("DRIFT_DELIVERY_REPO", "e1berd/drift")
 
 	urls := []struct {
@@ -80,6 +81,23 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func agentBinary(key, name string, homePath ...string) string {
+	if configured := os.Getenv(key); configured != "" {
+		return os.ExpandEnv(configured)
+	}
+	if path, err := exec.LookPath(name); err == nil {
+		return path
+	}
+	home, err := os.UserHomeDir()
+	if err == nil {
+		path := filepath.Join(append([]string{home}, homePath...)...)
+		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() && info.Mode().Perm()&0o111 != 0 {
+			return path
+		}
+	}
+	return name
 }
 
 func env(key, def string) string {

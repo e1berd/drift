@@ -62,6 +62,7 @@ function submit() {
                     :value="item.id"
                     :disabled="!SIGN_IN_AGENTS.includes(item.id)"
                     :title="SIGN_IN_AGENTS.includes(item.id) ? undefined : t('soon')"
+                    class="gap-1.5"
                 >
                     <AgentLogo :agent="item.id" decorative />{{ item.name }}
                 </SegmentedControlItem>

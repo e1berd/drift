@@ -58,13 +58,15 @@ SPA (`web/src`) — оболочка для работы с агентами: п
 
 ### Подписки агентов
 
-Drift не ходит в API провайдеров сам, а запускает официальные CLI: `claude` (Claude Code) и `codex` лежат в образе (`/usr/local/bin`, версии — `ARG` в `Containerfile`). У каждой подписки своя папка `DRIFT_AGENTS_DIR/<id>` (в compose — `./data/agents`, в `.gitignore`) — это `HOME`, `CLAUDE_CONFIG_DIR=<home>/.claude` и `CODEX_HOME=<home>/.codex` для процессов агента, поэтому аккаунтов одного агента может быть несколько. Учётные данные лежат только там и удаляются вместе с подпиской.
+Drift не ходит в API провайдеров сам, а запускает официальные CLI: `claude` (Claude Code), `codex`, `agy`, `kimi` и `mimo` лежат в образе (версии — `ARG` в `Containerfile`; Kimi работает на Node.js). На хосте Kimi и MiMo дополнительно находятся в штатных каталогах установщиков `~/.kimi-code/bin` и `~/.mimocode/bin`, даже если этих каталогов нет в `PATH` сервиса. У каждой подписки своя папка `DRIFT_AGENTS_DIR/<id>` (в compose — `./data/agents`, в `.gitignore`) — это `HOME`, `CLAUDE_CONFIG_DIR=<home>/.claude` и `CODEX_HOME=<home>/.codex` для процессов агента, поэтому аккаунтов одного агента может быть несколько. Учётные данные лежат только там и удаляются вместе с подпиской.
 
 | Агент | Вход | Лимиты |
 | --- | --- | --- |
 | Claude Code | `claude auth login --claudeai`: Drift показывает ссылку, страница Anthropic выдаёт код, его вставляют в Drift (уходит в stdin CLI). Запасной путь — токен из `claude setup-token` (`CLAUDE_CODE_OAUTH_TOKEN`, проверяется через `GET /v1/models`) | `GET api.anthropic.com/api/oauth/usage` с токеном из `.credentials.json` — недокументированный эндпоинт панели `/usage`, может сломаться. С токеном из `setup-token` недоступны (нет scope `user:profile`) |
 | Codex | `codex app-server`, `account/login/start` с `chatgptDeviceCode`: ссылка и код, вход завершается сам (`account/login/completed`). В ChatGPT должен быть разрешён вход по коду устройства | `account/rateLimits/read` того же app-server |
 | Antigravity | пока нет: `agy` без графического окружения требует keyring/D-Bus | — |
+| Kimi Code | `kimi login`: Drift показывает ссылку и код устройства, вход завершается сам | Аккаунт и четыре окна квот читаются через managed API с OAuth-токеном CLI; токен обновляется автоматически |
+| MiMo Code | `mimo providers login -p xiaomi`: Drift показывает ссылку, код со страницы Xiaomi вставляют в Drift | CLI не сообщает квоты подписки |
 
 Текущая подписка — одна на агента (`is_current`, уникальный индекс), первая подключённая становится текущей сама, при удалении текущей текущей становится последняя из оставшихся. Агент доступен в новом чате, если у него есть активная подписка. Незавершённые входы живут в памяти процесса (до 15 минут, не больше 4 одновременно); после перезапуска они помечаются как неудачные, и вход начинают заново. Лимиты кешируются на минуту. Контейнеру `drift` в `compose.yml` дано 1.5 ГБ памяти — CLI агентов тяжёлые.
 
@@ -77,8 +79,10 @@ Drift не ходит в API провайдеров сам, а запускае�
 | Claude Code | `claude -p --output-format stream-json [--resume id]`, промпт в stdin; с картинками — `--input-format stream-json` и блоки `image` (base64) | `--permission-mode` как есть, `default` — без флага (инструменты, которым нужно подтверждение, отклоняются) |
 | Codex | `codex exec [resume <thread id>] --json --skip-git-repo-check -c approval_policy="never" [--image=…] -- -`, промпт в stdin, id треда из `thread.started` | `default` и `plan` — `sandbox_mode="read-only"`, `acceptEdits` и `auto` — `"workspace-write"`, `bypassPermissions` — `--dangerously-bypass-approvals-and-sandbox` |
 | Antigravity | `agy --output-format stream-json [--conversation id] --prompt=…`; картинки — пути к временным файлам в конце промпта | `--mode accept-edits\|auto\|plan`, `bypassPermissions` — `--dangerously-skip-permissions` |
+| Kimi Code | `kimi -p … --output-format stream-json [-S id]`, промпт в аргументе; картинки — пути к временным файлам в конце промпта | `acceptEdits` — `-y`, `auto` и `bypassPermissions` — `--auto`, `plan` — `--plan` |
+| MiMo Code | `mimo run --format json [-s id]`, промпт в stdin, картинки — `-f <путь>` | Всегда `--dangerously-skip-permissions`: в headless-режиме запрос разрешения останавливает запуск |
 
-**Картинки** (`POST /api/attachments`, тело — байты файла, `?name=`): PNG, JPEG, GIF или WebP до 5 МБ (тип определяется по содержимому), до 10 на сообщение. Хранятся в Postgres (`attachments.data`), отдаются по `GET /api/attachments/{id}/content`. Загрузка ни к чему не привязана, пока её id не придёт в `attachmentIds` нового сообщения или сессии; непривязанные удаляются через сутки. Для Codex и Antigravity картинки на время запуска пишутся во временную папку.
+**Картинки** (`POST /api/attachments`, тело — байты файла, `?name=`): PNG, JPEG, GIF или WebP до 5 МБ (тип определяется по содержимому), до 10 на сообщение. Хранятся в Postgres (`attachments.data`), отдаются по `GET /api/attachments/{id}/content`. Загрузка ни к чему не привязана, пока её id не придёт в `attachmentIds` нового сообщения или сессии; непривязанные удаляются через сутки. Для Codex, Antigravity, Kimi и MiMo картинки на время запуска пишутся во временную папку.
 
 ### API и realtime
 
@@ -320,6 +324,6 @@ systemctl --user enable --now drift.service
 scp bin/drift server:drift/bin/drift.new && ssh server 'mv ~/drift/bin/drift.new ~/drift/bin/drift && systemctl --user restart drift'
 ```
 
-CLI агентов ставятся на хост в `PATH` сервиса (`~/.local/bin`, `~/.npm-global/bin`), версии — из `ARG` в `Containerfile`: `claude`, `codex` и `agy` (архив `linux-x64-musl/cli_linux_x64_musl.tar.gz` из `antigravity-public`, сверить `AGY_SHA512_AMD64`, бинарник `antigravity` установить как `agy`).
+CLI агентов ставятся на хост в `PATH` сервиса (`~/.local/bin`, `~/.npm-global/bin`), версии — из `ARG` в `Containerfile`: `claude`, `codex` и `agy` (архив `linux-x64-musl/cli_linux_x64_musl.tar.gz` из `antigravity-public`, сверить `AGY_SHA512_AMD64`, бинарник `antigravity` установить как `agy`). Kimi и MiMo можно поставить их официальными скриптами: Drift сам найдёт `~/.kimi-code/bin/kimi` и `~/.mimocode/bin/mimo`; явные пути задаются через `DRIFT_KIMI_BIN` и `DRIFT_MIMO_BIN`.
 
 Caddy: `reverse_proxy 127.0.0.1:8080` (SSE и WebSocket проходят без настроек).

@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { PhArrowClockwise } from '@phosphor-icons/vue'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { Button } from '@ui-sdk/vue/button'
 import { Meter, MeterIndicator, MeterLabel, MeterTrack, MeterValue } from '@ui-sdk/vue/meter'
+import { toast } from '@ui-sdk/vue/toast'
 import { useI18n } from 'vue-i18n'
 
-import { useGetSubscriptionUsage } from '@/gen'
+import { getSubscriptionUsage, getSubscriptionUsageQueryKey, useGetSubscriptionUsage } from '@/gen'
+import { errorMessage } from '@/shared/errors'
 import {
     formatReset,
     formatResetDate,
@@ -14,11 +19,28 @@ import {
 
 const props = defineProps<{ subscriptionId: string }>()
 const { t, locale } = useI18n()
+const queryClient = useQueryClient()
+const path = computed(() => ({ subscriptionId: props.subscriptionId }))
 
 const usage = useGetSubscriptionUsage(
-    { path: computed(() => ({ subscriptionId: props.subscriptionId })) },
+    { path },
     { query: { refetchInterval: 60_000, staleTime: 30_000 } },
 )
+
+const refresh = useMutation({
+    mutationFn: async () =>
+        (
+            await getSubscriptionUsage({
+                path: path.value,
+                query: { refresh: true },
+                throwOnError: true,
+            })
+        ).data,
+    onSuccess: (data) => {
+        queryClient.setQueryData(getSubscriptionUsageQueryKey({ path: path.value }), data)
+    },
+    onError: (error) => toast.error(errorMessage(error)),
+})
 
 const windows = computed(() =>
     (usage.data.value?.windows ?? []).map((window) => {
@@ -36,31 +58,57 @@ const windows = computed(() =>
 </script>
 
 <template>
-    <div v-if="usage.isPending.value" class="skeleton h-8" />
-    <p v-else-if="usage.data.value?.unavailable" class="m-0 text-muted">
-        {{ t(`unavailable.${usage.data.value.unavailable}`) }}
-    </p>
-    <div v-else-if="windows.length" class="usage-grid">
-        <Meter
-            v-for="window in windows"
-            :key="window.id"
-            :value="window.usedPercent"
-            :max="100"
-            :data-level="usageLevel(window.usedPercent)"
+    <div class="usage">
+        <div class="usage-content">
+            <div v-if="usage.isPending.value" class="skeleton h-8" />
+            <p v-else-if="usage.isError.value" class="m-0 text-muted">
+                {{ errorMessage(usage.error.value) }}
+            </p>
+            <p v-else-if="usage.data.value?.unavailable" class="m-0 text-muted">
+                {{ t(`unavailable.${usage.data.value.unavailable}`) }}
+            </p>
+            <div v-else-if="windows.length" class="usage-grid">
+                <Meter
+                    v-for="window in windows"
+                    :key="window.id"
+                    :value="window.usedPercent"
+                    :max="100"
+                    :data-level="usageLevel(window.usedPercent)"
+                >
+                    <MeterLabel>{{ window.label }}</MeterLabel>
+                    <MeterValue />
+                    <MeterTrack><MeterIndicator /></MeterTrack>
+                    <span v-if="window.reset" class="usage-reset text-muted">
+                        {{ window.reset
+                        }}<template v-if="window.resetDate"> · {{ window.resetDate }}</template>
+                    </span>
+                </Meter>
+            </div>
+            <p v-else class="m-0 text-muted">{{ t('none') }}</p>
+        </div>
+        <Button
+            :aria-label="t('refresh')"
+            :title="t('refresh')"
+            :disabled="refresh.isPending.value || usage.isFetching.value"
+            @click="refresh.mutate()"
         >
-            <MeterLabel>{{ window.label }}</MeterLabel>
-            <MeterValue />
-            <MeterTrack><MeterIndicator /></MeterTrack>
-            <span v-if="window.reset" class="usage-reset text-muted">
-                {{ window.reset
-                }}<template v-if="window.resetDate"> · {{ window.resetDate }}</template>
-            </span>
-        </Meter>
+            <PhArrowClockwise :class="{ 'animate-spin': refresh.isPending.value }" />
+        </Button>
     </div>
-    <p v-else class="m-0 text-muted">{{ t('none') }}</p>
 </template>
 
 <style scoped>
+.usage {
+    display: flex;
+    align-items: flex-start;
+    gap: calc(var(--ui-spacing) * 2);
+}
+
+.usage-content {
+    min-width: 0;
+    flex: 1;
+}
+
 .usage-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
@@ -94,6 +142,7 @@ ru:
         weekSonnet: Неделя · Sonnet
         other: 'Окно {minutes} мин'
     resets: 'Сброс {when}'
+    refresh: Обновить лимиты
     none: Агент не сообщил лимиты.
     unavailable:
         signed_out: Подписка не подключена.
@@ -109,6 +158,7 @@ en:
         weekSonnet: Week · Sonnet
         other: '{minutes} min window'
     resets: 'Resets {when}'
+    refresh: Refresh limits
     none: The agent reported no limits.
     unavailable:
         signed_out: The subscription is not connected.

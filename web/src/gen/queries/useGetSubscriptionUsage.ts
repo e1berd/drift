@@ -11,16 +11,16 @@ import { getSubscriptionUsage } from '../clients/getSubscriptionUsage'
 import { queryOptions, useQuery } from '@tanstack/vue-query'
 import { toValue } from 'vue'
 
-export const getSubscriptionUsageQueryKey = ({ path }: { path: MaybeRefOrGetter<Omit<GetSubscriptionUsageOptions, 'headers'>['path']> }) => [{ url: '/subscriptions/:subscriptionId/usage', params: path }] as const
+export const getSubscriptionUsageQueryKey = ({ path, query }: { path: MaybeRefOrGetter<Omit<GetSubscriptionUsageOptions, 'headers'>['path']>; query?: MaybeRefOrGetter<Omit<GetSubscriptionUsageOptions, 'headers'>['query']> }) => [{ url: '/subscriptions/:subscriptionId/usage', params: path }, ...(query ? [query] : [])] as const
 
 export type GetSubscriptionUsageQueryKey = ReturnType<typeof getSubscriptionUsageQueryKey>
 
-export function getSubscriptionUsageQueryOptions({ path }: { path: MaybeRefOrGetter<GetSubscriptionUsageOptions['path']> }, config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'cookies' | 'url' | 'throwOnError'>> = {}) {
-  const queryKey = getSubscriptionUsageQueryKey({ path })
+export function getSubscriptionUsageQueryOptions({ path, query }: { path: MaybeRefOrGetter<GetSubscriptionUsageOptions['path']>; query?: MaybeRefOrGetter<GetSubscriptionUsageOptions['query']> }, config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'cookies' | 'url' | 'throwOnError'>> = {}) {
+  const queryKey = getSubscriptionUsageQueryKey({ path, query })
   return queryOptions<GetSubscriptionUsageStatus200, ResponseErrorConfig<Error>, GetSubscriptionUsageStatus200>({
    queryKey,
    queryFn: async ({ signal }) => {
-      return (await getSubscriptionUsage({ ...config, path: toValue(path), signal: config.signal ?? signal, throwOnError: true })).data
+      return (await getSubscriptionUsage({ ...config, path: toValue(path), query: toValue(query), signal: config.signal ?? signal, throwOnError: true })).data
    },
   })
 }
@@ -29,16 +29,16 @@ export function getSubscriptionUsageQueryOptions({ path }: { path: MaybeRefOrGet
  * `GET /subscriptions/{subscriptionId}/usage`
  * @description Usage limits as the agent reports them, cached for a minute (AIP-156 singleton).
  */
-export function useGetSubscriptionUsage<TData = GetSubscriptionUsageStatus200, TQueryData = GetSubscriptionUsageStatus200, TQueryKey extends QueryKey = GetSubscriptionUsageQueryKey>({ path }: { path: MaybeRefOrGetter<GetSubscriptionUsageOptions['path']> }, options: {
+export function useGetSubscriptionUsage<TData = GetSubscriptionUsageStatus200, TQueryData = GetSubscriptionUsageStatus200, TQueryKey extends QueryKey = GetSubscriptionUsageQueryKey>({ path, query }: { path: MaybeRefOrGetter<GetSubscriptionUsageOptions['path']>; query?: MaybeRefOrGetter<GetSubscriptionUsageOptions['query']> }, options: {
   query?: Partial<UseQueryOptions<GetSubscriptionUsageStatus200, ResponseErrorConfig<Error>, TData, TQueryData, TQueryKey>> & { client?: QueryClient },
   client?: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'cookies' | 'url' | 'throwOnError'>>
 } = {}) {
   const { query: queryConfig = {}, client: config = {} } = options ?? {}
   const { client: queryClient, ...resolvedOptions } = queryConfig
-  const queryKey = (resolvedOptions && 'queryKey' in resolvedOptions ? toValue(resolvedOptions.queryKey) : undefined) ?? getSubscriptionUsageQueryKey({ path })
+  const queryKey = (resolvedOptions && 'queryKey' in resolvedOptions ? toValue(resolvedOptions.queryKey) : undefined) ?? getSubscriptionUsageQueryKey({ path, query })
 
   const queryResult = useQuery({
-   ...getSubscriptionUsageQueryOptions({ path }, config),
+   ...getSubscriptionUsageQueryOptions({ path, query }, config),
    ...resolvedOptions,
    queryKey
   } as unknown as UseQueryOptions<GetSubscriptionUsageStatus200, ResponseErrorConfig<Error>, TData, GetSubscriptionUsageStatus200, TQueryKey>, toValue(queryClient)) as UseQueryReturnType<TData, ResponseErrorConfig<Error>> & { queryKey: TQueryKey }

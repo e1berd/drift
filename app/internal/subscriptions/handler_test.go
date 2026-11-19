@@ -8,6 +8,18 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
+func TestCacheUsageDropsTransientErrors(t *testing.T) {
+	h := Handler{usage: make(map[string]cachedUsage)}
+	h.cacheUsage("s1", Usage{})
+	if _, ok := h.usage["s1"]; !ok {
+		t.Fatal("successful usage must be cached")
+	}
+	h.cacheUsage("s1", Usage{Unavailable: "error"})
+	if _, ok := h.usage["s1"]; ok {
+		t.Fatal("transient usage errors must not be cached")
+	}
+}
+
 func TestCustomMethodRouteKeepsTheVerb(t *testing.T) {
 	e := echo.New()
 	var got string

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/e1berd/drift/app/internal/agents"
@@ -44,11 +45,14 @@ func (h *Handler) getUsage(c *echo.Context) error {
 		return c.JSON(http.StatusOK, Usage{Windows: []UsageWindow{}, Unavailable: "signed_out", ReadTime: time.Now()})
 	}
 	id := uuidString(row.ID)
-	h.mu.Lock()
-	cached, ok := h.usage[id]
-	h.mu.Unlock()
-	if ok && time.Now().Before(cached.until) {
-		return c.JSON(http.StatusOK, cached.usage)
+	refresh, _ := strconv.ParseBool(c.QueryParam("refresh"))
+	if !refresh {
+		h.mu.Lock()
+		cached, ok := h.usage[id]
+		h.mu.Unlock()
+		if ok && time.Now().Before(cached.until) {
+			return c.JSON(http.StatusOK, cached.usage)
+		}
 	}
 	driver, ok := h.cli.Driver(row.Agent)
 	if !ok {
@@ -59,10 +63,18 @@ func (h *Handler) getUsage(c *echo.Context) error {
 		return c.JSON(http.StatusOK, Usage{Windows: []UsageWindow{}, Unavailable: "signed_out", ReadTime: time.Now()})
 	}
 	usage := h.readUsage(c.Request().Context(), driver, home)
-	h.mu.Lock()
-	h.usage[id] = cachedUsage{usage: usage, until: time.Now().Add(usageTTL)}
-	h.mu.Unlock()
+	h.cacheUsage(id, usage)
 	return c.JSON(http.StatusOK, usage)
+}
+
+func (h *Handler) cacheUsage(id string, usage Usage) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if usage.Unavailable == "error" {
+		delete(h.usage, id)
+		return
+	}
+	h.usage[id] = cachedUsage{usage: usage, until: time.Now().Add(usageTTL)}
 }
 
 func (h *Handler) readUsage(ctx context.Context, driver agents.Driver, home string) Usage {

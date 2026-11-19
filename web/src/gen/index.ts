@@ -65,7 +65,7 @@ export type { GetDeliveryOptions, GetDeliveryResponse, GetDeliveryResponses, Get
 export type { GetGitDiffOptions, GetGitDiffPath, GetGitDiffQuery, GetGitDiffResponse, GetGitDiffResponses, GetGitDiffStatus200, GetGitDiffStatusDefault } from './types/GetGitDiff'
 export type { GetGitStatusOptions, GetGitStatusPath, GetGitStatusResponse, GetGitStatusResponses, GetGitStatusStatus200, GetGitStatusStatusDefault } from './types/GetGitStatus'
 export type { GetSessionOptions, GetSessionPath, GetSessionResponse, GetSessionResponses, GetSessionStatus200, GetSessionStatusDefault } from './types/GetSession'
-export type { GetSubscriptionUsageOptions, GetSubscriptionUsagePath, GetSubscriptionUsageResponse, GetSubscriptionUsageResponses, GetSubscriptionUsageStatus200, GetSubscriptionUsageStatusDefault } from './types/GetSubscriptionUsage'
+export type { GetSubscriptionUsageOptions, GetSubscriptionUsagePath, GetSubscriptionUsageQuery, GetSubscriptionUsageResponse, GetSubscriptionUsageResponses, GetSubscriptionUsageStatus200, GetSubscriptionUsageStatusDefault } from './types/GetSubscriptionUsage'
 export type { GitBranch } from './types/GitBranch'
 export type { GitChangeStatusKey } from './types/GitChangeStatus'
 export type { GitCheckoutRequest } from './types/GitCheckoutRequest'
