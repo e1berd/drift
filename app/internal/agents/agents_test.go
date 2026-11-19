@@ -277,6 +277,33 @@ func TestRemoveRefusesPaths(t *testing.T) {
 	}
 }
 
+func TestAgentBinaryFindsCLIsInstalledAfterTheFirstLookup(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", t.TempDir())
+	cli := CLI{}
+	if got := cli.KimiPath(); got != "kimi" {
+		t.Fatalf("got %q before install", got)
+	}
+	path := filepath.Join(home, ".kimi-code", "bin", "kimi")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("binary"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if got := cli.KimiPath(); got != path {
+		t.Fatalf("got %q, want %q", got, path)
+	}
+}
+
+func TestMimoPathPrefersConfiguredPath(t *testing.T) {
+	t.Setenv("HOME", "/srv/home")
+	if got := (CLI{Mimo: "$HOME/custom/mimo"}).MimoPath(); got != "/srv/home/custom/mimo" {
+		t.Fatalf("got %q", got)
+	}
+}
+
 func TestCheckClaudeTokenRejectsOnlyUnauthorized(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Header.Get("Authorization") {

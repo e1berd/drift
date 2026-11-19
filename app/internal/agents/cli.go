@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -89,6 +90,35 @@ func (c CLI) Driver(agent string) (Driver, bool) {
 // Home is the private folder of one subscription.
 func (c CLI) Home(id string) string {
 	return filepath.Join(c.Root, id)
+}
+
+// KimiPath resolves the kimi binary on every call, so a CLI installed after Drift started
+// is found without a restart.
+func (c CLI) KimiPath() string {
+	return agentBinary(c.Kimi, "kimi", ".kimi-code", "bin", "kimi")
+}
+
+// MimoPath resolves the MiMo Code binary on every call, so a CLI installed after Drift
+// started is found without a restart.
+func (c CLI) MimoPath() string {
+	return agentBinary(c.Mimo, "mimo", ".mimocode", "bin", "mimo")
+}
+
+func agentBinary(configured, name string, homePath ...string) string {
+	if configured != "" {
+		return os.ExpandEnv(configured)
+	}
+	if path, err := exec.LookPath(name); err == nil {
+		return path
+	}
+	home, err := os.UserHomeDir()
+	if err == nil {
+		path := filepath.Join(append([]string{home}, homePath...)...)
+		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() && info.Mode().Perm()&0o111 != 0 {
+			return path
+		}
+	}
+	return name
 }
 
 // Prepare creates the subscription home with the config folders of every CLI.

@@ -18,7 +18,7 @@ const mimoPlan = "MiMo"
 type mimo struct{ cli CLI }
 
 func (d mimo) command(ctx context.Context, home string, args ...string) *exec.Cmd {
-	cmd := exec.CommandContext(ctx, d.cli.Mimo, args...)
+	cmd := exec.CommandContext(ctx, d.cli.MimoPath(), args...)
 	cmd.Env = d.cli.MimoEnv(home)
 	cmd.Dir = home
 	cmd.WaitDelay = 2 * time.Second

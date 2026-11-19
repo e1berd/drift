@@ -68,7 +68,7 @@ func (r *Runner) plan(agent string, req workspace.RunRequest, agentSessionID, di
 			return runPlan{}, err
 		}
 		return runPlan{
-			bin:     r.cli.Kimi,
+			bin:     r.cli.KimiPath(),
 			args:    kimiArgs(withImagePaths(req, paths), agentSessionID),
 			stream:  &kimiStream{t: t, projectDir: dir, saveSessionID: saveSessionID},
 			cleanup: removeFolder(folder),
@@ -79,7 +79,7 @@ func (r *Runner) plan(agent string, req workspace.RunRequest, agentSessionID, di
 			return runPlan{}, err
 		}
 		return runPlan{
-			bin:     r.cli.Mimo,
+			bin:     r.cli.MimoPath(),
 			args:    mimoArgs(req, agentSessionID, paths),
 			stdin:   req.Text,
 			stream:  &mimoStream{t: t, projectDir: dir, saveSessionID: saveSessionID},

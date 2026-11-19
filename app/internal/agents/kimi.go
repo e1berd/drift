@@ -31,7 +31,7 @@ var ErrKimiUnauthorized = errors.New("kimi rejected the credentials")
 type kimi struct{ cli CLI }
 
 func (d kimi) command(ctx context.Context, home string, args ...string) *exec.Cmd {
-	cmd := exec.CommandContext(ctx, d.cli.Kimi, args...)
+	cmd := exec.CommandContext(ctx, d.cli.KimiPath(), args...)
 	cmd.Env = d.cli.KimiEnv(home)
 	cmd.Dir = home
 	cmd.WaitDelay = 2 * time.Second
