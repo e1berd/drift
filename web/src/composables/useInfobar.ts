@@ -1,13 +1,26 @@
+import { computed, ref } from 'vue'
+
+import { useMediaQuery } from '@/composables/useMediaQuery'
 import { storedRef } from '@/shared/storage'
 
-const open = storedRef<boolean>('drift.infobar.open', true)
+const docked = storedRef<boolean>('drift.infobar.open', true)
+const drawerOpen = ref(false)
 
-/** The session info bar beside the chat; its open state survives reloads. */
+/** The session info bar: docked beside the chat on wide screens (kept across reloads), a drawer on narrow ones. */
 export function useInfobar() {
+    const narrow = useMediaQuery('(max-width: 760px)')
+    const open = computed(() => (narrow.value ? drawerOpen.value : docked.value))
     return {
+        narrow,
         open,
+        docked,
+        drawerOpen,
         toggle: () => {
-            open.value = !open.value
+            if (narrow.value) drawerOpen.value = !drawerOpen.value
+            else docked.value = !docked.value
+        },
+        closeDrawer: () => {
+            drawerOpen.value = false
         },
     }
 }

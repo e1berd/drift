@@ -7,7 +7,8 @@ import InfobarRefRow from '@/components/infobar/InfobarRefRow.vue'
 import type { GitSessionBranch, GitSessionWorktree, GitSummary } from '@/gen'
 import { branchLinkKey, worktreeLinkKey } from '@/components/infobar/linkKeys'
 
-defineProps<{
+const { placement = 'docked' } = defineProps<{
+    placement?: 'docked' | 'drawer'
     summary?: GitSummary
     loading: boolean
     failed: boolean
@@ -31,7 +32,7 @@ function worktreeMeta(tree: GitSessionWorktree): string {
 </script>
 
 <template>
-    <aside class="infobar" data-infobar :aria-label="t('label')">
+    <aside class="infobar" data-infobar :data-placement="placement" :aria-label="t('label')">
         <div class="infobar-inner">
             <header class="infobar-header">
                 <span class="font-medium">{{ t('title') }}</span>
@@ -139,6 +140,11 @@ en:
     &[inert] {
         border-color: transparent;
     }
+
+    &[data-placement='drawer'] {
+        height: 100%;
+        border: 0;
+    }
 }
 
 .infobar-inner {
@@ -150,6 +156,11 @@ en:
     transition:
         opacity var(--dur-3) var(--ease-out),
         translate var(--dur-3) var(--ease-out);
+
+    .infobar[data-placement='drawer'] & {
+        width: 100%;
+        animation: none;
+    }
 
     .infobar[inert] & {
         opacity: 0;

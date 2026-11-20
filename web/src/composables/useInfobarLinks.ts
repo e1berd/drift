@@ -17,6 +17,7 @@ export interface DrawnLink extends LinkRoute {
 const CARD_HEAD_OFFSET = 18
 const EDGE_PADDING = 2
 const FALLBACK_GUTTER = 40
+const CARD_GAP = 6
 
 interface Frame {
     top: number
@@ -67,7 +68,7 @@ function measure(container: HTMLElement, links: InfobarLink[]): DrawnLink[] {
                 : chatBox.top,
             chatBox,
         )
-        if (cardBox && !source.hidden) cardLefts.push(cardBox.left)
+        if (cardBox && !source.hidden) cardLefts.push(cardBox.left - CARD_GAP)
         shown.push(link)
         ends.push({
             id: link.key,

@@ -52,5 +52,10 @@ const emit = defineEmits<{ reveal: [messageId: string] }>()
         outline: 2px solid var(--ui-ring);
         outline-offset: 1px;
     }
+
+    @media (pointer: coarse) {
+        min-height: 44px;
+        align-content: center;
+    }
 }
 </style>

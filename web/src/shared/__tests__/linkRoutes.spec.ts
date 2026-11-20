@@ -12,12 +12,12 @@ function link(id: string, sourceY: number, targetY: number, sourceHidden = false
 describe('routeLinks', () => {
     it('draws an orthogonal route from the card to the row', () => {
         const [route] = routeLinks([link('a', 300, 120)], gutter)
-        expect(route).toEqual({ id: 'a', d: 'M200 300 H108 V120 H100', dashed: false })
+        expect(route).toEqual({ id: 'a', d: 'M200 300 H150 V120 H100', dashed: false })
     })
 
     it('starts a hidden card at its edge, dashed and without the card leg', () => {
         const [route] = routeLinks([link('a', 0, 120, true)], gutter)
-        expect(route?.d).toBe('M108 0 V120 H100')
+        expect(route?.d).toBe('M150 0 V120 H100')
         expect(route?.dashed).toBe(true)
     })
 

@@ -156,9 +156,9 @@ const stop = useStopSession({
                 </span>
                 <Button
                     v-if="tab === 'chat'"
-                    class="max-md:hidden"
                     :aria-label="infobarLabel"
-                    :aria-pressed="infobar.open.value"
+                    :aria-pressed="infobar.narrow.value ? undefined : infobar.open.value"
+                    :aria-expanded="infobar.narrow.value ? infobar.open.value : undefined"
                     :title="infobarLabel"
                     @click="infobar.toggle()"
                 >

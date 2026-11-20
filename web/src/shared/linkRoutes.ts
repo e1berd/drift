@@ -80,12 +80,12 @@ export function laneRanks(links: LinkEnds[]): number[] {
 
 function laneXs(links: LinkEnds[], gutter: Gutter): number[] {
     const room = Math.max(0, gutter.right - gutter.left - EDGE_INSET * 2)
-    const step = Math.max(
-        MIN_LANE_STEP,
-        Math.min(MAX_LANE_STEP, room / Math.max(1, links.length - 1)),
-    )
+    const gaps = Math.max(1, links.length - 1)
+    const step = Math.max(MIN_LANE_STEP, Math.min(MAX_LANE_STEP, room / gaps))
+    const bundle = step * (links.length - 1)
+    const first = gutter.left + EDGE_INSET + Math.max(0, (room - bundle) / 2)
     return laneRanks(links).map((rank) =>
-        Math.min(gutter.right - EDGE_INSET, gutter.left + EDGE_INSET + rank * step),
+        Math.min(gutter.right - EDGE_INSET, Math.round(first + rank * step)),
     )
 }
 

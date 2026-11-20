@@ -57,4 +57,9 @@ describe('SessionInfobar', () => {
         expect(wrapper.find('[data-link-target]').exists()).toBe(false)
         expect(wrapper.text()).toContain('not a git repository')
     })
+
+    it('fills the drawer on narrow screens', () => {
+        const wrapper = render({ placement: 'drawer' })
+        expect(wrapper.attributes('data-placement')).toBe('drawer')
+    })
 })
