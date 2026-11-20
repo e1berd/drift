@@ -15,6 +15,9 @@ tags:
   - name: sessions
   - name: drafts
   - name: attachments
+  - name: settings
+  - name: uploads
+    description: tus resumable uploads, driven by tus-js-client through Uppy rather than generated code.
   - name: files
   - name: subscriptions
   - name: events
@@ -640,49 +643,121 @@ paths:
       responses:
         '204': { description: The continuation is cancelled. }
         default: { $ref: '#/components/responses/Error' }
-  /attachments:
+  /uploads:
     post:
-      operationId: uploadAttachment
+      operationId: createUpload
       description: >-
-        Uploads an image for a message that is about to be sent (AIP-133 create with a raw
-        media body). PNG, JPEG, GIF or WebP up to 5 MB, detected from the bytes. The upload
-        belongs to no message until `attachmentIds` of a new message or session claims it;
-        unclaimed uploads are deleted after a day.
-      tags: [attachments]
+        Starts a resumable upload of a file for a message (tus 1.0 creation extension,
+        https://tus.io/protocols/resumable-upload). Any type of file up to the instance
+        `maxUploadBytes`; `Upload-Length` is required and `Upload-Metadata` carries `filename`
+        and `filetype`. The upload id in `Location` becomes the attachment id once the last byte
+        arrives; `attachmentIds` of a new message or session then claims it. Unclaimed
+        attachments and abandoned partial uploads are deleted after a week.
+      tags: [uploads]
       parameters:
-        - name: name
-          in: query
-          description: Original file name; only its base name is kept.
-          schema: { type: string, maxLength: 255 }
+        - { name: Tus-Resumable, in: header, required: true, schema: { type: string, enum: ['1.0.0'] } }
+        - { name: Upload-Length, in: header, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: Upload-Metadata, in: header, schema: { type: string } }
+      responses:
+        '201':
+          description: The upload is created; its URL is in `Location`.
+          headers:
+            Location: { schema: { type: string, format: uri } }
+        '411': { description: Upload-Length is missing. }
+        '413': { description: The file is larger than `maxUploadBytes`. }
+        '507': { description: The server has no room for the file. }
+        default: { $ref: '#/components/responses/Error' }
+  /uploads/{uploadId}:
+    parameters:
+      - name: uploadId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    head:
+      operationId: getUploadOffset
+      description: How many bytes of the upload the server already has (tus core protocol).
+      tags: [uploads]
+      responses:
+        '200':
+          description: The offset in `Upload-Offset`.
+          headers:
+            Upload-Offset: { schema: { type: integer } }
+        '404': { description: Unknown, finished or foreign upload. }
+    patch:
+      operationId: appendUpload
+      description: >-
+        Appends bytes at `Upload-Offset` (tus core protocol). The response to the request that
+        completes the file carries the attachment id in `Attachment-Id`.
+      tags: [uploads]
       requestBody:
         required: true
         content:
-          application/octet-stream:
+          application/offset+octet-stream:
             schema: { type: string, format: binary }
       responses:
-        '201':
-          description: The stored image.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Attachment' }
-        '413':
-          description: The image is larger than 5 MB.
-        '415':
-          description: Not a PNG, JPEG, GIF or WebP image.
+        '204':
+          description: The bytes are stored.
+          headers:
+            Upload-Offset: { schema: { type: integer } }
+            Attachment-Id: { schema: { type: string, format: uuid } }
+        default: { $ref: '#/components/responses/Error' }
+    delete:
+      operationId: cancelUpload
+      description: Drops an unfinished upload (tus termination extension).
+      tags: [uploads]
+      responses:
+        '204': { description: The upload is gone. }
         default: { $ref: '#/components/responses/Error' }
   /attachments/{attachmentId}/content:
     parameters:
       - $ref: '#/components/parameters/AttachmentId'
     get:
       operationId: getAttachmentContent
-      description: The image bytes (media download), cacheable forever since attachments never change.
+      description: >-
+        The file bytes (media download) with Range support, cacheable forever since attachments
+        never change. PNG, JPEG, GIF and WebP images are served inline, anything else as a
+        download.
       tags: [attachments]
       responses:
         '200':
-          description: The image.
+          description: The file.
           content:
-            image/*:
+            '*/*':
               schema: { type: string, format: binary }
+        '206':
+          description: The requested range of the file.
+          content:
+            '*/*':
+              schema: { type: string, format: binary }
+        default: { $ref: '#/components/responses/Error' }
+  /settings:
+    get:
+      operationId: getSettings
+      description: The instance settings singleton (AIP-156), readable by every signed-in user.
+      tags: [settings]
+      responses:
+        '200':
+          description: The settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Settings' }
+        default: { $ref: '#/components/responses/Error' }
+    patch:
+      operationId: updateSettings
+      description: Changes the settings (AIP-134); only the instance owner (superuser) may.
+      tags: [settings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SettingsInput' }
+      responses:
+        '200':
+          description: The stored settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Settings' }
+        '403': { description: Not the instance owner. }
         default: { $ref: '#/components/responses/Error' }
   /drafts:
     get:
@@ -1038,7 +1113,7 @@ components:
         model: { type: string, maxLength: 100 }
         mode: { $ref: '#/components/schemas/PermissionMode' }
     AttachmentIds:
-      description: Uploaded images (see uploadAttachment) that go with the message, in order.
+      description: Finished uploads (see createUpload) that go with the message, in order.
       type: array
       maxItems: 10
       items: { type: string, format: uuid }
@@ -1067,14 +1142,32 @@ components:
         session: { $ref: '#/components/schemas/Session' }
         message: { $ref: '#/components/schemas/Message' }
     Attachment:
-      description: An image attached to a user message; its bytes are at `/attachments/{id}/content`.
+      description: A file attached to a user message; its bytes are at `/attachments/{id}/content`.
       type: object
       required: [id, name, size, type]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
-        size: { type: integer }
-        type: { type: string }
+        size: { type: integer, format: int64 }
+        type: { type: string, description: Media type detected from the bytes or the extension. }
+    Settings:
+      description: Instance-wide settings (AIP-156 singleton).
+      type: object
+      required: [maxUploadBytes, updateTime]
+      properties:
+        maxUploadBytes:
+          description: Largest file one upload may carry.
+          type: integer
+          format: int64
+        updateTime: { type: string, format: date-time }
+    SettingsInput:
+      type: object
+      properties:
+        maxUploadBytes:
+          type: integer
+          format: int64
+          minimum: 10000000
+          maximum: 1000000000000
     MessageBody:
       type: object
       properties:

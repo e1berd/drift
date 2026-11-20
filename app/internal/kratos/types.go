@@ -9,6 +9,17 @@ type Identity struct {
 	MetadataPublic json.RawMessage `json:"metadata_public,omitempty"`
 }
 
+// Role is metadata_public.role, empty when the identity has none.
+func (i Identity) Role() string {
+	var metadata struct {
+		Role string `json:"role"`
+	}
+	if len(i.MetadataPublic) == 0 || json.Unmarshal(i.MetadataPublic, &metadata) != nil {
+		return ""
+	}
+	return metadata.Role
+}
+
 // Traits mirrors deploy/kratos/identity.schema.json.
 type Traits struct {
 	Email string `json:"email"`

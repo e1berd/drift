@@ -9,7 +9,7 @@ import { client } from '../../shared/http/client'
 
 /**
  * `GET /attachments/{attachmentId}/content`
- * @description The image bytes (media download), cacheable forever since attachments never change.
+ * @description The file bytes (media download) with Range support, cacheable forever since attachments never change. PNG, JPEG, GIF and WebP images are served inline, anything else as a download.
  */
 export function getAttachmentContent<ThrowOnError extends boolean = true>(options: Options<GetAttachmentContentOptions, ThrowOnError>): Promise<RequestResult<GetAttachmentContentResponses, ThrowOnError>> {
   const { client: apiClient = client, ...config } = options

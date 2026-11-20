@@ -1,5 +1,5 @@
 -- name: CreateAttachment :one
-INSERT INTO attachments (owner_id, name, media_type, size, data) VALUES ($1, $2, $3, $4, $5)
+INSERT INTO attachments (id, owner_id, name, media_type, size, path) VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id, name, media_type, size;
 
 -- name: ClaimAttachments :many
@@ -8,12 +8,21 @@ WHERE owner_id = @owner_id AND message_id IS NULL AND id = ANY(@ids::uuid[])
 RETURNING id, name, media_type, size;
 
 -- name: GetAttachmentContent :one
-SELECT media_type, data FROM attachments WHERE id = $1 AND owner_id = $2;
+SELECT name, media_type, path FROM attachments WHERE id = $1 AND owner_id = $2 AND path IS NOT NULL;
 
 -- name: ListAttachmentData :many
-SELECT id, name, media_type, data FROM attachments
+SELECT id, name, media_type, size, path FROM attachments
 WHERE owner_id = @owner_id AND id = ANY(@ids::uuid[])
 ORDER BY array_position(@ids::uuid[], id);
 
 -- name: DeleteStaleAttachments :execrows
-DELETE FROM attachments WHERE message_id IS NULL AND created_at < now() - interval '1 day';
+DELETE FROM attachments WHERE message_id IS NULL AND created_at < now() - interval '7 days';
+
+-- name: ListStoredAttachmentIDs :many
+SELECT id FROM attachments WHERE id = ANY(@ids::uuid[]);
+
+-- name: ListDatabaseAttachments :many
+SELECT id, name, data FROM attachments WHERE path IS NULL ORDER BY created_at LIMIT 20;
+
+-- name: MoveAttachmentToDisk :exec
+UPDATE attachments SET path = @path, data = NULL WHERE id = @id;

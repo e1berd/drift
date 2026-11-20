@@ -18,6 +18,7 @@ type Config struct {
 	WorkspaceRoot   string
 	ChatsRoot       string
 	AgentsRoot      string
+	UploadsRoot     string
 	ClaudeBin       string
 	CodexBin        string
 	Shell           string
@@ -48,6 +49,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("DRIFT_AGENTS_DIR: %w", err)
 	}
 	cfg.AgentsRoot = agentsRoot
+	uploadsRoot, err := filepath.Abs(os.ExpandEnv(env("DRIFT_UPLOADS_DIR", "data/uploads")))
+	if err != nil {
+		return nil, fmt.Errorf("DRIFT_UPLOADS_DIR: %w", err)
+	}
+	cfg.UploadsRoot = uploadsRoot
 	cfg.ClaudeBin = env("DRIFT_CLAUDE_BIN", "claude")
 	cfg.CodexBin = env("DRIFT_CODEX_BIN", "codex")
 	cfg.Shell = os.Getenv("DRIFT_SHELL")

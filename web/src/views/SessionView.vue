@@ -18,11 +18,11 @@ import ChatThread from '@/components/chat/ChatThread.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
 import SwitchFamilyDialog from '@/components/composer/SwitchFamilyDialog.vue'
 import PanePlaceholder from '@/components/PanePlaceholder.vue'
-import { useAttachmentUpload } from '@/composables/useAttachmentUpload'
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
 import { useEventStream } from '@/composables/useEventStream'
 import { useCreateMessage, useStopSession, useUpdateSession } from '@/gen'
+import type { ReadyAttachment } from '@/shared/attachments'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
 import type { AgentId } from '@/shared/agents'
@@ -106,11 +106,9 @@ async function switchAgent({ agent: next, model }: { agent: AgentId; model: stri
     update.mutate({ path: { sessionId: sessionId.value }, body: { agent: next } })
 }
 
-const attachments = useAttachmentUpload()
-
-async function send({ text, files }: { text: string; files: File[] }) {
-    const attachmentIds = await attachments.upload(files)
-    if (!attachmentIds || (!text && !attachmentIds.length)) return
+function send({ text, attachments }: { text: string; attachments: ReadyAttachment[] }) {
+    const attachmentIds = attachments.map((attachment) => attachment.id)
+    if (!text && !attachmentIds.length) return
     post.mutate({
         path: { sessionId: sessionId.value },
         body: { text, attachmentIds, model: settings.modelFor(agent.value), mode: settings.mode() },
@@ -177,11 +175,7 @@ const stop = useStopSession({
                     :agent="agent"
                     :history="history"
                     :placeholder="placeholder"
-                    :busy="
-                        post.isPending.value ||
-                        update.isPending.value ||
-                        attachments.uploading.value
-                    "
+                    :busy="post.isPending.value || update.isPending.value"
                     :running="running"
                     :stopping="stop.isPending.value"
                     autofocus

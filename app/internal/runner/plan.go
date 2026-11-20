@@ -1,23 +1,14 @@
 package runner
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 
-	"github.com/e1berd/drift/app/internal/db"
 	"github.com/e1berd/drift/app/internal/workspace"
 )
 
 var runnable = map[string]bool{"claude": true, "codex": true, "antigravity": true, "kimi": true, "mimo": true}
-
-var imageExtensions = map[string]string{
-	"image/png": ".png", "image/jpeg": ".jpg", "image/gif": ".gif", "image/webp": ".webp",
-}
 
 type runPlan struct {
 	bin     string
@@ -27,139 +18,59 @@ type runPlan struct {
 	cleanup func()
 }
 
-type attachedImage struct {
-	name      string
-	mediaType string
-	data      []byte
-}
-
 func (r *Runner) plan(agent string, req workspace.RunRequest, agentSessionID, dir string, t transcriptSink, saveSessionID func(string)) (runPlan, error) {
-	images, err := r.loadImages(req)
+	files, err := r.loadAttachments(req)
 	if err != nil {
 		return runPlan{}, fmt.Errorf("load attachments: %w", err)
 	}
 	switch agent {
 	case "codex":
-		folder, paths, err := writeImages(images)
-		if err != nil {
-			return runPlan{}, err
-		}
+		images, others := splitInlineImages(files)
 		return runPlan{
 			bin:     r.cli.Codex,
-			args:    codexArgs(req, agentSessionID, paths, r.askMCP),
-			stdin:   req.Text,
+			args:    codexArgs(req, agentSessionID, paths(images), r.askMCP),
+			stdin:   withFilePaths(req.Text, others),
 			stream:  &codexStream{t: t, projectDir: dir, threadID: agentSessionID, saveSessionID: saveSessionID},
-			cleanup: removeFolder(folder),
+			cleanup: func() {},
 		}, nil
 	case "antigravity":
-		folder, paths, err := writeImages(images)
-		if err != nil {
-			return runPlan{}, err
-		}
+		req.Text = withFilePaths(req.Text, files)
 		return runPlan{
 			bin:     r.cli.Antigravity,
-			args:    antigravityArgs(withImagePaths(req, paths), agentSessionID),
+			args:    antigravityArgs(req, agentSessionID),
 			stream:  &antigravityStream{t: t, projectDir: dir, conversationID: agentSessionID, saveSessionID: saveSessionID},
-			cleanup: removeFolder(folder),
+			cleanup: func() {},
 		}, nil
 	case "kimi":
-		folder, paths, err := writeImages(images)
-		if err != nil {
-			return runPlan{}, err
-		}
+		req.Text = withFilePaths(req.Text, files)
 		return runPlan{
 			bin:     r.cli.KimiPath(),
-			args:    kimiArgs(withImagePaths(req, paths), agentSessionID),
+			args:    kimiArgs(req, agentSessionID),
 			stream:  &kimiStream{t: t, projectDir: dir, saveSessionID: saveSessionID},
-			cleanup: removeFolder(folder),
+			cleanup: func() {},
 		}, nil
 	case "mimo":
-		folder, paths, err := writeImages(images)
-		if err != nil {
-			return runPlan{}, err
-		}
+		images, others := splitInlineImages(files)
 		return runPlan{
 			bin:     r.cli.MimoPath(),
-			args:    mimoArgs(req, agentSessionID, paths),
-			stdin:   req.Text,
+			args:    mimoArgs(req, agentSessionID, paths(images)),
+			stdin:   withFilePaths(req.Text, others),
 			stream:  &mimoStream{t: t, projectDir: dir, saveSessionID: saveSessionID},
-			cleanup: removeFolder(folder),
+			cleanup: func() {},
 		}, nil
+	}
+	images, others := splitInlineImages(files)
+	inline, err := readImages(images)
+	if err != nil {
+		return runPlan{}, fmt.Errorf("read attachments: %w", err)
 	}
 	return runPlan{
 		bin:     r.cli.Claude,
-		args:    claudeArgs(req, agentSessionID, len(images) > 0, r.askMCP),
-		stdin:   claudeInput(req.Text, images),
+		args:    claudeArgs(req, agentSessionID, len(inline) > 0, r.askMCP),
+		stdin:   claudeInput(withFilePaths(req.Text, others), inline),
 		stream:  &claudeStream{t: t, projectDir: dir, agentSessionID: agentSessionID, saveSessionID: saveSessionID},
 		cleanup: func() {},
 	}, nil
-}
-
-func (r *Runner) loadImages(req workspace.RunRequest) ([]attachedImage, error) {
-	if len(req.Attachments) == 0 {
-		return nil, nil
-	}
-	rows, err := r.q.ListAttachmentData(context.WithoutCancel(r.ctx), db.ListAttachmentDataParams{OwnerID: req.Owner, Ids: req.Attachments})
-	if err != nil {
-		return nil, err
-	}
-	images := make([]attachedImage, 0, len(rows))
-	for _, row := range rows {
-		images = append(images, attachedImage{name: row.Name, mediaType: row.MediaType, data: row.Data})
-	}
-	return images, nil
-}
-
-func writeImages(images []attachedImage) (string, []string, error) {
-	if len(images) == 0 {
-		return "", nil, nil
-	}
-	folder, err := os.MkdirTemp("", "drift-attachments-")
-	if err != nil {
-		return "", nil, fmt.Errorf("save attachments: %w", err)
-	}
-	paths := make([]string, 0, len(images))
-	for i, image := range images {
-		base := strings.TrimSuffix(image.name, filepath.Ext(image.name))
-		path := filepath.Join(folder, fmt.Sprintf("%02d-%s%s", i+1, safeFileName(base), imageExtensions[image.mediaType]))
-		if err := os.WriteFile(path, image.data, 0o600); err != nil {
-			_ = os.RemoveAll(folder)
-			return "", nil, fmt.Errorf("save attachments: %w", err)
-		}
-		paths = append(paths, path)
-	}
-	return folder, paths, nil
-}
-
-func safeFileName(name string) string {
-	clean := strings.Map(func(r rune) rune {
-		switch {
-		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '-', r == '_', r == '.':
-			return r
-		}
-		return '_'
-	}, name)
-	if clean = strings.Trim(clean, "._"); clean == "" {
-		return "image"
-	}
-	return clip(clean, 60)
-}
-
-func removeFolder(folder string) func() {
-	return func() {
-		if folder != "" {
-			_ = os.RemoveAll(folder)
-		}
-	}
-}
-
-func withImagePaths(req workspace.RunRequest, paths []string) workspace.RunRequest {
-	if len(paths) == 0 {
-		return req
-	}
-	lines := append([]string{"Attached images:"}, paths...)
-	req.Text = strings.TrimSpace(req.Text + "\n\n" + strings.Join(lines, "\n"))
-	return req
 }
 
 func claudeArgs(req workspace.RunRequest, agentSessionID string, streamInput bool, askMCP mcpCommand) []string {

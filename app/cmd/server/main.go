@@ -24,8 +24,10 @@ import (
 	"github.com/e1berd/drift/app/internal/kratos"
 	"github.com/e1berd/drift/app/internal/migrate"
 	"github.com/e1berd/drift/app/internal/runner"
+	"github.com/e1berd/drift/app/internal/settings"
 	"github.com/e1berd/drift/app/internal/subscriptions"
 	"github.com/e1berd/drift/app/internal/terminal"
+	"github.com/e1berd/drift/app/internal/uploads"
 	"github.com/e1berd/drift/app/internal/workspace"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -118,7 +120,22 @@ func run() (string, error) {
 		Root: cfg.AgentsRoot, Claude: cfg.ClaudeBin, Codex: cfg.CodexBin,
 		Antigravity: cfg.AntigravityBin, Kimi: cfg.KimiBin, Mimo: cfg.MimoBin,
 	}
-	folders := workspace.Folders{Workspace: cfg.WorkspaceRoot, Chats: cfg.ChatsRoot}
+	attachments, err := uploads.NewStore(cfg.UploadsRoot)
+	if err != nil {
+		return "", err
+	}
+	instanceSettings := settings.New(pool)
+	instanceSettings.Register(api)
+	uploadServer, err := uploads.New(attachments, pool, instanceSettings, log)
+	if err != nil {
+		return "", err
+	}
+	if err := uploadServer.MoveDatabaseAttachments(ctx); err != nil {
+		return "", err
+	}
+	uploadServer.Register(api)
+	go uploadServer.Sweep(ctx)
+	folders := workspace.Folders{Workspace: cfg.WorkspaceRoot, Chats: cfg.ChatsRoot, Attachments: attachments}
 	agentRunner, err := runner.New(ctx, pool, hub, cli, folders, log)
 	if err != nil {
 		return "", err

@@ -4,7 +4,7 @@
 */
 
 /**
- * @description Uploaded images (see uploadAttachment) that go with the message, in order.
+ * @description Finished uploads (see createUpload) that go with the message, in order.
  * @type array
  */
 export type AttachmentIds = string[];

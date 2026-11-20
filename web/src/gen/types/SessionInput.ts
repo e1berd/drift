@@ -20,7 +20,7 @@ export type SessionInput = {
   title?: string;
   text?: string;
   /**
-   * @description Uploaded images (see uploadAttachment) that go with the message, in order.
+   * @description Finished uploads (see createUpload) that go with the message, in order.
    * @type array | undefined
    */
   attachmentIds?: AttachmentIds;

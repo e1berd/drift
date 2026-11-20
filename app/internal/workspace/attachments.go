@@ -3,10 +3,8 @@ package workspace
 import (
 	"context"
 	"encoding/json"
-	"io"
+	"mime"
 	"net/http"
-	"path"
-	"strings"
 
 	"github.com/e1berd/drift/app/internal/db"
 	"github.com/e1berd/drift/app/internal/identity"
@@ -15,64 +13,26 @@ import (
 )
 
 const (
-	maxAttachmentBytes    = 5 << 20
 	maxMessageAttachments = 10
-	defaultAttachmentName = "image"
+	defaultAttachmentName = "file"
 )
 
-var attachableTypes = map[string]bool{
+var inlineMediaTypes = map[string]bool{
 	"image/png": true, "image/jpeg": true, "image/gif": true, "image/webp": true,
 }
 
-// Attachment is an image uploaded for a user message. It belongs to no message until a
-// message or session created with its id claims it; unclaimed uploads are dropped after a day.
+// Attachment is a file uploaded for a user message over tus (/uploads). It belongs to no message
+// until a message or session created with its id claims it; unclaimed uploads are dropped after a week.
 type Attachment struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-	Size int32  `json:"size"`
+	Size int64  `json:"size"`
 	Type string `json:"type"`
 }
 
 type userMessageBody struct {
 	Text        string       `json:"text,omitempty"`
 	Attachments []Attachment `json:"attachments,omitempty"`
-}
-
-func attachmentName(raw string) string {
-	name := path.Base(strings.ReplaceAll(strings.TrimSpace(raw), `\`, "/"))
-	if name, ok := cleanName(name, 255); ok && name != "." && name != "/" {
-		return name
-	}
-	return defaultAttachmentName
-}
-
-func (h *Handler) uploadAttachment(c *echo.Context) error {
-	data, err := io.ReadAll(io.LimitReader(c.Request().Body, maxAttachmentBytes+1))
-	if err != nil {
-		return badRequest("could not read the upload")
-	}
-	if len(data) == 0 {
-		return badRequest("the file is empty")
-	}
-	if len(data) > maxAttachmentBytes {
-		return echo.NewHTTPError(http.StatusRequestEntityTooLarge, "an image must be at most 5 MB")
-	}
-	mediaType := http.DetectContentType(data)
-	if !attachableTypes[mediaType] {
-		return echo.NewHTTPError(http.StatusUnsupportedMediaType, "only PNG, JPEG, GIF and WebP images can be attached")
-	}
-	ctx := c.Request().Context()
-	if _, err := h.q.DeleteStaleAttachments(ctx); err != nil {
-		h.log.Warn("delete stale attachments", "err", err)
-	}
-	row, err := h.q.CreateAttachment(ctx, db.CreateAttachmentParams{
-		OwnerID: identity.From(c), Name: attachmentName(c.QueryParam("name")),
-		MediaType: mediaType, Size: int32(len(data)), Data: data,
-	})
-	if err != nil {
-		return err
-	}
-	return c.JSON(http.StatusCreated, Attachment{ID: uuidString(row.ID), Name: row.Name, Size: row.Size, Type: row.MediaType})
 }
 
 func (h *Handler) attachmentContent(c *echo.Context) error {
@@ -84,10 +44,37 @@ func (h *Handler) attachmentContent(c *echo.Context) error {
 	if err != nil {
 		return notFound(err)
 	}
+	file, err := h.folders.Attachments.Open(row.Path.String)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "the file is gone")
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return err
+	}
 	header := c.Response().Header()
 	header.Set("Cache-Control", "private, max-age=31536000, immutable")
 	header.Set("Content-Security-Policy", "default-src 'none'; sandbox")
-	return c.Blob(http.StatusOK, row.MediaType, row.Data)
+	header.Set("Content-Disposition", contentDisposition(row.Name, row.MediaType))
+	header.Set("Content-Type", servedMediaType(row.MediaType))
+	http.ServeContent(c.Response(), c.Request(), "", info.ModTime(), file)
+	return nil
+}
+
+func contentDisposition(name, mediaType string) string {
+	disposition := "attachment"
+	if inlineMediaTypes[mediaType] {
+		disposition = "inline"
+	}
+	return mime.FormatMediaType(disposition, map[string]string{"filename": name})
+}
+
+func servedMediaType(mediaType string) string {
+	if inlineMediaTypes[mediaType] {
+		return mediaType
+	}
+	return "application/octet-stream"
 }
 
 func parseAttachmentIDs(raw []string) ([]pgtype.UUID, error) {

@@ -90,7 +90,6 @@ func (h *Handler) Register(g *echo.Group) {
 	g.POST("/sessions/:session/messages", h.createMessage)
 	g.POST("/sessions/:session/messages/:message", h.messageCustomMethod)
 
-	g.POST("/attachments", h.uploadAttachment)
 	g.GET("/attachments/:attachment/content", h.attachmentContent)
 
 	g.GET("/drafts", h.listDrafts)

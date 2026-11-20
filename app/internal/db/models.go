@@ -14,9 +14,10 @@ type Attachment struct {
 	MessageID pgtype.UUID        `json:"message_id"`
 	Name      string             `json:"name"`
 	MediaType string             `json:"media_type"`
-	Size      int32              `json:"size"`
+	Size      int64              `json:"size"`
 	Data      []byte             `json:"data"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Path      pgtype.Text        `json:"path"`
 }
 
 type Draft struct {
@@ -25,6 +26,12 @@ type Draft struct {
 	Text      string             `json:"text"`
 	DeviceID  string             `json:"device_id"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type InstanceSetting struct {
+	Singleton      bool               `json:"singleton"`
+	MaxUploadBytes int64              `json:"max_upload_bytes"`
+	UpdateTime     pgtype.Timestamptz `json:"update_time"`
 }
 
 type Message struct {

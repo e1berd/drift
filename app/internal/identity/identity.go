@@ -13,13 +13,16 @@ import (
 )
 
 const (
-	contextKey = "drift.identity"
-	cacheTTL   = 30 * time.Second
-	cacheMax   = 512
+	contextKey     = "drift.identity"
+	roleContextKey = "drift.identity.role"
+	superuserRole  = "superuser"
+	cacheTTL       = 30 * time.Second
+	cacheMax       = 512
 )
 
 type entry struct {
 	id      string
+	role    string
 	expires time.Time
 }
 
@@ -57,11 +60,12 @@ func (r *Resolver) Require(next echo.HandlerFunc) echo.HandlerFunc {
 			if session == nil {
 				return echo.NewHTTPError(http.StatusUnauthorized, "not signed in")
 			}
-			e = entry{id: session.Identity.ID, expires: now.Add(cacheTTL)}
+			e = entry{id: session.Identity.ID, role: session.Identity.Role(), expires: now.Add(cacheTTL)}
 			r.store(key, e, now)
 		}
 
 		c.Set(contextKey, e.id)
+		c.Set(roleContextKey, e.role)
 		return next(c)
 	}
 }
@@ -86,4 +90,20 @@ func (r *Resolver) store(key [32]byte, e entry, now time.Time) {
 func From(c *echo.Context) string {
 	id, _ := c.Get(contextKey).(string)
 	return id
+}
+
+// IsSuperuser reports whether the identity stored by Require is the instance owner.
+func IsSuperuser(c *echo.Context) bool {
+	role, _ := c.Get(roleContextKey).(string)
+	return role == superuserRole
+}
+
+// RequireSuperuser rejects requests from identities other than the instance owner.
+func RequireSuperuser(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c *echo.Context) error {
+		if !IsSuperuser(c) {
+			return echo.NewHTTPError(http.StatusForbidden, "only the instance owner can do this")
+		}
+		return next(c)
+	}
 }

@@ -4,7 +4,7 @@
 */
 
 import type { RequestConfig, ResponseErrorConfig } from '../../shared/http/client'
-import type { GetAttachmentContentOptions, GetAttachmentContentStatus200 } from '../types/GetAttachmentContent'
+import type { GetAttachmentContentOptions, GetAttachmentContentStatus200, GetAttachmentContentStatus206 } from '../types/GetAttachmentContent'
 import type { QueryKey, QueryClient, UseQueryOptions, UseQueryReturnType } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { getAttachmentContent } from '../clients/getAttachmentContent'
@@ -17,7 +17,7 @@ export type GetAttachmentContentQueryKey = ReturnType<typeof getAttachmentConten
 
 export function getAttachmentContentQueryOptions({ path }: { path: MaybeRefOrGetter<GetAttachmentContentOptions['path']> }, config: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'cookies' | 'url' | 'throwOnError'>> = {}) {
   const queryKey = getAttachmentContentQueryKey({ path })
-  return queryOptions<GetAttachmentContentStatus200, ResponseErrorConfig<Error>, GetAttachmentContentStatus200>({
+  return queryOptions<GetAttachmentContentStatus200 | GetAttachmentContentStatus206, ResponseErrorConfig<Error>, GetAttachmentContentStatus200 | GetAttachmentContentStatus206>({
    queryKey,
    queryFn: async ({ signal }) => {
       return (await getAttachmentContent({ ...config, path: toValue(path), signal: config.signal ?? signal, throwOnError: true })).data
@@ -27,10 +27,10 @@ export function getAttachmentContentQueryOptions({ path }: { path: MaybeRefOrGet
 
 /**
  * `GET /attachments/{attachmentId}/content`
- * @description The image bytes (media download), cacheable forever since attachments never change.
+ * @description The file bytes (media download) with Range support, cacheable forever since attachments never change. PNG, JPEG, GIF and WebP images are served inline, anything else as a download.
  */
-export function useGetAttachmentContent<TData = GetAttachmentContentStatus200, TQueryData = GetAttachmentContentStatus200, TQueryKey extends QueryKey = GetAttachmentContentQueryKey>({ path }: { path: MaybeRefOrGetter<GetAttachmentContentOptions['path']> }, options: {
-  query?: Partial<UseQueryOptions<GetAttachmentContentStatus200, ResponseErrorConfig<Error>, TData, TQueryData, TQueryKey>> & { client?: QueryClient },
+export function useGetAttachmentContent<TData = GetAttachmentContentStatus200 | GetAttachmentContentStatus206, TQueryData = GetAttachmentContentStatus200 | GetAttachmentContentStatus206, TQueryKey extends QueryKey = GetAttachmentContentQueryKey>({ path }: { path: MaybeRefOrGetter<GetAttachmentContentOptions['path']> }, options: {
+  query?: Partial<UseQueryOptions<GetAttachmentContentStatus200 | GetAttachmentContentStatus206, ResponseErrorConfig<Error>, TData, TQueryData, TQueryKey>> & { client?: QueryClient },
   client?: Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'cookies' | 'url' | 'throwOnError'>>
 } = {}) {
   const { query: queryConfig = {}, client: config = {} } = options ?? {}
@@ -41,7 +41,7 @@ export function useGetAttachmentContent<TData = GetAttachmentContentStatus200, T
    ...getAttachmentContentQueryOptions({ path }, config),
    ...resolvedOptions,
    queryKey
-  } as unknown as UseQueryOptions<GetAttachmentContentStatus200, ResponseErrorConfig<Error>, TData, GetAttachmentContentStatus200, TQueryKey>, toValue(queryClient)) as UseQueryReturnType<TData, ResponseErrorConfig<Error>> & { queryKey: TQueryKey }
+  } as unknown as UseQueryOptions<GetAttachmentContentStatus200 | GetAttachmentContentStatus206, ResponseErrorConfig<Error>, TData, GetAttachmentContentStatus200 | GetAttachmentContentStatus206, TQueryKey>, toValue(queryClient)) as UseQueryReturnType<TData, ResponseErrorConfig<Error>> & { queryKey: TQueryKey }
 
   queryResult.queryKey = queryKey as TQueryKey
 

@@ -1,39 +1,40 @@
 import { API_BASE } from '@/shared/http/client'
 
-/** Image types the server accepts as attachments (it checks the bytes, not the name). */
-export const ATTACHMENT_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'] as const
-
-/** Largest image the server accepts. */
-export const ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024
-
-/** Largest number of images one message can carry. */
+/** Largest number of files one message can carry. */
 export const ATTACHMENT_MAX_COUNT = 10
 
-/** Whether a picked, pasted or dropped file can be attached to a message. */
-export function isAttachable(file: File): boolean {
-    return (
-        (ATTACHMENT_TYPES as readonly string[]).includes(file.type) &&
-        file.size > 0 &&
-        file.size <= ATTACHMENT_MAX_BYTES
-    )
+const INLINE_IMAGE_TYPES: readonly string[] = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
+
+/** A finished upload waiting in the composer for its message. */
+export interface ReadyAttachment {
+    id: string
+    name: string
+    size: number
+    type: string
 }
 
-/** Splits files into those that can be attached (up to the per-message limit) and the rest. */
-export function partitionAttachable(files: File[]): { accepted: File[]; rejected: File[] } {
-    const accepted: File[] = []
-    const rejected: File[] = []
-    for (const file of files) {
-        if (isAttachable(file) && accepted.length < ATTACHMENT_MAX_COUNT) accepted.push(file)
-        else rejected.push(file)
-    }
-    return { accepted, rejected }
+/** Whether the server shows the attachment inline as an image rather than offering a download. */
+export function isInlineImage(type: string): boolean {
+    return INLINE_IMAGE_TYPES.includes(type)
 }
 
-/** URL of an attachment's image bytes. */
+function apiPath(path: string): string {
+    return new URL(`${API_BASE}${path}`, globalThis.location?.origin ?? 'http://localhost').pathname
+}
+
+/** URL of an attachment's bytes. */
 export function attachmentURL(id: string): string {
-    const url = new URL(
-        `${API_BASE}/attachments/${encodeURIComponent(id)}/content`,
-        globalThis.location?.origin ?? 'http://localhost',
-    )
-    return url.pathname
+    return apiPath(`/attachments/${encodeURIComponent(id)}/content`)
+}
+
+/** The tus endpoint new uploads are created at. */
+export function uploadEndpoint(): string {
+    return apiPath('/uploads')
+}
+
+/** The attachment id the server gives a finished upload: the last segment of its tus URL. */
+export function attachmentIdFromUploadURL(uploadURL: string | undefined): string | null {
+    if (!uploadURL) return null
+    const id = new URL(uploadURL, 'http://localhost').pathname.split('/').at(-1)
+    return id || null
 }

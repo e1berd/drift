@@ -16,6 +16,7 @@ export default defineConfig({
             exclude: [
                 { type: 'tag', pattern: 'events' },
                 { type: 'tag', pattern: 'terminal' },
+                { type: 'tag', pattern: 'uploads' },
             ],
         }),
         pluginVueQuery({
@@ -24,6 +25,7 @@ export default defineConfig({
             exclude: [
                 { type: 'tag', pattern: 'events' },
                 { type: 'tag', pattern: 'terminal' },
+                { type: 'tag', pattern: 'uploads' },
             ],
             infinite: {
                 queryParam: 'page_token',

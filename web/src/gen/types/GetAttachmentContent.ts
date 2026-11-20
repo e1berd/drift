@@ -20,6 +20,12 @@ export type GetAttachmentContentPath = {
  */
 export type GetAttachmentContentStatus200 = Blob;
 
+/**
+ * @description
+ * Format: `binary`
+ */
+export type GetAttachmentContentStatus206 = Blob;
+
 export type GetAttachmentContentStatusDefault = Error;
 
 export type GetAttachmentContentOptions = {
@@ -31,10 +37,11 @@ export type GetAttachmentContentOptions = {
 
 export type GetAttachmentContentResponses = {
   '200': GetAttachmentContentStatus200;
+  '206': GetAttachmentContentStatus206;
   default: GetAttachmentContentStatusDefault;
 };
 
 /**
  * @description Union of all possible responses
  */
-export type GetAttachmentContentResponse = GetAttachmentContentStatus200;
+export type GetAttachmentContentResponse = GetAttachmentContentStatus200 | GetAttachmentContentStatus206;

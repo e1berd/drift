@@ -22,12 +22,12 @@ import AgentLogo from '@/components/AgentLogo.vue'
 import BrandMark from '@/components/BrandMark.vue'
 import TopBar from '@/components/TopBar.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
-import { useAttachmentUpload } from '@/composables/useAttachmentUpload'
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
 import { useAgents } from '@/composables/useAgents'
 import { useCreateSession, useCreateStandaloneSession } from '@/gen'
 import type { CreateSessionResponse } from '@/gen'
+import type { ReadyAttachment } from '@/shared/attachments'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
 import type { AgentId } from '@/shared/agents'
@@ -81,27 +81,21 @@ const created = {
 }
 const createInProject = useCreateSession(created)
 const createStandalone = useCreateStandaloneSession(created)
-const attachments = useAttachmentUpload()
-const creating = computed(
-    () =>
-        createInProject.isPending.value ||
-        createStandalone.isPending.value ||
-        attachments.uploading.value,
-)
+const creating = computed(() => createInProject.isPending.value || createStandalone.isPending.value)
 
 function switchAgent(choice: { agent: AgentId; model: string }) {
     settings.setModel(choice.agent, choice.model)
     agent.value = choice.agent
 }
 
-async function send({ text, files }: { text: string; files: File[] }) {
+function send({ text, attachments }: { text: string; attachments: ReadyAttachment[] }) {
     if (!agents.isConnected(agent.value)) return
-    const attachmentIds = await attachments.upload(files)
-    if (!attachmentIds || (!text && !attachmentIds.length)) return
+    const attachmentIds = attachments.map((attachment) => attachment.id)
+    if (!text && !attachmentIds.length) return
     const body = {
         agent: agent.value,
         text,
-        title: text ? undefined : files.at(0)?.name.slice(0, 200),
+        title: text ? undefined : attachments.at(0)?.name.slice(0, 200),
         attachmentIds,
         model: settings.modelFor(agent.value),
         mode: settings.mode(),

@@ -72,17 +72,17 @@ Drift не ходит в API провайдеров сам, а запускае�
 
 ### Запуск агентов
 
-Сообщение пользователя запускает CLI агента в папке сессии с окружением текущей подписки; пока агент работает, новые сообщения копятся и уходят следующим промптом вместе с картинками. Одновременно — не больше двух запусков.
+Сообщение пользователя запускает CLI агента в папке сессии с окружением текущей подписки; пока агент работает, новые сообщения копятся и уходят следующим промптом вместе с вложениями. Одновременно — не больше двух запусков.
 
 | Агент | Команда | Режимы разрешений |
 | --- | --- | --- |
-| Claude Code | `claude -p --output-format stream-json [--resume id]`, промпт в stdin; с картинками — `--input-format stream-json` и блоки `image` (base64) | `--permission-mode` как есть, `default` — без флага (инструменты, которым нужно подтверждение, отклоняются) |
-| Codex | `codex exec [resume <thread id>] --json --skip-git-repo-check -c approval_policy="never" [--image=…] -- -`, промпт в stdin, id треда из `thread.started` | `default` и `plan` — `sandbox_mode="read-only"`, `acceptEdits` и `auto` — `"workspace-write"`, `bypassPermissions` — `--dangerously-bypass-approvals-and-sandbox` |
-| Antigravity | `agy --output-format stream-json [--conversation id] --prompt=…`; картинки — пути к временным файлам в конце промпта | `--mode accept-edits\|auto\|plan`, `bypassPermissions` — `--dangerously-skip-permissions` |
-| Kimi Code | `kimi -p … --output-format stream-json [-S id]`, промпт в аргументе; картинки — пути к временным файлам в конце промпта | `acceptEdits` — `-y`, `auto` и `bypassPermissions` — `--auto`, `plan` — `--plan` |
-| MiMo Code | `mimo run --format json [-s id]`, промпт в stdin, картинки — `-f <путь>` | Всегда `--dangerously-skip-permissions`: в headless-режиме запрос разрешения останавливает запуск |
+| Claude Code | `claude -p --output-format stream-json [--resume id]`, промпт в stdin; картинки PNG/JPEG/GIF/WebP до 5 МБ — `--input-format stream-json` и блоки `image` (base64), остальные файлы — пути в конце промпта | `--permission-mode` как есть, `default` — без флага (инструменты, которым нужно подтверждение, отклоняются) |
+| Codex | `codex exec [resume <thread id>] --json --skip-git-repo-check -c approval_policy="never" [--image=…] -- -`, промпт в stdin, файлы кроме картинок — пути в конце промпта, id треда из `thread.started` | `default` и `plan` — `sandbox_mode="read-only"`, `acceptEdits` и `auto` — `"workspace-write"`, `bypassPermissions` — `--dangerously-bypass-approvals-and-sandbox` |
+| Antigravity | `agy --output-format stream-json [--conversation id] --prompt=…`; вложения — пути в конце промпта | `--mode accept-edits\|auto\|plan`, `bypassPermissions` — `--dangerously-skip-permissions` |
+| Kimi Code | `kimi -p … --output-format stream-json [-S id]`, промпт в аргументе; вложения — пути в конце промпта | `acceptEdits` — `-y`, `auto` и `bypassPermissions` — `--auto`, `plan` — `--plan` |
+| MiMo Code | `mimo run --format json [-s id]`, промпт в stdin, картинки — `-f <путь>`, остальные файлы — пути в конце промпта | Всегда `--dangerously-skip-permissions`: в headless-режиме запрос разрешения останавливает запуск |
 
-**Картинки** (`POST /api/attachments`, тело — байты файла, `?name=`): PNG, JPEG, GIF или WebP до 5 МБ (тип определяется по содержимому), до 10 на сообщение. Хранятся в Postgres (`attachments.data`), отдаются по `GET /api/attachments/{id}/content`. Загрузка ни к чему не привязана, пока её id не придёт в `attachmentIds` нового сообщения или сессии; непривязанные удаляются через сутки. Для Codex, Antigravity, Kimi и MiMo картинки на время запуска пишутся во временную папку.
+**Вложения** — файлы любого типа, до 10 на сообщение. Загружаются по протоколу [tus](https://tus.io/protocols/resumable-upload) на `/api/uploads` (сервер — `tusd`, клиент — Uppy с плагинами Tus и Golden Retriever): загрузка начинается сразу при добавлении файла, показывает прогресс, ставится на паузу, переживает обрыв связи (повторы с паузами и докачка с того же байта) и перезагрузку страницы — Golden Retriever восстанавливает файлы из IndexedDB, а если браузер не смог сохранить большой файл, достаточно выбрать его снова, и загрузка продолжится с места остановки. Загрузки черновика живут, пока открыта вкладка, поэтому переход в другой чат их не прерывает. Предельный размер файла — настройка инстанса (`GET`/`PATCH /api/settings`, `maxUploadBytes`, по умолчанию 2 ГБ, меняет только владелец в «Настройках → Файлы»); перед загрузкой сервер проверяет и свободное место на диске. Недокачанные части лежат в `DRIFT_UPLOADS_DIR/partial`, готовые файлы — в `DRIFT_UPLOADS_DIR/files/<id>/<имя>` (по умолчанию `./data/uploads`); id загрузки становится id вложения, ответ на последний `PATCH` несёт его в `Attachment-Id`. Вложение ни к чему не привязано, пока его id не придёт в `attachmentIds` нового сообщения или сессии; непривязанные вложения и брошенные загрузки удаляются через неделю, файлы удалённых сообщений — в течение часа. Агенту файлы передаются путями к этим файлам. `GET /api/attachments/{id}/content` отдаёт байты с поддержкой `Range`: картинки — inline, остальное — как скачивание. Картинки, которые прежние версии хранили в Postgres, при старте переносятся на диск.
 
 ### API и realtime
 
@@ -101,7 +101,8 @@ JSON API под `/api` требует сессию Kratos (идентичнос�
 | `GET` | `/api/subscriptions/{id}/usage` (AIP-156) |
 | `GET`, `PATCH`, `DELETE` | `/api/sessions/{id}` |
 | `GET`, `POST` | `/api/sessions/{id}/messages` (POST принимает `text` и/или `attachmentIds`) |
-| `POST` | `/api/attachments?name=` (тело — картинка); `GET` `/api/attachments/{id}/content` |
+| `POST`, `HEAD`, `PATCH`, `DELETE` | `/api/uploads`, `/api/uploads/{id}` — tus 1.0 (creation, termination); `GET` `/api/attachments/{id}/content` |
+| `GET`, `PATCH` | `/api/settings` (AIP-156, `PATCH` — только владелец) |
 | `GET` | `/api/sessions/{id}/git` (статус, AIP-156), `/git/diff?path=&staged=`, `/git/branches`, `/git/commits` (AIP-158) |
 | `POST` | `/api/sessions/{id}/git:init`, `:stage`, `:unstage`, `:discard`, `:commit`, `:checkout`, `:pull`, `:push` (AIP-136, отвечают свежим статусом) |
 | `GET` | `/api/drafts`; `PUT`, `DELETE` `/api/drafts/{key}` |
@@ -279,6 +280,7 @@ KRATOS_ADMIN_URL=http://127.0.0.1:4434
 DRIFT_WORKSPACE_ROOT=/home/user/work
 DRIFT_CHATS_DIR=/home/user/drift/data/chats
 DRIFT_AGENTS_DIR=/home/user/drift/data/agents
+DRIFT_UPLOADS_DIR=/home/user/drift/data/uploads
 DRIFT_SHELL=fish
 GOMEMLIMIT=192MiB
 

@@ -27,7 +27,7 @@ type ClaimAttachmentsRow struct {
 	ID        pgtype.UUID `json:"id"`
 	Name      string      `json:"name"`
 	MediaType string      `json:"media_type"`
-	Size      int32       `json:"size"`
+	Size      int64       `json:"size"`
 }
 
 func (q *Queries) ClaimAttachments(ctx context.Context, arg ClaimAttachmentsParams) ([]ClaimAttachmentsRow, error) {
@@ -56,32 +56,34 @@ func (q *Queries) ClaimAttachments(ctx context.Context, arg ClaimAttachmentsPara
 }
 
 const createAttachment = `-- name: CreateAttachment :one
-INSERT INTO attachments (owner_id, name, media_type, size, data) VALUES ($1, $2, $3, $4, $5)
+INSERT INTO attachments (id, owner_id, name, media_type, size, path) VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id, name, media_type, size
 `
 
 type CreateAttachmentParams struct {
-	OwnerID   string `json:"owner_id"`
-	Name      string `json:"name"`
-	MediaType string `json:"media_type"`
-	Size      int32  `json:"size"`
-	Data      []byte `json:"data"`
+	ID        pgtype.UUID `json:"id"`
+	OwnerID   string      `json:"owner_id"`
+	Name      string      `json:"name"`
+	MediaType string      `json:"media_type"`
+	Size      int64       `json:"size"`
+	Path      pgtype.Text `json:"path"`
 }
 
 type CreateAttachmentRow struct {
 	ID        pgtype.UUID `json:"id"`
 	Name      string      `json:"name"`
 	MediaType string      `json:"media_type"`
-	Size      int32       `json:"size"`
+	Size      int64       `json:"size"`
 }
 
 func (q *Queries) CreateAttachment(ctx context.Context, arg CreateAttachmentParams) (CreateAttachmentRow, error) {
 	row := q.db.QueryRow(ctx, createAttachment,
+		arg.ID,
 		arg.OwnerID,
 		arg.Name,
 		arg.MediaType,
 		arg.Size,
-		arg.Data,
+		arg.Path,
 	)
 	var i CreateAttachmentRow
 	err := row.Scan(
@@ -94,7 +96,7 @@ func (q *Queries) CreateAttachment(ctx context.Context, arg CreateAttachmentPara
 }
 
 const deleteStaleAttachments = `-- name: DeleteStaleAttachments :execrows
-DELETE FROM attachments WHERE message_id IS NULL AND created_at < now() - interval '1 day'
+DELETE FROM attachments WHERE message_id IS NULL AND created_at < now() - interval '7 days'
 `
 
 func (q *Queries) DeleteStaleAttachments(ctx context.Context) (int64, error) {
@@ -106,7 +108,7 @@ func (q *Queries) DeleteStaleAttachments(ctx context.Context) (int64, error) {
 }
 
 const getAttachmentContent = `-- name: GetAttachmentContent :one
-SELECT media_type, data FROM attachments WHERE id = $1 AND owner_id = $2
+SELECT name, media_type, path FROM attachments WHERE id = $1 AND owner_id = $2 AND path IS NOT NULL
 `
 
 type GetAttachmentContentParams struct {
@@ -115,19 +117,20 @@ type GetAttachmentContentParams struct {
 }
 
 type GetAttachmentContentRow struct {
-	MediaType string `json:"media_type"`
-	Data      []byte `json:"data"`
+	Name      string      `json:"name"`
+	MediaType string      `json:"media_type"`
+	Path      pgtype.Text `json:"path"`
 }
 
 func (q *Queries) GetAttachmentContent(ctx context.Context, arg GetAttachmentContentParams) (GetAttachmentContentRow, error) {
 	row := q.db.QueryRow(ctx, getAttachmentContent, arg.ID, arg.OwnerID)
 	var i GetAttachmentContentRow
-	err := row.Scan(&i.MediaType, &i.Data)
+	err := row.Scan(&i.Name, &i.MediaType, &i.Path)
 	return i, err
 }
 
 const listAttachmentData = `-- name: ListAttachmentData :many
-SELECT id, name, media_type, data FROM attachments
+SELECT id, name, media_type, size, path FROM attachments
 WHERE owner_id = $1 AND id = ANY($2::uuid[])
 ORDER BY array_position($2::uuid[], id)
 `
@@ -141,7 +144,8 @@ type ListAttachmentDataRow struct {
 	ID        pgtype.UUID `json:"id"`
 	Name      string      `json:"name"`
 	MediaType string      `json:"media_type"`
-	Data      []byte      `json:"data"`
+	Size      int64       `json:"size"`
+	Path      pgtype.Text `json:"path"`
 }
 
 func (q *Queries) ListAttachmentData(ctx context.Context, arg ListAttachmentDataParams) ([]ListAttachmentDataRow, error) {
@@ -157,7 +161,8 @@ func (q *Queries) ListAttachmentData(ctx context.Context, arg ListAttachmentData
 			&i.ID,
 			&i.Name,
 			&i.MediaType,
-			&i.Data,
+			&i.Size,
+			&i.Path,
 		); err != nil {
 			return nil, err
 		}
@@ -167,4 +172,72 @@ func (q *Queries) ListAttachmentData(ctx context.Context, arg ListAttachmentData
 		return nil, err
 	}
 	return items, nil
+}
+
+const listDatabaseAttachments = `-- name: ListDatabaseAttachments :many
+SELECT id, name, data FROM attachments WHERE path IS NULL ORDER BY created_at LIMIT 20
+`
+
+type ListDatabaseAttachmentsRow struct {
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+	Data []byte      `json:"data"`
+}
+
+func (q *Queries) ListDatabaseAttachments(ctx context.Context) ([]ListDatabaseAttachmentsRow, error) {
+	rows, err := q.db.Query(ctx, listDatabaseAttachments)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDatabaseAttachmentsRow
+	for rows.Next() {
+		var i ListDatabaseAttachmentsRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.Data); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStoredAttachmentIDs = `-- name: ListStoredAttachmentIDs :many
+SELECT id FROM attachments WHERE id = ANY($1::uuid[])
+`
+
+func (q *Queries) ListStoredAttachmentIDs(ctx context.Context, ids []pgtype.UUID) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listStoredAttachmentIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var id pgtype.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const moveAttachmentToDisk = `-- name: MoveAttachmentToDisk :exec
+UPDATE attachments SET path = $1, data = NULL WHERE id = $2
+`
+
+type MoveAttachmentToDiskParams struct {
+	Path pgtype.Text `json:"path"`
+	ID   pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) MoveAttachmentToDisk(ctx context.Context, arg MoveAttachmentToDiskParams) error {
+	_, err := q.db.Exec(ctx, moveAttachmentToDisk, arg.Path, arg.ID)
+	return err
 }

@@ -12,23 +12,18 @@ import { Button } from '@ui-sdk/vue/button'
 import { FileInput, FileInputTrigger } from '@ui-sdk/vue/file-input'
 import { RouterLink } from 'vue-router'
 
-import AttachmentChip from '@/components/composer/AttachmentChip.vue'
+import ComposerAttachments from '@/components/composer/ComposerAttachments.vue'
 import ModeSelect from '@/components/composer/ModeSelect.vue'
 import ModelSelect from '@/components/composer/ModelSelect.vue'
 import PromptEditor from '@/components/composer/PromptEditor.vue'
 import UsageIndicator from '@/components/composer/usage/UsageIndicator.vue'
 import ImagePreview from '@/components/composer/ImagePreview.vue'
-import { useAttachmentUpload } from '@/composables/useAttachmentUpload'
+import { useComposerUploads } from '@/composables/useComposerUploads'
 import { useDraft } from '@/composables/useDrafts'
 import { useAgents } from '@/composables/useAgents'
 import type { AgentId } from '@/shared/agents'
 import { AGENTS } from '@/shared/agents'
-import {
-    ATTACHMENT_MAX_BYTES,
-    ATTACHMENT_MAX_COUNT,
-    ATTACHMENT_TYPES,
-    partitionAttachable,
-} from '@/shared/attachments'
+import type { ReadyAttachment } from '@/shared/attachments'
 import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
@@ -54,7 +49,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-    send: [payload: { text: string; files: File[] }]
+    send: [payload: { text: string; attachments: ReadyAttachment[] }]
     switchAgent: [choice: { agent: AgentId; model: string }]
     stop: []
 }>()
@@ -62,17 +57,24 @@ const { t } = useI18n()
 const agents = useAgents()
 const unavailable = computed(() => agents.ready.value && !agents.isConnected(props.agent))
 
-const { announceRejected } = useAttachmentUpload()
 const draft = useDraft(() => props.draftKey)
-const files = ref<File[]>([])
+const uploads = useComposerUploads(() => props.draftKey)
+const noFiles: File[] = []
 const historyIndex = ref(-1)
 const preview = ref<{ url: string; name: string } | null>(null)
 const editor = useTemplateRef<InstanceType<typeof PromptEditor>>('editor')
 
 const canSend = computed(
     () =>
-        !unavailable.value && !props.busy && (!!draft.text.value.trim() || files.value.length > 0),
+        !unavailable.value &&
+        !props.busy &&
+        !uploads.uploading.value &&
+        (!!draft.text.value.trim() || uploads.ready.value.length > 0),
 )
+const sendTitle = computed(() => {
+    if (uploads.uploading.value) return t('composer.waitForUploads')
+    return props.running ? t('composer.queue') : t('composer.send')
+})
 
 function setText(value: string) {
     draft.set(value)
@@ -81,8 +83,7 @@ function setText(value: string) {
 
 function send() {
     if (!canSend.value) return
-    emit('send', { text: draft.text.value.trim(), files: files.value })
-    files.value = []
+    emit('send', { text: draft.text.value.trim(), attachments: uploads.takeReady() })
     historyIndex.value = -1
     draft.clear()
 }
@@ -107,12 +108,6 @@ function forward() {
     setText(props.history.at(index) ?? '')
 }
 
-function addFiles(added: File[]) {
-    const { accepted, rejected } = partitionAttachable([...files.value, ...added])
-    files.value = accepted
-    announceRejected(rejected)
-}
-
 function onInput(value: string) {
     historyIndex.value = -1
     draft.set(value)
@@ -133,14 +128,11 @@ defineExpose({ focus: () => editor.value?.focus() })
 
 <template>
     <FileInput
-        v-model:value="files"
+        :value="noFiles"
         class="max-w-none"
         multiple
         :disabled="unavailable"
-        :accept="ATTACHMENT_TYPES"
-        :max-size="ATTACHMENT_MAX_BYTES"
-        :max-files="ATTACHMENT_MAX_COUNT"
-        @reject="(rejected) => announceRejected(rejected.map((item) => item.file))"
+        @update:value="uploads.add"
     >
         <div
             class="composer"
@@ -173,16 +165,10 @@ defineExpose({ focus: () => editor.value?.focus() })
                 }}</Button>
             </div>
 
-            <div v-if="files.length" v-auto-animate class="flex flex-wrap gap-2 px-3 pt-3">
-                <AttachmentChip
-                    v-for="(file, index) in files"
-                    :key="`${file.name}-${file.size}-${file.lastModified}`"
-                    :file="file"
-                    removable
-                    @remove="files.splice(index, 1)"
-                    @open="(url) => (preview = { url, name: file.name })"
-                />
-            </div>
+            <ComposerAttachments
+                :uploads="uploads"
+                @open="(url, name) => (preview = { url, name })"
+            />
 
             <PromptEditor
                 ref="editor"
@@ -194,7 +180,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                 @update:model-value="onInput"
                 @submit="send"
                 @history-back="back"
-                @files="addFiles"
+                @files="uploads.add"
             />
 
             <div class="flex flex-wrap items-center justify-between gap-2 p-2">
@@ -246,8 +232,8 @@ defineExpose({ focus: () => editor.value?.focus() })
                     <Button
                         data-variant="solid"
                         :disabled="!canSend"
-                        :aria-label="running ? t('composer.queue') : t('composer.send')"
-                        v-tooltip="running ? t('composer.queue') : t('composer.send')"
+                        :aria-label="sendTitle"
+                        v-tooltip="sendTitle"
                         @click="send"
                     >
                         <PhArrowUp />

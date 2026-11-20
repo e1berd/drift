@@ -3,6 +3,7 @@ package workspace
 import (
 	"context"
 	"errors"
+	"github.com/e1berd/drift/app/internal/uploads"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,8 +19,9 @@ const standaloneDraftKey = "new:chat"
 // Folders says where agents work: a project session in its project folder under Workspace,
 // a standalone session (no project) in a private empty folder of its own under Chats.
 type Folders struct {
-	Workspace string
-	Chats     string
+	Workspace   string
+	Chats       string
+	Attachments uploads.Store
 }
 
 // Session returns the folder the session's agent works in, creating a standalone one on demand.

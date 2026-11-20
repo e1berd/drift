@@ -1,37 +1,29 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-    ATTACHMENT_MAX_BYTES,
-    ATTACHMENT_MAX_COUNT,
+    attachmentIdFromUploadURL,
     attachmentURL,
-    isAttachable,
-    partitionAttachable,
+    isInlineImage,
+    uploadEndpoint,
 } from '../attachments'
 
-const image = (name: string, size = 10, type = 'image/png') =>
-    new File([new Uint8Array(size)], name, { type })
-
 describe('attachments', () => {
-    it('accepts only supported images within the size limit', () => {
-        expect(isAttachable(image('a.png'))).toBe(true)
-        expect(isAttachable(image('a.webp', 10, 'image/webp'))).toBe(true)
-        expect(isAttachable(image('a.svg', 10, 'image/svg+xml'))).toBe(false)
-        expect(isAttachable(image('a.txt', 10, 'text/plain'))).toBe(false)
-        expect(isAttachable(image('big.png', ATTACHMENT_MAX_BYTES + 1))).toBe(false)
-        expect(isAttachable(image('empty.png', 0))).toBe(false)
+    it('shows only the common raster images inline', () => {
+        expect(isInlineImage('image/png')).toBe(true)
+        expect(isInlineImage('image/webp')).toBe(true)
+        expect(isInlineImage('image/svg+xml')).toBe(false)
+        expect(isInlineImage('application/zip')).toBe(false)
     })
 
-    it('rejects files past the per-message limit', () => {
-        const files = Array.from({ length: ATTACHMENT_MAX_COUNT + 2 }, (_, i) => image(`${i}.png`))
-        const { accepted, rejected } = partitionAttachable([
-            image('doc.pdf', 10, 'application/pdf'),
-            ...files,
-        ])
-        expect(accepted).toHaveLength(ATTACHMENT_MAX_COUNT)
-        expect(rejected.map((file) => file.name)).toEqual(['doc.pdf', '10.png', '11.png'])
-    })
-
-    it('builds the content URL', () => {
+    it('builds the content URL and the upload endpoint', () => {
         expect(attachmentURL('a b')).toBe('/api/attachments/a%20b/content')
+        expect(uploadEndpoint()).toBe('/api/uploads')
+    })
+
+    it('takes the attachment id from the tus upload URL', () => {
+        const id = '6f1c1d1e-8a5b-4c1b-9d2e-0f1a2b3c4d5e'
+        expect(attachmentIdFromUploadURL(`https://drift.example/api/uploads/${id}`)).toBe(id)
+        expect(attachmentIdFromUploadURL(`/api/uploads/${id}`)).toBe(id)
+        expect(attachmentIdFromUploadURL(undefined)).toBeNull()
     })
 })

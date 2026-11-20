@@ -84,7 +84,7 @@ func TestClaudeInputCarriesImages(t *testing.T) {
 	if got := claudeInput("hi", nil); got != "hi" {
 		t.Fatalf("plain text input %q", got)
 	}
-	line := claudeInput("what is this", []attachedImage{{name: "a.png", mediaType: "image/png", data: []byte{1, 2}}})
+	line := claudeInput("what is this", []attachedImage{{mediaType: "image/png", data: []byte{1, 2}}})
 	var message claudeUserMessage
 	if err := json.Unmarshal([]byte(line), &message); err != nil || !strings.HasSuffix(line, "\n") {
 		t.Fatalf("input %q: %v", line, err)
@@ -114,17 +114,20 @@ func TestMergeKeepsAttachmentsOfQueuedMessages(t *testing.T) {
 	}
 }
 
-func TestWriteImagesAndPromptPaths(t *testing.T) {
-	folder, paths, err := writeImages([]attachedImage{{name: "../Screen shot.png", mediaType: "image/png", data: []byte{1}}})
-	if err != nil {
-		t.Fatal(err)
+func TestAttachmentsSplitIntoInlineImagesAndPaths(t *testing.T) {
+	files := []attachedFile{
+		{name: "shot.png", mediaType: "image/png", size: 10, path: "/files/a/shot.png"},
+		{name: "huge.png", mediaType: "image/png", size: maxInlineImageBytes + 1, path: "/files/b/huge.png"},
+		{name: "logs.zip", mediaType: "application/zip", size: 10, path: "/files/c/logs.zip"},
 	}
-	defer removeFolder(folder)()
-	if len(paths) != 1 || !strings.HasPrefix(paths[0], folder+"/") || !strings.HasSuffix(paths[0], "01-Screen_shot.png") {
-		t.Fatalf("paths %v", paths)
+	images, others := splitInlineImages(files)
+	if len(images) != 1 || images[0].name != "shot.png" || len(others) != 2 {
+		t.Fatalf("images %v, others %v", images, others)
 	}
-	req := withImagePaths(workspace.RunRequest{Text: "look"}, paths)
-	if req.Text != "look\n\nAttached images:\n"+paths[0] {
-		t.Errorf("text %q", req.Text)
+	if got := withFilePaths("look", others); got != "look\n\nAttached files:\n/files/b/huge.png\n/files/c/logs.zip" {
+		t.Errorf("text %q", got)
+	}
+	if got := withFilePaths("look", nil); got != "look" {
+		t.Errorf("text without files %q", got)
 	}
 }

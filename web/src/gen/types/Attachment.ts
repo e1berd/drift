@@ -4,7 +4,7 @@
 */
 
 /**
- * @description An image attached to a user message; its bytes are at `/attachments/{id}/content`.
+ * @description A file attached to a user message; its bytes are at `/attachments/{id}/content`.
  * @type object
  */
 export type Attachment = {
@@ -15,6 +15,15 @@ export type Attachment = {
    */
   id: string;
   name: string;
+  /**
+   * @description
+   * Format: `int64`
+   * @type integer
+   */
   size: number;
+  /**
+   * @description Media type detected from the bytes or the extension.
+   * @type string
+   */
   type: string;
 };
