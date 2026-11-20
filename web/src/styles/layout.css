@@ -92,8 +92,49 @@
         font-size: calc(var(--ui-font-size) - 0.0625rem);
     }
 
+    .composer-bar {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        min-width: 0;
+        padding: calc(var(--ui-spacing) * 1.5);
+
+        & > .composer-bar-spacer {
+            flex: 1;
+        }
+
+        &
+            :is(
+                [data-slot='file-input-trigger'],
+                [data-slot='select-trigger'],
+                [data-slot='popover-trigger'],
+                .composer-history > [data-slot='button'],
+                .composer-stop:not([data-variant])
+            ) {
+            border-color: transparent;
+            background: transparent;
+            color: var(--ui-muted-foreground);
+
+            &:hover:not([data-disabled]),
+            &[aria-expanded='true'] {
+                background: var(--ui-muted);
+                color: var(--ui-foreground);
+            }
+        }
+
+        & > .composer-history {
+            display: flex;
+            gap: 2px;
+
+            @container composer (width < 560px) {
+                display: none;
+            }
+        }
+    }
+
     .composer-select {
         min-width: 0;
+        max-width: 14rem;
         gap: calc(var(--ui-spacing) * 1.5);
         padding-inline: calc(var(--ui-spacing) * 2);
 
@@ -101,9 +142,30 @@
             display: inline-flex;
         }
 
+        & > .composer-select-label,
+        & > [data-slot='select-value'] {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         @container composer (width < 560px) {
-            & > .composer-select-label {
-                display: none;
+            gap: 0;
+            padding-inline: 0;
+            width: calc(var(--ui-spacing) * 8);
+            justify-content: center;
+
+            &:has(> .composer-select-icon) {
+                &::after,
+                & > .composer-select-label {
+                    display: none;
+                }
+            }
+
+            &:not(:has(> .composer-select-icon)) {
+                width: auto;
+                max-width: 9rem;
+                padding-inline: calc(var(--ui-spacing) * 2);
             }
         }
     }

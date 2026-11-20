@@ -79,6 +79,11 @@ watch(
     justify-content: center;
     gap: 3px;
     padding-inline: calc(var(--ui-spacing) * 2);
+
+    @container composer (width < 560px) {
+        gap: 4px;
+        padding-inline: calc(var(--ui-spacing) * 1.5);
+    }
 }
 
 .usage-popover {

@@ -79,7 +79,7 @@ composer:
   placeholder:
     new: 'Describe the task for {agent}…'
     reply: "Reply to {agent}…  / for commands, {'@'} for files"
-    queue: '{agent} is still answering — this message goes next…'
+    queue: 'This message goes to {agent} next…'
     afterReset: 'The limit is used up — {agent} gets this once it resets…'
   attach: 'Attach files'
   waitForUploads: 'Wait for the files to finish uploading'

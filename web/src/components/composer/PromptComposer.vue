@@ -1,18 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
-import {
-    PhArrowLeft,
-    PhArrowRight,
-    PhArrowUp,
-    PhDeviceMobile,
-    PhPaperclip,
-    PhStop,
-} from '@phosphor-icons/vue'
+import { PhArrowLeft, PhArrowRight, PhDeviceMobile, PhPaperclip } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { FileInput, FileInputTrigger } from '@ui-sdk/vue/file-input'
 import { RouterLink } from 'vue-router'
 
 import ComposerAttachments from '@/components/composer/ComposerAttachments.vue'
+import ComposerSendControls from '@/components/composer/ComposerSendControls.vue'
 import ModeSelect from '@/components/composer/ModeSelect.vue'
 import ModelSelect from '@/components/composer/ModelSelect.vue'
 import PromptEditor from '@/components/composer/PromptEditor.vue'
@@ -183,62 +177,48 @@ defineExpose({ focus: () => editor.value?.focus() })
                 @files="uploads.add"
             />
 
-            <div class="flex flex-wrap items-center justify-between gap-2 p-2">
-                <div class="flex items-center gap-1">
-                    <FileInputTrigger
-                        :aria-label="t('composer.attach')"
-                        v-tooltip="t('composer.attach')"
-                    >
-                        <PhPaperclip />
-                    </FileInputTrigger>
-                    <slot name="start">
-                        <template v-if="showHistory">
-                            <Button
-                                :disabled="unavailable || !history.length || historyIndex === 0"
-                                :aria-label="t('composer.historyBack')"
-                                v-tooltip="t('composer.historyBack')"
-                                @click="back"
-                            >
-                                <PhArrowLeft />
-                            </Button>
-                            <Button
-                                :disabled="historyIndex === -1"
-                                :aria-label="t('composer.historyForward')"
-                                v-tooltip="t('composer.historyForward')"
-                                @click="forward"
-                            >
-                                <PhArrowRight />
-                            </Button>
-                        </template>
-                    </slot>
-                </div>
-                <div class="flex items-center gap-1">
-                    <UsageIndicator :agent="agent" :running="running" />
-                    <ModelSelect
-                        :agent="agent"
-                        @switch-agent="(choice) => emit('switchAgent', choice)"
-                    />
-                    <ModeSelect />
-                    <Button
-                        v-if="running"
-                        data-variant="destructive"
-                        :disabled="stopping"
-                        :aria-label="t('composer.stop')"
-                        v-tooltip="t('composer.stop')"
-                        @click="emit('stop')"
-                    >
-                        <PhStop weight="fill" />
-                    </Button>
-                    <Button
-                        data-variant="solid"
-                        :disabled="!canSend"
-                        :aria-label="sendTitle"
-                        v-tooltip="sendTitle"
-                        @click="send"
-                    >
-                        <PhArrowUp />
-                    </Button>
-                </div>
+            <div class="composer-bar">
+                <FileInputTrigger
+                    :aria-label="t('composer.attach')"
+                    v-tooltip="t('composer.attach')"
+                >
+                    <PhPaperclip />
+                </FileInputTrigger>
+                <ModelSelect
+                    :agent="agent"
+                    @switch-agent="(choice) => emit('switchAgent', choice)"
+                />
+                <ModeSelect />
+                <slot name="start">
+                    <div v-if="showHistory" class="composer-history">
+                        <Button
+                            :disabled="unavailable || !history.length || historyIndex === 0"
+                            :aria-label="t('composer.historyBack')"
+                            v-tooltip="t('composer.historyBack')"
+                            @click="back"
+                        >
+                            <PhArrowLeft />
+                        </Button>
+                        <Button
+                            :disabled="historyIndex === -1"
+                            :aria-label="t('composer.historyForward')"
+                            v-tooltip="t('composer.historyForward')"
+                            @click="forward"
+                        >
+                            <PhArrowRight />
+                        </Button>
+                    </div>
+                </slot>
+                <span class="composer-bar-spacer" />
+                <UsageIndicator :agent="agent" :running="running" />
+                <ComposerSendControls
+                    :running="running"
+                    :stopping="stopping"
+                    :can-send="canSend"
+                    :send-title="sendTitle"
+                    @send="send"
+                    @stop="emit('stop')"
+                />
             </div>
         </div>
     </FileInput>
@@ -256,7 +236,6 @@ defineExpose({ focus: () => editor.value?.focus() })
     background: var(--ui-background);
 
     &:focus-within {
-        outline: 4px solid var(--ui-ring);
         border-color: var(--ui-ring-border);
     }
 

@@ -54,6 +54,10 @@ const title = computed(() =>
         display: block;
         width: 2.25rem;
         height: 0.25rem;
+
+        @container composer (width < 560px) {
+            width: 1.5rem;
+        }
         overflow: hidden;
         border-radius: 999px;
         background: var(--ui-muted);
@@ -91,6 +95,10 @@ const title = computed(() =>
 
 .usage-mini-label {
     min-width: 1.25rem;
+
+    @container composer (width < 560px) {
+        display: none;
+    }
 }
 
 .usage-mini-label,
