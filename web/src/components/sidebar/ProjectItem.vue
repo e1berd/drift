@@ -122,13 +122,11 @@ useInfiniteSentinel(sentinel, () => {
                     <span class="ml-auto text-muted tabular-nums">{{ project.sessionCount }}</span>
                 </span>
             </CollapsibleTrigger>
-            <div class="project-actions">
-                <ProjectMenu
-                    @new-chat="startChatInProject"
-                    @rename="startRename"
-                    @remove="mode = 'confirm'"
-                />
-            </div>
+            <ProjectMenu
+                @new-chat="startChatInProject"
+                @rename="startRename"
+                @remove="mode = 'confirm'"
+            />
         </div>
 
         <CollapsiblePanel>
@@ -164,28 +162,6 @@ useInfiniteSentinel(sentinel, () => {
 .project-row {
     display: flex;
     align-items: center;
-}
-
-.project-row {
-    interpolate-size: allow-keywords;
-}
-
-.project-actions {
-    display: flex;
-    flex: none;
-    gap: 2px;
-    width: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition:
-        width var(--dur-1),
-        opacity var(--dur-1);
-}
-
-.project-row:is(:hover, :focus-within) .project-actions,
-.project-actions:has([aria-expanded='true']) {
-    width: auto;
-    padding-inline-start: 4px;
-    opacity: 1;
+    gap: calc(var(--ui-spacing) * 1);
 }
 </style>

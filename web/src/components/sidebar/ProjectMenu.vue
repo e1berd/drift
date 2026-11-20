@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { PhDotsThree, PhPencilSimple, PhPlus, PhTrash } from '@phosphor-icons/vue'
-import { Button } from '@ui-sdk/vue/button'
 import { Menu, MenuContent, MenuItem, MenuItemIcon, MenuTrigger } from '@ui-sdk/vue/menu'
 import { useI18n } from 'vue-i18n'
 
@@ -24,10 +23,12 @@ function choose(value: string) {
 
 <template>
     <Menu @action="choose">
-        <MenuTrigger as-child>
-            <Button :aria-label="t('project.actions')" v-tooltip="t('project.actions')">
-                <PhDotsThree />
-            </Button>
+        <MenuTrigger
+            class="project-menu-trigger"
+            :aria-label="t('project.actions')"
+            v-tooltip="t('project.actions')"
+        >
+            <PhDotsThree :size="16" weight="bold" />
         </MenuTrigger>
         <MenuContent align="end">
             <MenuItem value="newChat">
@@ -45,3 +46,22 @@ function choose(value: string) {
         </MenuContent>
     </Menu>
 </template>
+
+<style scoped>
+.project-menu-trigger {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: calc(var(--ui-radius) / 2);
+    background: none;
+    color: var(--ui-muted-foreground);
+
+    &:hover:not([data-disabled]),
+    &[data-open] {
+        background: none;
+        color: var(--ui-foreground);
+    }
+}
+</style>
