@@ -59,7 +59,7 @@ func (h *Hub) Publish(owner, typ string, data any, origin string) {
 	defer h.mu.Unlock()
 
 	h.seq++
-	ev := Event{ID: h.boot + "-" + strconv.FormatUint(h.seq, 10), Type: typ, Data: raw, Origin: origin, seq: h.seq}
+	ev := Event{ID: h.idLocked(h.seq), Type: typ, Data: raw, Origin: origin, seq: h.seq}
 	s := h.streamLocked(owner)
 	s.ring = append(s.ring, ev)
 	if len(s.ring) > ringSize {
@@ -75,21 +75,33 @@ func (h *Hub) Publish(owner, typ string, data any, origin string) {
 	}
 }
 
-// Subscribe registers a subscriber and returns the events after lastID. resync is true when
-// lastID cannot be replayed (older process, or too far behind) and the client must refetch.
-func (h *Hub) Subscribe(owner, lastID string) (ch chan Event, missed []Event, resync bool, cancel func()) {
+// Subscription is one open tab's feed. Missed holds the events after the requested last id;
+// Resync is true when that id cannot be replayed (older process, or too far behind) and the
+// client must refetch. Cursor is the position the feed starts from, so a tab that has not seen
+// any event yet can still resume from it after a reconnect.
+type Subscription struct {
+	Events <-chan Event
+	Missed []Event
+	Resync bool
+	Cursor string
+	Cancel func()
+}
+
+// Subscribe registers a subscriber positioned right after lastID.
+func (h *Hub) Subscribe(owner, lastID string) Subscription {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	s := h.streamLocked(owner)
-	ch = make(chan Event, subBuffer)
+	ch := make(chan Event, subBuffer)
 	s.subs[ch] = struct{}{}
 
+	sub := Subscription{Events: ch, Cursor: h.idLocked(h.seq)}
 	if lastID != "" {
-		missed, resync = h.sinceLocked(s, lastID)
+		sub.Missed, sub.Resync = h.sinceLocked(s, lastID)
 	}
 
-	cancel = func() {
+	sub.Cancel = func() {
 		h.mu.Lock()
 		defer h.mu.Unlock()
 		if _, ok := s.subs[ch]; ok {
@@ -98,7 +110,11 @@ func (h *Hub) Subscribe(owner, lastID string) (ch chan Event, missed []Event, re
 		}
 		s.lastSeen = time.Now()
 	}
-	return ch, missed, resync, cancel
+	return sub
+}
+
+func (h *Hub) idLocked(seq uint64) string {
+	return h.boot + "-" + strconv.FormatUint(seq, 10)
 }
 
 func (h *Hub) sinceLocked(s *stream, lastID string) ([]Event, bool) {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
+import type { CSSProperties } from 'vue'
 import { PhFolderSimple, PhPlus } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { Input } from '@ui-sdk/vue/input'
@@ -21,7 +22,7 @@ import { errorMessage } from '@/shared/errors'
 import { useI18n } from 'vue-i18n'
 import { useSessions } from '@/shared/queries'
 
-const props = defineProps<{ project: Project }>()
+const props = defineProps<{ project: Project; pinStyle?: CSSProperties }>()
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
@@ -86,59 +87,64 @@ useInfiniteSentinel(sentinel, () => {
 </script>
 
 <template>
-    <Collapsible v-model:open="open">
-        <div v-if="mode === 'confirm'" class="motion-fade flex flex-col gap-2 p-2">
-            <span>{{
-                t('project.confirmDelete', { name: project.name, count: project.sessionCount })
-            }}</span>
-            <div class="flex justify-end gap-2">
-                <Button @click="mode = 'view'">{{ t('project.cancel') }}</Button>
-                <Button
-                    data-variant="destructive"
-                    :disabled="remove.isPending.value"
-                    @click="remove.mutate({ path: { projectId: project.id } })"
+    <Collapsible v-model:open="open" class="contents">
+        <div data-project-marker />
+        <div class="project-head" :style="pinStyle">
+            <div v-if="mode === 'confirm'" class="motion-fade flex flex-col gap-2 p-2">
+                <span>{{
+                    t('project.confirmDelete', { name: project.name, count: project.sessionCount })
+                }}</span>
+                <div class="flex justify-end gap-2">
+                    <Button @click="mode = 'view'">{{ t('project.cancel') }}</Button>
+                    <Button
+                        data-variant="destructive"
+                        :disabled="remove.isPending.value"
+                        @click="remove.mutate({ path: { projectId: project.id } })"
+                    >
+                        {{ t('project.delete') }}
+                    </Button>
+                </div>
+            </div>
+
+            <div v-else-if="mode === 'rename'" ref="renameRow" class="p-1">
+                <Input
+                    v-model="name"
+                    maxlength="120"
+                    :aria-label="t('project.name')"
+                    @keydown.enter.prevent="commitRename"
+                    @keydown.esc.prevent="mode = 'view'"
+                    @blur="commitRename"
+                />
+            </div>
+
+            <div v-else class="project-row">
+                <CollapsibleTrigger class="min-w-0 flex-1">
+                    <span class="flex min-w-0 flex-1 items-center gap-2">
+                        <PhFolderSimple class="shrink-0" />
+                        <span class="truncate">{{ project.name }}</span>
+                        <span class="ml-auto text-muted tabular-nums">{{
+                            project.sessionCount
+                        }}</span>
+                    </span>
+                </CollapsibleTrigger>
+                <button
+                    type="button"
+                    class="row-action"
+                    :aria-label="t('project.newChat')"
+                    v-tooltip="t('project.newChat')"
+                    @click="startChatInProject"
                 >
-                    {{ t('project.delete') }}
-                </Button>
+                    <PhPlus :size="16" weight="bold" />
+                </button>
+                <ProjectMenu
+                    @new-chat="startChatInProject"
+                    @rename="startRename"
+                    @remove="mode = 'confirm'"
+                />
             </div>
         </div>
 
-        <div v-else-if="mode === 'rename'" ref="renameRow" class="p-1">
-            <Input
-                v-model="name"
-                maxlength="120"
-                :aria-label="t('project.name')"
-                @keydown.enter.prevent="commitRename"
-                @keydown.esc.prevent="mode = 'view'"
-                @blur="commitRename"
-            />
-        </div>
-
-        <div v-else class="project-row">
-            <CollapsibleTrigger class="min-w-0 flex-1">
-                <span class="flex min-w-0 flex-1 items-center gap-2">
-                    <PhFolderSimple class="shrink-0" />
-                    <span class="truncate">{{ project.name }}</span>
-                    <span class="ml-auto text-muted tabular-nums">{{ project.sessionCount }}</span>
-                </span>
-            </CollapsibleTrigger>
-            <button
-                type="button"
-                class="row-action"
-                :aria-label="t('project.newChat')"
-                v-tooltip="t('project.newChat')"
-                @click="startChatInProject"
-            >
-                <PhPlus :size="16" weight="bold" />
-            </button>
-            <ProjectMenu
-                @new-chat="startChatInProject"
-                @rename="startRename"
-                @remove="mode = 'confirm'"
-            />
-        </div>
-
-        <CollapsiblePanel>
+        <CollapsiblePanel class="project-panel">
             <div v-auto-animate class="flex flex-col gap-px py-1 pl-4">
                 <DraftItem
                     v-if="showDraft"
@@ -168,6 +174,25 @@ useInfiniteSentinel(sentinel, () => {
 </template>
 
 <style scoped>
+.project-head {
+    position: sticky;
+    background: var(--ui-background);
+    transition: top var(--dur-1) var(--ease-out);
+}
+
+.project-panel {
+    height: var(--collapsible-panel-height);
+    overflow: hidden;
+    transition:
+        height var(--dur-3) var(--ease-out),
+        opacity var(--dur-2) var(--ease-out);
+
+    &:is([data-starting-style], [data-ending-style]) {
+        height: 0;
+        opacity: 0;
+    }
+}
+
 .project-row {
     display: flex;
     align-items: center;

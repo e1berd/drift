@@ -5,6 +5,7 @@ import type { Draft } from '@/gen'
 
 import { deleteDraft, listDrafts, updateDraft } from '@/gen'
 import { deviceId } from '@/shared/device'
+import { forgetSyncedDraft, readUnsyncedDrafts, rememberUnsyncedDraft } from '@/shared/draftBackup'
 import { reportError } from '@/shared/errors'
 
 const SAVE_DELAY = 400
@@ -20,7 +21,7 @@ function saveDraft(key: string, text: string, keepalive = false) {
     const request = text
         ? updateDraft({ path: { key }, body: { text }, keepalive })
         : deleteDraft({ path: { key }, keepalive })
-    return request.catch(reportError)
+    return request.then(() => forgetSyncedDraft(key, text)).catch(reportError)
 }
 
 function flushPendingDrafts(keepalive: boolean) {
@@ -38,14 +39,33 @@ function flushWhenPageHides() {
     })
 }
 
-if (typeof window !== 'undefined') flushWhenPageHides()
+function restoreUnsyncedDrafts() {
+    for (const [key, { text, updateTime }] of Object.entries(readUnsyncedDrafts())) {
+        if (text) drafts.set(key, { key, text, deviceId: deviceId(), updateTime })
+        else drafts.delete(key)
+    }
+}
 
-/** Loads every draft of the user once; later changes arrive as realtime events. */
+function resendUnsyncedDrafts() {
+    for (const [key, { text }] of Object.entries(readUnsyncedDrafts())) {
+        if (!pending.has(key)) void saveDraft(key, text)
+    }
+}
+
+if (typeof window !== 'undefined') {
+    flushWhenPageHides()
+    restoreUnsyncedDrafts()
+    window.addEventListener('online', resendUnsyncedDrafts)
+}
+
+/** Loads every draft of the user; text this device has not synced yet wins over the server copy. */
 export async function loadDrafts() {
     const { data } = await listDrafts()
     drafts.clear()
     for (const draft of data.drafts) drafts.set(draft.key, draft)
+    restoreUnsyncedDrafts()
     loaded.value = true
+    resendUnsyncedDrafts()
 }
 
 function markRemoteTyping(key: string) {
@@ -99,6 +119,7 @@ export function useDraftIndex() {
 }
 
 function storeLocalDraft(key: string, text: string) {
+    rememberUnsyncedDraft(key, text)
     if (text)
         drafts.set(key, { key, text, deviceId: deviceId(), updateTime: new Date().toISOString() })
     else drafts.delete(key)
@@ -114,6 +135,13 @@ function scheduleSave(key: string, text: string) {
             void saveDraft(key, text)
         }, SAVE_DELAY),
     })
+}
+
+/** Drops a sent draft that is no longer open, unless it was edited after sending. */
+export function discardSentDraft(key: string, sentText: string) {
+    if ((drafts.get(key)?.text ?? '').trim() !== sentText) return
+    storeLocalDraft(key, '')
+    scheduleSave(key, '')
 }
 
 /** The editable draft for one key, saved with a short debounce and flushed when the page hides. */

@@ -68,8 +68,8 @@ const lastPrompt = computed(() =>
                             :message="message"
                             :agent="agent"
                         />
+                        <slot name="after" />
                     </div>
-                    <slot name="after" />
                 </div>
             </ScrollAreaContent>
         </ScrollAreaViewport>

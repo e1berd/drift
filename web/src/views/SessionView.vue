@@ -26,7 +26,7 @@ import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
 import { useEventStream } from '@/composables/useEventStream'
 import { useCreateMessage, useStopSession, useUpdateSession } from '@/gen'
-import type { ReadyAttachment } from '@/shared/attachments'
+import type { SentPrompt } from '@/shared/attachments'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
 import type { AgentId } from '@/shared/agents'
@@ -112,10 +112,10 @@ async function switchAgent({ agent: next, model }: { agent: AgentId; model: stri
     update.mutate({ path: { sessionId: sessionId.value }, body: { agent: next } })
 }
 
-function send({ text, attachments }: { text: string; attachments: ReadyAttachment[] }) {
+async function send({ text, attachments }: SentPrompt) {
     const attachmentIds = attachments.map((attachment) => attachment.id)
     if (!text && !attachmentIds.length) return
-    post.mutate({
+    await post.mutateAsync({
         path: { sessionId: sessionId.value },
         body: {
             text,
@@ -136,8 +136,8 @@ const stop = useStopSession({
         <TopBar>
             <template #start>
                 <template v-if="project">
-                    <span class="shrink-0 whitespace-nowrap text-muted">{{ project.name }}</span>
-                    <span class="text-muted">/</span>
+                    <span class="truncate text-muted">{{ project.name }}</span>
+                    <span class="shrink-0 text-muted">/</span>
                 </template>
                 <span class="truncate font-medium">{{ session.data.value?.title }}</span>
             </template>
@@ -203,7 +203,7 @@ const stop = useStopSession({
                         :running="running"
                         :stopping="stop.isPending.value"
                         autofocus
-                        @send="send"
+                        :submit="send"
                         @stop="stop.mutate({ path: { sessionId } })"
                         @switch-agent="switchAgent"
                     />
@@ -234,13 +234,8 @@ const stop = useStopSession({
 <style scoped>
 .session-tabs {
     @media (max-width: 760px) {
-        width: 100%;
-
         & > [data-slot='tabs-tab'] {
-            flex: 1;
-            justify-content: center;
-            min-width: 0;
-            padding-inline: calc(var(--ui-spacing) * 2);
+            padding-inline: calc(var(--ui-spacing) * 3);
         }
 
         & .session-tab-label {

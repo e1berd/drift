@@ -25,6 +25,7 @@ import {
     searchSessionsInfiniteQueryKey,
 } from '@/gen'
 import { applyDraftEvent, loadDrafts } from '@/composables/useDrafts'
+import { connectRealtime, useRealtimeConnection } from '@/composables/realtimeConnection'
 import { deviceId } from '@/shared/device'
 import { API_BASE } from '@/shared/http/client'
 import { reportError } from '@/shared/errors'
@@ -32,13 +33,9 @@ import { reportError } from '@/shared/errors'
 type Listener = (event: WireEvent) => void
 type Pages<T> = InfiniteData<T, string>
 
-const connected = ref(true)
 const freshSessions = ref(new Set<string>())
 const activities = ref(new Map<string, SessionActivity>())
 const listeners = new Set<Listener>()
-const REOPEN_DELAY_MS = 3000
-
-let source: EventSource | null = null
 let lastEventId = ''
 
 function mapPages<TPage, TItem>(
@@ -270,28 +267,20 @@ function eventStreamUrl() {
     return url
 }
 
-function reopenClosedStream(qc: QueryClient, closed: EventSource) {
-    if (closed.readyState !== EventSource.CLOSED || source !== closed) return
-    source = null
-    setTimeout(() => startEventStream(qc), REOPEN_DELAY_MS)
+function receive(qc: QueryClient, message: MessageEvent<string>) {
+    if (message.lastEventId) lastEventId = message.lastEventId
+    const event = parseEvent(message)
+    if (!event) return
+    apply(qc, event)
+    for (const listener of listeners) listener(event)
 }
 
 /** Opens the single per-tab SSE connection and folds every event into the query cache. */
 export function startEventStream(qc: QueryClient) {
-    if (source || typeof EventSource === 'undefined') return
-    const stream = new EventSource(eventStreamUrl())
-    source = stream
-    stream.addEventListener('open', () => (connected.value = true))
-    stream.addEventListener('error', () => {
-        connected.value = false
-        reopenClosedStream(qc, stream)
-    })
-    stream.addEventListener('message', (message: MessageEvent<string>) => {
-        if (message.lastEventId) lastEventId = message.lastEventId
-        const event = parseEvent(message)
-        if (!event) return
-        apply(qc, event)
-        for (const listener of listeners) listener(event)
+    connectRealtime({
+        url: eventStreamUrl,
+        onMessage: (message) => receive(qc, message),
+        onCursor: (id) => (lastEventId = id),
     })
 }
 
@@ -301,5 +290,6 @@ export function useEventStream() {
         listeners.add(listener)
         return () => listeners.delete(listener)
     }
+    const { connected } = useRealtimeConnection()
     return { connected, freshSessions, activities, on }
 }

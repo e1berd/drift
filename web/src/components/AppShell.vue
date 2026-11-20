@@ -17,6 +17,7 @@ import { useMediaQuery } from '@/composables/useMediaQuery'
 import { provideShell } from '@/composables/useShell'
 import { startEventStream } from '@/composables/useEventStream'
 import { loadDrafts } from '@/composables/useDrafts'
+import { useRealtimeNotice } from '@/composables/useRealtimeNotice'
 import { reportError } from '@/shared/errors'
 import { useI18n } from 'vue-i18n'
 import { shellPreferences, sidebarSide } from '@/shared/preferences'
@@ -25,6 +26,7 @@ const { t } = useI18n()
 const qc = useQueryClient()
 const side = usePreference(sidebarSide)
 const narrow = useMediaQuery('(max-width: 760px)')
+useRealtimeNotice()
 
 const shell = createResizableController()
 const collapsed = ref(false)

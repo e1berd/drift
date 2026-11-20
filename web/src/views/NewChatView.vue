@@ -28,7 +28,7 @@ import { draftKey } from '@/composables/useDrafts'
 import { useAgents } from '@/composables/useAgents'
 import { useCreateSession, useCreateStandaloneSession } from '@/gen'
 import type { CreateSessionResponse } from '@/gen'
-import type { ReadyAttachment } from '@/shared/attachments'
+import type { SentPrompt } from '@/shared/attachments'
 import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
 import type { AgentId } from '@/shared/agents'
@@ -99,8 +99,8 @@ function switchAgent(choice: { agent: AgentId; model: string }) {
     agent.value = choice.agent
 }
 
-function send({ text, attachments }: { text: string; attachments: ReadyAttachment[] }) {
-    if (!agents.isConnected(agent.value)) return
+async function send({ text, attachments }: SentPrompt) {
+    if (!agents.isConnected(agent.value)) throw new Error(`agent ${agent.value} is not connected`)
     const attachmentIds = attachments.map((attachment) => attachment.id)
     if (!text && !attachmentIds.length) return
     const body = {
@@ -111,8 +111,9 @@ function send({ text, attachments }: { text: string; attachments: ReadyAttachmen
         model: settings.modelFor(agent.value),
         mode: settings.modeFor(agent.value),
     }
-    if (projectId.value) createInProject.mutate({ path: { projectId: projectId.value }, body })
-    else createStandalone.mutate({ body })
+    if (projectId.value)
+        await createInProject.mutateAsync({ path: { projectId: projectId.value }, body })
+    else await createStandalone.mutateAsync({ body })
 }
 </script>
 
@@ -159,7 +160,7 @@ function send({ text, attachments }: { text: string; attachments: ReadyAttachmen
                     :placeholder="t('composer.placeholder.new', { agent: AGENTS[agent].name })"
                     :busy="creating"
                     :autofocus="!narrow"
-                    @send="send"
+                    :submit="send"
                     @switch-agent="switchAgent"
                 >
                     <template #start>

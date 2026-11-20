@@ -27,8 +27,11 @@ class FakeEventSource extends EventTarget {
         )
     }
 
-    failPermanently() {
-        this.readyState = FakeEventSource.CLOSED
+    signal(type: 'ready' | 'ping', id = '') {
+        this.dispatchEvent(new MessageEvent(type, { data: '{}', lastEventId: id }))
+    }
+
+    fail() {
         this.dispatchEvent(new Event('error'))
     }
 
@@ -37,51 +40,114 @@ class FakeEventSource extends EventTarget {
     }
 }
 
+let disconnect: (() => void) | undefined
+
 async function loadEventStream() {
     vi.resetModules()
-    return import('@/composables/useEventStream')
+    const connection = await import('@/composables/realtimeConnection')
+    disconnect = connection.disconnectRealtime
+    const stream = await import('@/composables/useEventStream')
+    return { ...stream, ...connection }
+}
+
+function latestSource() {
+    return FakeEventSource.instances.at(-1)!
 }
 
 describe('startEventStream', () => {
     beforeEach(() => {
         vi.useFakeTimers()
+        vi.spyOn(Math, 'random').mockReturnValue(1)
         FakeEventSource.instances = []
         vi.stubGlobal('EventSource', FakeEventSource)
     })
 
     afterEach(() => {
+        disconnect?.()
+        vi.restoreAllMocks()
         vi.useRealTimers()
         vi.unstubAllGlobals()
     })
 
-    it('reopens a stream the browser gave up on and resumes after the last event', async () => {
+    it('reconnects after an error and resumes after the last event', async () => {
         const { startEventStream, useEventStream } = await loadEventStream()
         const { connected } = useEventStream()
 
         startEventStream(new QueryClient())
-        const first = FakeEventSource.instances.at(0)!
+        const first = latestSource()
         first.open()
         first.receive('42', { type: 'noop' })
-        first.failPermanently()
+        first.fail()
 
         expect(connected.value).toBe(false)
-        expect(FakeEventSource.instances).toHaveLength(1)
+        expect(first.readyState).toBe(FakeEventSource.CLOSED)
 
-        vi.advanceTimersByTime(3000)
+        vi.advanceTimersByTime(1000)
 
-        const second = FakeEventSource.instances.at(1)!
+        const second = latestSource()
+        expect(second).not.toBe(first)
         expect(new URL(second.url).searchParams.get('last_event_id')).toBe('42')
         second.open()
         expect(connected.value).toBe(true)
     })
 
-    it('leaves reconnecting to the browser while the stream is not closed', async () => {
+    it('resumes from the ready cursor when no change event arrived yet', async () => {
         const { startEventStream } = await loadEventStream()
 
         startEventStream(new QueryClient())
-        FakeEventSource.instances.at(0)!.dispatchEvent(new Event('error'))
-        vi.advanceTimersByTime(3000)
+        const first = latestSource()
+        first.open()
+        first.signal('ready', 'boot-7')
+        first.fail()
+        vi.advanceTimersByTime(1000)
 
+        expect(new URL(latestSource().url).searchParams.get('last_event_id')).toBe('boot-7')
+    })
+
+    it('backs off exponentially while the server stays unreachable', async () => {
+        const { startEventStream } = await loadEventStream()
+
+        startEventStream(new QueryClient())
+        latestSource().fail()
+        vi.advanceTimersByTime(1000)
+        expect(FakeEventSource.instances).toHaveLength(2)
+
+        latestSource().fail()
+        vi.advanceTimersByTime(1999)
+        expect(FakeEventSource.instances).toHaveLength(2)
+        vi.advanceTimersByTime(1)
+        expect(FakeEventSource.instances).toHaveLength(3)
+    })
+
+    it('drops a connection that went silent and opens a new one', async () => {
+        const { startEventStream, useRealtimeConnection } = await loadEventStream()
+        const { status } = useRealtimeConnection()
+
+        startEventStream(new QueryClient())
+        const first = latestSource()
+        first.open()
+        vi.advanceTimersByTime(30_000)
+        first.signal('ping')
+        vi.advanceTimersByTime(30_000)
+        expect(status.value).toBe('open')
+
+        vi.advanceTimersByTime(15_000)
+        expect(status.value).toBe('lost')
+        expect(first.readyState).toBe(FakeEventSource.CLOSED)
+
+        vi.advanceTimersByTime(1000)
+        expect(latestSource()).not.toBe(first)
+    })
+
+    it('reconnects immediately when the browser comes back online', async () => {
+        const { startEventStream } = await loadEventStream()
+
+        startEventStream(new QueryClient())
+        latestSource().open()
+        window.dispatchEvent(new Event('offline'))
         expect(FakeEventSource.instances).toHaveLength(1)
+
+        window.dispatchEvent(new Event('online'))
+        expect(FakeEventSource.instances).toHaveLength(2)
     })
 })

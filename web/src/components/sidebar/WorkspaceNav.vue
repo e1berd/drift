@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { PhPlus } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { useI18n } from 'vue-i18n'
@@ -7,11 +7,13 @@ import { useI18n } from 'vue-i18n'
 import NewProjectForm from '@/components/sidebar/NewProjectForm.vue'
 import ProjectItem from '@/components/sidebar/ProjectItem.vue'
 import StandaloneChats from '@/components/sidebar/StandaloneChats.vue'
+import { useStickyProjects } from '@/composables/useStickyProjects'
 import { useProjects } from '@/shared/queries'
 
 const { t } = useI18n()
 const { projects, isPending } = useProjects()
 const creating = ref(false)
+const { pinStyle } = useStickyProjects(useTemplateRef<HTMLElement>('projectList'))
 </script>
 
 <template>
@@ -43,8 +45,13 @@ const creating = ref(false)
             <p v-else-if="!projects.length && !creating" class="px-2 py-2 text-muted">
                 {{ t('nav.noProjects') }}
             </p>
-            <div v-auto-animate>
-                <ProjectItem v-for="project in projects" :key="project.id" :project="project" />
+            <div ref="projectList">
+                <ProjectItem
+                    v-for="(project, index) in projects"
+                    :key="project.id"
+                    :project="project"
+                    :pin-style="pinStyle(index, projects.length)"
+                />
             </div>
         </nav>
     </div>

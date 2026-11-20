@@ -39,3 +39,9 @@ export function attachmentIdFromUploadURL(uploadURL: string | undefined): string
     const id = new URL(uploadURL, 'http://localhost').pathname.split('/').at(-1)
     return id || null
 }
+
+/** What the composer sends: the trimmed text and the attachments uploaded for it. */
+export interface SentPrompt {
+    text: string
+    attachments: ReadyAttachment[]
+}

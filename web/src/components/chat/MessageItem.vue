@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import { PhCopy } from '@phosphor-icons/vue'
+import { Button } from '@ui-sdk/vue/button'
+import { toast } from '@ui-sdk/vue/toast'
+import { useI18n } from 'vue-i18n'
+
+import type { Message } from '@/gen'
+import type { AgentId } from '@/shared/agents'
+
 import AgentLogo from '@/components/AgentLogo.vue'
 import MarkdownText from '@/components/chat/MarkdownText.vue'
 import MessageAttachments from '@/components/chat/MessageAttachments.vue'
@@ -8,10 +16,18 @@ import QuestionCard from '@/components/chat/question/QuestionCard.vue'
 import SystemNote from '@/components/chat/SystemNote.vue'
 import UsageWarning from '@/components/chat/UsageWarning.vue'
 import ToolCall from '@/components/chat/ToolCall.vue'
-import type { Message } from '@/gen'
-import type { AgentId } from '@/shared/agents'
+import { reportError } from '@/shared/errors'
 
-defineProps<{ message: Message; agent: AgentId }>()
+const props = defineProps<{ message: Message; agent: AgentId }>()
+const { t } = useI18n()
+
+function copyMessageText() {
+    if (!props.message.body.text) return
+    navigator.clipboard
+        .writeText(props.message.body.text)
+        .then(() => toast.success(t('copied')))
+        .catch(reportError)
+}
 </script>
 
 <template>
@@ -26,6 +42,14 @@ defineProps<{ message: Message; agent: AgentId }>()
         >
             {{ message.body.text }}
         </div>
+        <Button
+            v-if="message.body.text"
+            :aria-label="t('copy')"
+            :title="t('copy')"
+            @click="copyMessageText"
+        >
+            <PhCopy />
+        </Button>
     </div>
 
     <ThinkingBlock v-else-if="message.kind === 'thinking'" :body="message.body" />
@@ -48,3 +72,12 @@ defineProps<{ message: Message; agent: AgentId }>()
         <MarkdownText :source="message.body.text ?? ''" />
     </div>
 </template>
+
+<i18n lang="yaml">
+ru:
+    copy: Скопировать сообщение
+    copied: Сообщение скопировано
+en:
+    copy: Copy message
+    copied: Message copied
+</i18n>

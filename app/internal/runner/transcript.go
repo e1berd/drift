@@ -36,7 +36,7 @@ const (
 
 	maxOutputLines = 400
 	maxLineRunes   = 2000
-	maxInputRunes  = 600
+	maxInputRunes  = 8000
 )
 
 type textBody struct {

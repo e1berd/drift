@@ -127,6 +127,12 @@ export function useComposerUploads(draftKey: MaybeRefOrGetter<string>) {
         return taken
     }
 
+    function returnUnsent(key: string, attachments: ReadyAttachment[]) {
+        const target = draftUploads(key).ready
+        const kept = target.value.filter((item) => !attachments.some((sent) => sent.id === item.id))
+        target.value = [...attachments, ...kept]
+    }
+
     return {
         pending,
         ready,
@@ -137,5 +143,6 @@ export function useComposerUploads(draftKey: MaybeRefOrGetter<string>) {
         togglePause,
         retry,
         takeReady,
+        returnUnsent,
     }
 }

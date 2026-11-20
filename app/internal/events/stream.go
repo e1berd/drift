@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-const heartbeat = 25 * time.Second
+const heartbeat = 15 * time.Second
 
 type wireEvent struct {
 	Type   string          `json:"type"`
@@ -19,7 +19,9 @@ type wireEvent struct {
 }
 
 // Stream serves GET /api/events as text/event-stream for the signed-in user.
-// Every event is a default "message" event whose JSON carries its type.
+// Every change is a default "message" event whose JSON carries its type. Named "ready" (with the
+// resume cursor as its id, after any replay) and periodic "ping" events let the client tell a live
+// connection from a silently dead one.
 func (h *Hub) Stream(c *echo.Context) error {
 	r := c.Request()
 	lastID := r.Header.Get("Last-Event-ID")
@@ -27,8 +29,8 @@ func (h *Hub) Stream(c *echo.Context) error {
 		lastID = c.QueryParam("last_event_id")
 	}
 
-	ch, missed, resync, cancel := h.Subscribe(identity.From(c), lastID)
-	defer cancel()
+	sub := h.Subscribe(identity.From(c), lastID)
+	defer sub.Cancel()
 
 	w := c.Response()
 	header := w.Header()
@@ -50,15 +52,18 @@ func (h *Hub) Stream(c *echo.Context) error {
 	if _, err := bw.WriteString("retry: 3000\n\n"); err != nil {
 		return nil
 	}
-	if resync {
+	if sub.Resync {
 		if err := writeEvent(bw, "", wireEvent{Type: "resync"}); err != nil {
 			return nil
 		}
 	}
-	for _, ev := range missed {
+	for _, ev := range sub.Missed {
 		if err := writeEvent(bw, ev.ID, wireEvent{Type: ev.Type, Data: ev.Data, Origin: ev.Origin}); err != nil {
 			return nil
 		}
+	}
+	if _, err := bw.WriteString("id: " + sub.Cursor + "\nevent: ready\ndata: {}\n\n"); err != nil {
+		return nil
 	}
 	if err := flush(); err != nil {
 		return nil
@@ -72,10 +77,10 @@ func (h *Hub) Stream(c *echo.Context) error {
 		case <-r.Context().Done():
 			return nil
 		case <-ticker.C:
-			if _, err := bw.WriteString(": ping\n\n"); err != nil {
+			if _, err := bw.WriteString("event: ping\ndata: {}\n\n"); err != nil {
 				return nil
 			}
-		case ev, ok := <-ch:
+		case ev, ok := <-sub.Events:
 			if !ok {
 				return nil
 			}

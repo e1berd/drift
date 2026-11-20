@@ -13,16 +13,18 @@ import PromptEditor from '@/components/composer/PromptEditor.vue'
 import UsageIndicator from '@/components/composer/usage/UsageIndicator.vue'
 import ImagePreview from '@/components/composer/ImagePreview.vue'
 import { useComposerUploads } from '@/composables/useComposerUploads'
-import { useDraft } from '@/composables/useDrafts'
+import { discardSentDraft, useDraft } from '@/composables/useDrafts'
 import { useAgents } from '@/composables/useAgents'
 import type { AgentId } from '@/shared/agents'
 import { AGENTS } from '@/shared/agents'
-import type { ReadyAttachment } from '@/shared/attachments'
+import type { SentPrompt } from '@/shared/attachments'
+import { reportError } from '@/shared/errors'
 import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
     defineProps<{
         draftKey: string
+        submit: (payload: SentPrompt) => Promise<unknown>
         agent: AgentId
         sessionId?: string
         placeholder: string
@@ -44,7 +46,6 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-    send: [payload: { text: string; attachments: ReadyAttachment[] }]
     switchAgent: [choice: { agent: AgentId; model: string }]
     stop: []
 }>()
@@ -56,6 +57,7 @@ const draft = useDraft(() => props.draftKey)
 const uploads = useComposerUploads(() => props.draftKey)
 const noFiles: File[] = []
 const historyIndex = ref(-1)
+const sending = ref(false)
 const preview = ref<{ url: string; name: string } | null>(null)
 const editor = useTemplateRef<InstanceType<typeof PromptEditor>>('editor')
 
@@ -63,6 +65,7 @@ const canSend = computed(
     () =>
         !unavailable.value &&
         !props.busy &&
+        !sending.value &&
         !uploads.uploading.value &&
         (!!draft.text.value.trim() || uploads.ready.value.length > 0),
 )
@@ -76,11 +79,26 @@ function setText(value: string) {
     draft.external.value++
 }
 
-function send() {
+function clearSentDraft(key: string, text: string) {
+    if (key !== props.draftKey) discardSentDraft(key, text)
+    else if (draft.text.value.trim() === text) draft.clear()
+}
+
+async function send() {
     if (!canSend.value) return
-    emit('send', { text: draft.text.value.trim(), attachments: uploads.takeReady() })
-    historyIndex.value = -1
-    draft.clear()
+    const key = props.draftKey
+    const prompt = { text: draft.text.value.trim(), attachments: uploads.takeReady() }
+    sending.value = true
+    try {
+        await props.submit(prompt)
+        historyIndex.value = -1
+        clearSentDraft(key, prompt.text)
+    } catch (error) {
+        uploads.returnUnsent(key, prompt.attachments)
+        reportError(error)
+    } finally {
+        sending.value = false
+    }
 }
 
 function back() {

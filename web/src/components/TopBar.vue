@@ -56,7 +56,7 @@ const label = computed(() => (sidebarOpen.value ? t('nav.toggle.hide') : t('nav.
     padding: 0 10px;
     border-bottom: 1px solid var(--ui-border);
 
-    @media (max-width: 760px) {
+    @media (max-width: 1024px) {
         grid-template-columns: auto minmax(0, 1fr) auto;
     }
 }
@@ -64,11 +64,12 @@ const label = computed(() => (sidebarOpen.value ? t('nav.toggle.hide') : t('nav.
 .crumb {
     display: flex;
     min-width: 0;
+    overflow: hidden;
     align-items: center;
     gap: 8px;
     padding-inline-start: 6px;
 
-    @media (max-width: 760px) {
+    @media (max-width: 1024px) {
         display: none;
     }
 }

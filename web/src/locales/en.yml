@@ -165,3 +165,9 @@ uploads:
   empty: '{name} is empty'
   noSpace: 'The server has no room for {name}'
   failed: 'Could not upload {name}'
+realtime:
+  lost: 'Realtime connection lost'
+  reconnecting: 'Reconnecting; updates will arrive as soon as it is back.'
+  noNetwork: 'No internet. We will reconnect as soon as the network is back.'
+  reconnectNow: 'Reconnect'
+  restored: 'Connection restored'
