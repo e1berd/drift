@@ -45,7 +45,7 @@ function toggleAll() {
                 class="ml-auto"
                 :disabled="git.busy.value"
                 :aria-label="staged ? t('unstageAll') : t('stageAll')"
-                :title="staged ? t('unstageAll') : t('stageAll')"
+                v-tooltip="staged ? t('unstageAll') : t('stageAll')"
                 @click="toggleAll"
             >
                 <PhMinus v-if="staged" />
@@ -62,7 +62,9 @@ function toggleAll() {
                 <button
                     type="button"
                     class="change-name"
-                    :title="change.origPath ? `${change.origPath} → ${change.path}` : change.path"
+                    v-tooltip="
+                        change.origPath ? `${change.origPath} → ${change.path}` : change.path
+                    "
                     @click="git.selected.value = { path: change.path, staged }"
                 >
                     <span class="truncate text-fg">{{ fileName(change.path) }}</span>
@@ -73,7 +75,7 @@ function toggleAll() {
                     class="change-action"
                     :disabled="git.busy.value"
                     :aria-label="t('discard')"
-                    :title="t('discard')"
+                    v-tooltip="t('discard')"
                     @click="emit('discard', change)"
                 >
                     <PhArrowCounterClockwise />
@@ -82,7 +84,7 @@ function toggleAll() {
                     class="change-action"
                     :disabled="git.busy.value"
                     :aria-label="staged ? t('unstage') : t('stage')"
-                    :title="staged ? t('unstage') : t('stage')"
+                    v-tooltip="staged ? t('unstage') : t('stage')"
                     @click="toggleStage(change)"
                 >
                     <PhMinus v-if="staged" />
@@ -91,7 +93,7 @@ function toggleAll() {
                 <span
                     class="change-letter"
                     :data-status="change.status"
-                    :title="t(`status.${change.status}`)"
+                    v-tooltip="t(`status.${change.status}`)"
                     >{{ statusLetter(change.status) }}</span
                 >
             </li>

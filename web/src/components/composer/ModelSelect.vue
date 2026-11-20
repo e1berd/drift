@@ -63,7 +63,7 @@ const value = computed({
         <SelectTrigger
             class="composer-select"
             :aria-label="`${t('composer.model')}: ${AGENTS[agent].name} ${triggerLabel}`"
-            :title="`${AGENTS[agent].name} · ${triggerLabel}`"
+            v-tooltip="`${AGENTS[agent].name} · ${triggerLabel}`"
         >
             <span class="composer-select-icon"><AgentLogo :agent="agent" decorative /></span>
             <span class="composer-select-label">{{ triggerLabel }}</span>
@@ -84,7 +84,7 @@ const value = computed({
                         :key="model.id"
                         :value="optionValue(family.id, model.id)"
                         :disabled="!agents.isConnected(family.id)"
-                        :title="t(model.hint)"
+                        v-tooltip="t(model.hint)"
                     >
                         <SelectItemText>{{ itemLabel(model) }}</SelectItemText>
                         <SelectItemIndicator />

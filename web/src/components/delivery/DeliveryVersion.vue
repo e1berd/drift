@@ -21,7 +21,7 @@ function showUpdate() {
         <button
             type="button"
             class="version-label"
-            :title="t('versions')"
+            v-tooltip="t('versions')"
             :aria-label="`${t('versions')}: ${delivery.currentVersion}`"
             @click="versionsOpen = true"
         >
@@ -31,7 +31,7 @@ function showUpdate() {
             v-if="delivery.updateAvailable && latest"
             type="button"
             class="version-update"
-            :title="t('update', { version: latest.version })"
+            v-tooltip="t('update', { version: latest.version })"
             :aria-label="t('update', { version: latest.version })"
             @click="showUpdate"
         >

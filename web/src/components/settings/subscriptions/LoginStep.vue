@@ -53,7 +53,7 @@ function copyUserCode() {
                 <span>{{ t('enterCode') }}</span>
                 <div class="mt-2 flex items-center gap-2">
                     <code class="text-lg font-semibold tracking-widest">{{ login.userCode }}</code>
-                    <Button :aria-label="t('copy')" :title="t('copy')" @click="copyUserCode">
+                    <Button :aria-label="t('copy')" v-tooltip="t('copy')" @click="copyUserCode">
                         <PhCopy />
                     </Button>
                 </div>

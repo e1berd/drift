@@ -63,7 +63,7 @@ function saveDraft() {
     <section class="flex min-h-0 min-w-0 flex-col">
         <div class="editor-head">
             <b class="truncate font-mono font-medium text-fg">{{ selected ?? t('files.pick') }}</b>
-            <span v-if="dirty" class="shrink-0" :title="t('unsaved')" aria-hidden="true">●</span>
+            <span v-if="dirty" class="shrink-0" v-tooltip="t('unsaved')" aria-hidden="true">●</span>
             <span v-if="file.data.value && !file.data.value.binary" class="ml-auto shrink-0">
                 {{ t('files.lines', { count: lineCount }) }}
                 <template v-if="!editable"> · {{ t('files.readOnly') }}</template>
@@ -71,7 +71,7 @@ function saveDraft() {
             <Button
                 v-if="editable && !file.data.value?.binary"
                 :disabled="!dirty || save.isPending.value"
-                :title="t('saveHint')"
+                v-tooltip="t('saveHint')"
                 @click="saveDraft"
             >
                 <PhFloppyDisk />{{ t('save') }}

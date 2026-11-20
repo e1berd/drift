@@ -44,7 +44,7 @@ useInfiniteSentinel(sentinel, () => {
                 v-for="commit in commits"
                 :key="commit.hash"
                 class="commit-row"
-                :title="`${commit.hash}\n${commit.authorName} <${commit.authorEmail}>`"
+                v-tooltip="`${commit.hash}\n${commit.authorName} <${commit.authorEmail}>`"
             >
                 <span class="truncate text-fg">{{ commit.subject }}</span>
                 <span class="commit-meta">

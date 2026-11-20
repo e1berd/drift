@@ -7,6 +7,7 @@ import { createVAutoAnimate } from '@formkit/auto-animate/vue'
 import App from './App.vue'
 import router from './router'
 import { setupI18n } from './i18n'
+import { vTooltip } from '@/shared/tooltip/tooltip'
 import { applyColorScheme } from '@/shared/preferences'
 
 applyColorScheme()
@@ -25,6 +26,7 @@ const app = createApp(App)
 app.use(router)
 app.use(i18n)
 app.use(VueQueryPlugin, { queryClient })
+app.directive('tooltip', vTooltip)
 app.directive(
     'auto-animate',
     createVAutoAnimate({ duration: 320, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' }),

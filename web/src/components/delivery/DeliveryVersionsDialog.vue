@@ -82,7 +82,7 @@ function installChosen() {
                     target="_blank"
                     rel="noopener noreferrer"
                     class="delivery-repo"
-                    :title="t('repo', { stars: delivery.repository.stars })"
+                    v-tooltip="t('repo', { stars: delivery.repository.stars })"
                 >
                     <PhGithubLogo /><PhStar weight="fill" />{{ stars }}
                 </a>
@@ -97,7 +97,7 @@ function installChosen() {
                     :loading="releasesQuery.isPending.value"
                 />
                 <Button
-                    :title="t('check')"
+                    v-tooltip="t('check')"
                     :aria-label="t('check')"
                     :disabled="checking"
                     @click="check"

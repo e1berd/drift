@@ -29,7 +29,7 @@ const pushLabel = computed(() =>
         <span
             v-if="data?.upstream && (data.ahead || data.behind)"
             class="status-tag shrink-0 tabular-nums"
-            :title="t('aheadBehind', { ahead: data.ahead, behind: data.behind })"
+            v-tooltip="t('aheadBehind', { ahead: data.ahead, behind: data.behind })"
         >
             <template v-if="data.behind"><PhArrowDown />{{ data.behind }}</template>
             <template v-if="data.ahead"><PhArrowUp />{{ data.ahead }}</template>
@@ -37,7 +37,7 @@ const pushLabel = computed(() =>
         <div class="ml-auto flex shrink-0 gap-0.5">
             <Button
                 :aria-label="t('pull')"
-                :title="t('pull')"
+                v-tooltip="t('pull')"
                 :disabled="pending.pull.value || !data?.upstream"
                 @click="git.pull()"
             >
@@ -45,7 +45,7 @@ const pushLabel = computed(() =>
             </Button>
             <Button
                 :aria-label="pushLabel"
-                :title="pushLabel"
+                v-tooltip="pushLabel"
                 :disabled="pending.push.value || data?.detached || !data?.head"
                 @click="git.push()"
             >
@@ -53,7 +53,7 @@ const pushLabel = computed(() =>
             </Button>
             <Button
                 :aria-label="t('refresh')"
-                :title="t('refresh')"
+                v-tooltip="t('refresh')"
                 :disabled="status.isFetching.value"
                 @click="git.refresh().catch(reportError)"
             >

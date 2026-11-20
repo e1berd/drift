@@ -57,7 +57,7 @@ function toggleFull() {
             </CollapsibleTrigger>
             <Button
                 :aria-label="fullLabel"
-                :title="fullLabel"
+                v-tooltip="fullLabel"
                 :aria-pressed="full"
                 @click="toggleFull"
             >

@@ -201,7 +201,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                 <div class="flex items-center gap-1">
                     <FileInputTrigger
                         :aria-label="t('composer.attach')"
-                        :title="t('composer.attach')"
+                        v-tooltip="t('composer.attach')"
                     >
                         <PhPaperclip />
                     </FileInputTrigger>
@@ -210,7 +210,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                             <Button
                                 :disabled="unavailable || !history.length || historyIndex === 0"
                                 :aria-label="t('composer.historyBack')"
-                                :title="t('composer.historyBack')"
+                                v-tooltip="t('composer.historyBack')"
                                 @click="back"
                             >
                                 <PhArrowLeft />
@@ -218,7 +218,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                             <Button
                                 :disabled="historyIndex === -1"
                                 :aria-label="t('composer.historyForward')"
-                                :title="t('composer.historyForward')"
+                                v-tooltip="t('composer.historyForward')"
                                 @click="forward"
                             >
                                 <PhArrowRight />
@@ -238,7 +238,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                         data-variant="destructive"
                         :disabled="stopping"
                         :aria-label="t('composer.stop')"
-                        :title="t('composer.stop')"
+                        v-tooltip="t('composer.stop')"
                         @click="emit('stop')"
                     >
                         <PhStop weight="fill" />
@@ -247,7 +247,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                         data-variant="solid"
                         :disabled="!canSend"
                         :aria-label="running ? t('composer.queue') : t('composer.send')"
-                        :title="running ? t('composer.queue') : t('composer.send')"
+                        v-tooltip="running ? t('composer.queue') : t('composer.send')"
                         @click="send"
                     >
                         <PhArrowUp />

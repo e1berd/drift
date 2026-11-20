@@ -51,7 +51,7 @@ const details = computed(() => {
             <Button
                 v-if="!confirming"
                 :aria-label="t('remove')"
-                :title="t('remove')"
+                v-tooltip="t('remove')"
                 @click="confirming = true"
             >
                 <PhTrash />

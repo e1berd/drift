@@ -47,7 +47,7 @@ function choose(value: string) {
 
 <template>
     <Menu v-model:open="open" @action="choose">
-        <MenuTrigger class="branch-trigger" :disabled="git.busy.value" :title="t('switch')">
+        <MenuTrigger class="branch-trigger" :disabled="git.busy.value" v-tooltip="t('switch')">
             <PhGitBranch class="shrink-0" />
             <span class="truncate font-mono">{{ label }}</span>
             <PhCaretDown class="shrink-0" />

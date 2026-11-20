@@ -124,21 +124,21 @@ useInfiniteSentinel(sentinel, () => {
             <div class="project-actions">
                 <Button
                     :aria-label="t('project.newChat')"
-                    :title="t('project.newChat')"
+                    v-tooltip="t('project.newChat')"
                     @click="startChatInProject"
                 >
                     <PhPlus />
                 </Button>
                 <Button
                     :aria-label="t('project.rename')"
-                    :title="t('project.rename')"
+                    v-tooltip="t('project.rename')"
                     @click="startRename"
                 >
                     <PhPencilSimple />
                 </Button>
                 <Button
                     :aria-label="t('project.delete')"
-                    :title="t('project.delete')"
+                    v-tooltip="t('project.delete')"
                     @click="mode = 'confirm'"
                 >
                     <PhTrash />

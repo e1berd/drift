@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 
+import AppTooltip from '@/components/AppTooltip.vue'
 import AppShell from '@/components/AppShell.vue'
 import { useSession } from '@/composables/useSession'
 
@@ -21,4 +22,5 @@ onMounted(refresh)
             />
         </RouterView>
     </AppShell>
+    <AppTooltip />
 </template>

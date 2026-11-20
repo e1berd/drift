@@ -47,7 +47,7 @@ const draftTitle = computed(() => {
                 <PhDeviceMobile :size="11" />{{ t('session.typing')
                 }}<span class="typing-dots"><i /><i /><i /></span>
             </span>
-            <span v-else-if="hasDraft" class="status-tag" :title="draftTitle"
+            <span v-else-if="hasDraft" class="status-tag" v-tooltip="draftTitle"
                 ><PhPencilSimple :size="11" />{{ t('session.draft') }}</span
             >
             <time v-else :datetime="session.updateTime">{{

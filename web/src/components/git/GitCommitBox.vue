@@ -37,7 +37,7 @@ function commit() {
             @keydown.enter.ctrl.prevent="commit"
             @keydown.enter.meta.prevent="commit"
         />
-        <Button type="submit" data-variant="solid" :disabled="!canCommit" :title="t('hint')">
+        <Button type="submit" data-variant="solid" :disabled="!canCommit" v-tooltip="t('hint')">
             <PhCheck />{{ t('commit', { count: stagedCount }) }}
         </Button>
     </form>

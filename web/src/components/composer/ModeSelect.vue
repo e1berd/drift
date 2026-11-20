@@ -37,7 +37,7 @@ const current = computed(
             class="composer-select"
             :data-mode="current.id"
             :aria-label="`${t('composer.permissions')}: ${current.label}`"
-            :title="current.label"
+            v-tooltip="current.label"
         >
             <span class="composer-select-icon"><component :is="current.icon" weight="bold" /></span>
             <span class="composer-select-label">{{ current.short }}</span>
@@ -48,7 +48,7 @@ const current = computed(
                 :key="mode.id"
                 :value="mode.id"
                 :data-mode="mode.id"
-                :title="t(mode.hint)"
+                v-tooltip="t(mode.hint)"
             >
                 <SelectItemIcon><component :is="mode.icon" weight="bold" /></SelectItemIcon>
                 <SelectItemText>{{ mode.label }}</SelectItemText>

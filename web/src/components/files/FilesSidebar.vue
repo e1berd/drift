@@ -22,11 +22,11 @@ function toggle(kind: 'file' | 'dir') {
     >
         <div class="files-head">
             <PhFolderSimple class="shrink-0 text-fg" />
-            <b class="truncate font-medium text-fg" :title="hint">{{ title }}</b>
+            <b class="truncate font-medium text-fg" v-tooltip="hint">{{ title }}</b>
             <div class="ml-auto flex shrink-0 gap-0.5">
                 <Button
                     :aria-label="t('newFile')"
-                    :title="t('newFile')"
+                    v-tooltip="t('newFile')"
                     :aria-pressed="creating === 'file'"
                     @click="toggle('file')"
                 >
@@ -34,7 +34,7 @@ function toggle(kind: 'file' | 'dir') {
                 </Button>
                 <Button
                     :aria-label="t('newDir')"
-                    :title="t('newDir')"
+                    v-tooltip="t('newDir')"
                     :aria-pressed="creating === 'dir'"
                     @click="toggle('dir')"
                 >

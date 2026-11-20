@@ -18,7 +18,7 @@ const meta = computed(() => AGENTS[props.agent])
         :width="size"
         :height="size"
         :alt="decorative ? '' : meta.name"
-        :title="decorative ? undefined : meta.name"
+        v-tooltip="decorative ? undefined : meta.name"
         class="shrink-0 rounded-[4px] select-none"
         draggable="false"
     />

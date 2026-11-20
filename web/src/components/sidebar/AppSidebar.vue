@@ -43,7 +43,7 @@ function startNewChat() {
             <Button
                 class="flex-none"
                 :aria-label="t('nav.newChat')"
-                :title="t('nav.newChat')"
+                v-tooltip="t('nav.newChat')"
                 @click="startNewChat"
                 ><PhPlus /><span class="new-chat-label">{{ t('nav.newChat') }}</span></Button
             >

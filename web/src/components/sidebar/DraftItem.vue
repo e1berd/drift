@@ -22,7 +22,7 @@ const fromOther = computed(() => drafts.fromOther(props.draftKey))
         :to="projectId ? { name: 'new', query: { project: projectId } } : { name: 'new' }"
         class="nav-row motion-enter no-underline"
         data-draft
-        :title="text"
+        v-tooltip="text"
         @click="closeOnNarrow"
     >
         <span class="truncate italic">{{ text }}</span>

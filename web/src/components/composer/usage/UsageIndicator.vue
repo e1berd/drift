@@ -46,7 +46,7 @@ watch(
         <PopoverTrigger
             class="usage-trigger"
             :aria-label="`${t('title')}: ${summary}`"
-            :title="summary"
+            v-tooltip="summary"
         >
             <UsageMiniMeter
                 :short="t('short.session')"

@@ -59,7 +59,7 @@ function choose(value: string) {
 <template>
     <div class="flex flex-none items-center gap-1 border-t border-line p-2">
         <Menu @action="choose">
-            <MenuTrigger class="account-trigger" :title="name">
+            <MenuTrigger class="account-trigger" v-tooltip="name">
                 <Avatar class="flex-none"><AvatarFallback>{{ initial }}</AvatarFallback></Avatar>
                 <span class="min-w-0 flex-1 text-left leading-tight">
                     <span class="block truncate font-medium">{{ name }}</span>
@@ -88,7 +88,7 @@ function choose(value: string) {
         <Button
             class="flex-none"
             :aria-label="t('nav.settings')"
-            :title="t('nav.settings')"
+            v-tooltip="t('nav.settings')"
             @click="openSettings"
         >
             <PhGearSix />

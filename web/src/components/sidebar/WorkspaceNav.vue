@@ -22,7 +22,7 @@ const creating = ref(false)
             <span>{{ t('nav.projects') }}</span>
             <Button
                 :aria-label="t('nav.newProject')"
-                :title="t('nav.newProject')"
+                v-tooltip="t('nav.newProject')"
                 :aria-expanded="creating"
                 @click="creating = !creating"
             >

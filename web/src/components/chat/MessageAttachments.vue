@@ -17,7 +17,7 @@ const preview = ref<{ url: string; name: string } | null>(null)
             v-for="attachment in attachments"
             :key="attachment.id"
             :aria-label="attachment.name"
-            :title="attachment.name"
+            v-tooltip="attachment.name"
             class="thumb"
             @click="preview = { url: attachmentURL(attachment.id), name: attachment.name }"
         >

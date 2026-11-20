@@ -138,7 +138,7 @@ const stop = useStopSession({
                         v-for="item in TABS"
                         :key="item.id"
                         :value="item.id"
-                        :title="t(`tabs.${item.id}`)"
+                        v-tooltip="t(`tabs.${item.id}`)"
                     >
                         <component :is="item.icon" />
                         <span class="session-tab-label">{{ t(`tabs.${item.id}`) }}</span>
@@ -147,7 +147,7 @@ const stop = useStopSession({
                 </TabsList>
             </template>
             <template #end>
-                <span v-if="running" class="status-tag motion-fade" :title="AGENTS[agent].name">
+                <span v-if="running" class="status-tag motion-fade" v-tooltip="AGENTS[agent].name">
                     <RunSpinner /><span class="max-md:sr-only">{{ AGENTS[agent].name }}</span>
                 </span>
             </template>

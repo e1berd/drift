@@ -22,7 +22,7 @@ const label = computed(() => (sidebarOpen.value ? t('nav.toggle.hide') : t('nav.
                 v-if="left"
                 :aria-label="label"
                 :aria-expanded="sidebarOpen"
-                :title="label"
+                v-tooltip="label"
                 @click="toggleSidebar"
             >
                 <PhSidebarSimple />
@@ -36,7 +36,7 @@ const label = computed(() => (sidebarOpen.value ? t('nav.toggle.hide') : t('nav.
                 v-if="!left"
                 :aria-label="label"
                 :aria-expanded="sidebarOpen"
-                :title="label"
+                v-tooltip="label"
                 @click="toggleSidebar"
             >
                 <PhSidebarSimple class="-scale-x-100" />

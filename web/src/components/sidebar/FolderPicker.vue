@@ -32,7 +32,7 @@ function choose() {
 </script>
 
 <template>
-    <Button type="button" :aria-label="t('browse')" :title="t('browse')" @click="browse">
+    <Button type="button" :aria-label="t('browse')" v-tooltip="t('browse')" @click="browse">
         <PhFolderOpen />
     </Button>
     <Dialog v-model:open="open">
