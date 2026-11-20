@@ -36,6 +36,7 @@ nav:
     show: 'Show panel'
   offline: 'Offline, reconnecting'
 project:
+  actions: 'Project actions'
   name: 'Project name'
   newChat: 'New chat in this project'
   path: 'Folder in the workspace'

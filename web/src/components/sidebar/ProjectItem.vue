@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
-import { PhFolderSimple, PhPencilSimple, PhPlus, PhTrash } from '@phosphor-icons/vue'
+import { PhFolderSimple } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { Input } from '@ui-sdk/vue/input'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@ui-sdk/vue/collapsible'
@@ -10,6 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { Project } from '@/gen'
 
 import SessionItem from '@/components/sidebar/SessionItem.vue'
+import ProjectMenu from '@/components/sidebar/ProjectMenu.vue'
 import DraftItem from '@/components/sidebar/DraftItem.vue'
 import { draftKey, useDraftIndex } from '@/composables/useDrafts'
 import { useOpenProjects } from '@/composables/useOpenProjects'
@@ -122,27 +123,11 @@ useInfiniteSentinel(sentinel, () => {
                 </span>
             </CollapsibleTrigger>
             <div class="project-actions">
-                <Button
-                    :aria-label="t('project.newChat')"
-                    v-tooltip="t('project.newChat')"
-                    @click="startChatInProject"
-                >
-                    <PhPlus />
-                </Button>
-                <Button
-                    :aria-label="t('project.rename')"
-                    v-tooltip="t('project.rename')"
-                    @click="startRename"
-                >
-                    <PhPencilSimple />
-                </Button>
-                <Button
-                    :aria-label="t('project.delete')"
-                    v-tooltip="t('project.delete')"
-                    @click="mode = 'confirm'"
-                >
-                    <PhTrash />
-                </Button>
+                <ProjectMenu
+                    @new-chat="startChatInProject"
+                    @rename="startRename"
+                    @remove="mode = 'confirm'"
+                />
             </div>
         </div>
 
@@ -197,7 +182,8 @@ useInfiniteSentinel(sentinel, () => {
         opacity var(--dur-1);
 }
 
-.project-row:is(:hover, :focus-within) .project-actions {
+.project-row:is(:hover, :focus-within) .project-actions,
+.project-actions:has([aria-expanded='true']) {
     width: auto;
     padding-inline-start: 4px;
     opacity: 1;
