@@ -21,14 +21,14 @@ func kimiArgs(req workspace.RunRequest, agentSessionID string) []string {
 }
 
 type kimiEvent struct {
-	Role        string         `json:"role"`
-	Type        string         `json:"type"`
-	SessionID   string         `json:"session_id"`
-	Content     string         `json:"content"`
-	ToolCallID  string         `json:"tool_call_id"`
-	ToolCalls   []kimiToolCall `json:"tool_calls"`
-	Message     string         `json:"message"`
-	Error       string         `json:"error"`
+	Role       string         `json:"role"`
+	Type       string         `json:"type"`
+	SessionID  string         `json:"session_id"`
+	Content    string         `json:"content"`
+	ToolCallID string         `json:"tool_call_id"`
+	ToolCalls  []kimiToolCall `json:"tool_calls"`
+	Message    string         `json:"message"`
+	Error      string         `json:"error"`
 }
 
 type kimiToolCall struct {

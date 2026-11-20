@@ -110,6 +110,8 @@ modes:
   auto: 'The agent decides what is safe to run'
   plan: 'Read and plan only, no changes'
   bypass: 'No prompts at all. Sandboxes only'
+  kimiPrompt: 'Kimi Code in prompt mode runs edits and commands without asking; the mode cannot be changed'
+  mimoBuild: 'Build agent: edits files and runs commands'
 chat:
   today: 'Today'
   olderLoading: 'Loading earlier messages…'

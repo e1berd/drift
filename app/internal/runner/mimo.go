@@ -8,7 +8,7 @@ import (
 )
 
 func mimoArgs(req workspace.RunRequest, agentSessionID string, images []string) []string {
-	args := []string{"run", "--format", "json", "--dangerously-skip-permissions"}
+	args := []string{"run", "--format", "json", "--dangerously-skip-permissions", "--agent", mimoAgent(req.Mode)}
 	if req.Model != "" && req.Model != "default" {
 		args = append(args, "-m", req.Model)
 	}
@@ -21,20 +21,27 @@ func mimoArgs(req workspace.RunRequest, agentSessionID string, images []string) 
 	return args
 }
 
+func mimoAgent(mode string) string {
+	if mode == "plan" {
+		return "plan"
+	}
+	return "build"
+}
+
 type mimoEvent struct {
-	Type      string          `json:"type"`
-	SessionID string          `json:"sessionID"`
-	Text      string          `json:"text"`
-	Part      *mimoPart       `json:"part"`
-	Error     *mimoError      `json:"error"`
+	Type      string     `json:"type"`
+	SessionID string     `json:"sessionID"`
+	Text      string     `json:"text"`
+	Part      *mimoPart  `json:"part"`
+	Error     *mimoError `json:"error"`
 }
 
 type mimoPart struct {
-	ID    string          `json:"id"`
-	Type  string          `json:"type"`
-	Text  string          `json:"text"`
-	Tool  string          `json:"tool"`
-	State mimoToolState   `json:"state"`
+	ID    string        `json:"id"`
+	Type  string        `json:"type"`
+	Text  string        `json:"text"`
+	Tool  string        `json:"tool"`
+	State mimoToolState `json:"state"`
 }
 
 type mimoToolState struct {

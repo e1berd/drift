@@ -48,7 +48,7 @@ export function useQuestionAnswers(
                     custom: answer.custom?.trim() ?? '',
                 })),
                 model: settings.modelFor(toValue(agent), current.sessionId),
-                mode: settings.mode(),
+                mode: settings.modeFor(toValue(agent)),
             },
         })
     }

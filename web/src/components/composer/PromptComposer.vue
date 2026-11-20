@@ -190,7 +190,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                     :session-id="sessionId"
                     @switch-agent="(choice) => emit('switchAgent', choice)"
                 />
-                <ModeSelect />
+                <ModeSelect :agent="agent" />
                 <slot name="start">
                     <div v-if="showHistory" class="composer-history">
                         <Button

@@ -109,7 +109,7 @@ function send({ text, attachments }: { text: string; attachments: ReadyAttachmen
         title: text ? undefined : attachments.at(0)?.name.slice(0, 200),
         attachmentIds,
         model: settings.modelFor(agent.value),
-        mode: settings.mode(),
+        mode: settings.modeFor(agent.value),
     }
     if (projectId.value) createInProject.mutate({ path: { projectId: projectId.value }, body })
     else createStandalone.mutate({ body })

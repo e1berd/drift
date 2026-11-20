@@ -30,6 +30,10 @@ const usage = useAgentUsage(
     () => props.sessionId,
 )
 
+const reportsLimits = computed(
+    () => !!usage.subscription.value && usage.unavailable.value !== 'unsupported',
+)
+
 const summary = computed(() => {
     const percentOf = (used?: number) =>
         used === undefined ? t('unknown') : `${Math.round(used)}%`
@@ -48,7 +52,7 @@ watch(
 </script>
 
 <template>
-    <Popover v-if="usage.subscription.value">
+    <Popover v-if="reportsLimits">
         <PopoverTrigger
             class="usage-trigger"
             :aria-label="`${t('title')}: ${summary}`"
@@ -67,10 +71,10 @@ watch(
         </PopoverTrigger>
         <PopoverContent side="top" align="end" class="usage-popover">
             <PopoverTitle>{{ t('heading', { agent: AGENTS[agent].name }) }}</PopoverTitle>
-            <PopoverDescription v-if="usage.subscription.value.account">
+            <PopoverDescription v-if="usage.subscription.value?.account">
                 {{ usage.subscription.value.account }}
             </PopoverDescription>
-            <UsageMeters :subscription-id="usage.subscription.value.id" />
+            <UsageMeters :subscription-id="usage.subscription.value!.id" />
             <RouterLink to="/settings" class="usage-settings text-muted">{{
                 t('settings')
             }}</RouterLink>

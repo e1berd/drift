@@ -11,28 +11,41 @@ import {
 } from '@ui-sdk/vue/select'
 import { useI18n } from 'vue-i18n'
 
-import type { PermissionMode } from '@/shared/agents'
+import type { AgentId, PermissionMode } from '@/shared/agents'
 
 import { useComposerSettings } from '@/composables/useComposerSettings'
-import { PERMISSION_MODES } from '@/shared/agents'
+import { AGENTS } from '@/shared/agents'
 
+const props = defineProps<{ agent: AgentId }>()
 const { t } = useI18n()
 const settings = useComposerSettings()
 
-const items = PERMISSION_MODES.map((mode) => ({ value: mode.id, label: mode.label }))
+const modes = computed(() => AGENTS[props.agent].modes)
+const items = computed(() => modes.value.map((mode) => ({ value: mode.id, label: mode.label })))
 const value = computed({
-    get: () => settings.mode(),
+    get: () => settings.modeFor(props.agent),
     set: (mode: PermissionMode | null) => {
-        if (mode) settings.setMode(mode)
+        if (mode) settings.setMode(props.agent, mode)
     },
 })
 const current = computed(
-    () => PERMISSION_MODES.find((mode) => mode.id === value.value) ?? PERMISSION_MODES.at(0)!,
+    () => modes.value.find((mode) => mode.id === value.value) ?? modes.value.at(0)!,
 )
 </script>
 
 <template>
-    <Select v-model:value="value" :items="items">
+    <span
+        v-if="modes.length === 1"
+        class="composer-select composer-mode-fixed"
+        tabindex="0"
+        :data-mode="current.id"
+        :aria-label="`${t('composer.permissions')}: ${current.label}. ${t(current.hint)}`"
+        v-tooltip="t(current.hint)"
+    >
+        <span class="composer-select-icon"><component :is="current.icon" weight="bold" /></span>
+        <span class="composer-select-label">{{ current.short }}</span>
+    </span>
+    <Select v-else v-model:value="value" :items="items">
         <SelectTrigger
             class="composer-select"
             :data-mode="current.id"
@@ -44,7 +57,7 @@ const current = computed(
         </SelectTrigger>
         <SelectContent side="top" align="end">
             <SelectItem
-                v-for="mode in PERMISSION_MODES"
+                v-for="mode in modes"
                 :key="mode.id"
                 :value="mode.id"
                 :data-mode="mode.id"
@@ -76,6 +89,20 @@ const current = computed(
 
     &[data-mode='bypassPermissions'] {
         color: var(--mode-bypassPermissions);
+    }
+}
+
+.composer-mode-fixed {
+    display: inline-flex;
+    align-items: center;
+    height: calc(var(--ui-spacing) * 8);
+    border-radius: var(--ui-radius);
+    font-size: var(--ui-font-size);
+    cursor: default;
+
+    &:focus-visible {
+        outline: 2px solid var(--ui-ring);
+        outline-offset: 2px;
     }
 }
 </style>

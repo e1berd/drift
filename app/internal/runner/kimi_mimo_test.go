@@ -104,11 +104,14 @@ func TestMimoArgs(t *testing.T) {
 	req.Text = "hi"
 	args := mimoArgs(req, "m1", []string{"/tmp/img.png"})
 	got := strings.Join(args, " ")
-	want := "run --format json --dangerously-skip-permissions -s m1 -f /tmp/img.png"
+	want := "run --format json --dangerously-skip-permissions --agent build -s m1 -f /tmp/img.png"
 	if got != want {
 		t.Errorf("args %q, want %q", got, want)
 	}
-	if args = mimoArgs(runRequest("", "default"), "", nil); strings.Join(args, " ") != "run --format json --dangerously-skip-permissions" {
+	if args = mimoArgs(runRequest("", "default"), "", nil); strings.Join(args, " ") != "run --format json --dangerously-skip-permissions --agent build" {
 		t.Errorf("args %q", args)
+	}
+	if args = mimoArgs(runRequest("", "plan"), "", nil); strings.Join(args, " ") != "run --format json --dangerously-skip-permissions --agent plan" {
+		t.Errorf("plan mode must run the plan agent: %q", args)
 	}
 }

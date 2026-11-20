@@ -121,7 +121,7 @@ function send({ text, attachments }: { text: string; attachments: ReadyAttachmen
             text,
             attachmentIds,
             model: settings.modelFor(agent.value, sessionId.value),
-            mode: settings.mode(),
+            mode: settings.modeFor(agent.value),
         },
     })
 }
