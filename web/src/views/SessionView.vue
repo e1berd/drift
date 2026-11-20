@@ -108,7 +108,7 @@ const update = useUpdateSession({
 
 async function switchAgent({ agent: next, model }: { agent: AgentId; model: string }) {
     if (!(await switchDialog.value?.ask(next))) return
-    settings.setModel(next, model)
+    settings.setModel(next, model, sessionId.value)
     update.mutate({ path: { sessionId: sessionId.value }, body: { agent: next } })
 }
 
@@ -117,7 +117,12 @@ function send({ text, attachments }: { text: string; attachments: ReadyAttachmen
     if (!text && !attachmentIds.length) return
     post.mutate({
         path: { sessionId: sessionId.value },
-        body: { text, attachmentIds, model: settings.modelFor(agent.value), mode: settings.mode() },
+        body: {
+            text,
+            attachmentIds,
+            model: settings.modelFor(agent.value, sessionId.value),
+            mode: settings.mode(),
+        },
     })
 }
 
@@ -190,6 +195,7 @@ const stop = useStopSession({
                     <PromptComposer
                         :draft-key="draftKey(sessionId)"
                         :agent="agent"
+                        :session-id="sessionId"
                         :history="history"
                         :placeholder="placeholder"
                         :busy="post.isPending.value || update.isPending.value"

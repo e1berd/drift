@@ -10,7 +10,10 @@ import { headlineWindows } from '@/shared/usage'
 
 const USAGE_REFRESH_MS = 60_000
 
-export function useAgentUsage(agent: MaybeRefOrGetter<AgentId>) {
+export function useAgentUsage(
+    agent: MaybeRefOrGetter<AgentId>,
+    sessionId?: MaybeRefOrGetter<string | undefined>,
+) {
     const agents = useAgents()
     const settings = useComposerSettings()
 
@@ -34,7 +37,7 @@ export function useAgentUsage(agent: MaybeRefOrGetter<AgentId>) {
 
     const windows = computed(() => usage.data.value?.windows ?? [])
     const headline = computed(() =>
-        headlineWindows(windows.value, settings.modelFor(toValue(agent))),
+        headlineWindows(windows.value, settings.modelFor(toValue(agent), toValue(sessionId))),
     )
 
     return {

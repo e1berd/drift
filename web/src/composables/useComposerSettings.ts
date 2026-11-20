@@ -4,18 +4,27 @@ import { storedRef } from '@/shared/storage'
 
 interface ComposerSettings {
     models: Partial<Record<AgentId, string>>
+    sessionModels?: Record<string, string>
     mode: PermissionMode
 }
 
-const state = storedRef<ComposerSettings>('drift.composer', { models: {}, mode: 'default' })
+const state = storedRef<ComposerSettings>('drift.composer', {
+    models: {},
+    sessionModels: {},
+    mode: 'default',
+})
 
-/** Model per agent and the permission mode last picked in any composer on this device. */
+const defaultModel = (agent: AgentId) =>
+    state.value.models[agent] ?? AGENTS[agent].models.at(0)?.id ?? 'default'
+
+/** Model per agent (or per session) and the permission mode last picked in any composer on this device. */
 export function useComposerSettings() {
     return {
-        modelFor: (agent: AgentId) =>
-            state.value.models[agent] ?? AGENTS[agent].models.at(0)?.id ?? 'default',
-        setModel: (agent: AgentId, model: string) => {
-            state.value.models[agent] = model
+        modelFor: (agent: AgentId, sessionId?: string) =>
+            (sessionId && state.value.sessionModels?.[sessionId]) || defaultModel(agent),
+        setModel: (agent: AgentId, model: string, sessionId?: string) => {
+            if (sessionId) (state.value.sessionModels ??= {})[sessionId] = model
+            else state.value.models[agent] = model
         },
         mode: () => state.value.mode,
         setMode: (mode: PermissionMode) => {

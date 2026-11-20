@@ -18,11 +18,17 @@ import { useAgentUsage } from '@/composables/useAgentUsage'
 import { reportError } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
 
-const props = withDefaults(defineProps<{ agent: AgentId; running?: boolean }>(), {
-    running: false,
-})
+const props = withDefaults(
+    defineProps<{ agent: AgentId; sessionId?: string; running?: boolean }>(),
+    {
+        running: false,
+    },
+)
 const { t } = useI18n()
-const usage = useAgentUsage(() => props.agent)
+const usage = useAgentUsage(
+    () => props.agent,
+    () => props.sessionId,
+)
 
 const summary = computed(() => {
     const percentOf = (used?: number) =>

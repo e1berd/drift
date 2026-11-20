@@ -20,7 +20,7 @@ import { useAgents } from '@/composables/useAgents'
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { AGENTS } from '@/shared/agents'
 
-const props = defineProps<{ agent: AgentId }>()
+const props = defineProps<{ agent: AgentId; sessionId?: string }>()
 const emit = defineEmits<{ switchAgent: [choice: { agent: AgentId; model: string }] }>()
 const { t } = useI18n()
 const settings = useComposerSettings()
@@ -42,17 +42,17 @@ const items = computed(() =>
     ),
 )
 const currentModel = computed(() => {
-    const id = settings.modelFor(props.agent)
+    const id = settings.modelFor(props.agent, props.sessionId)
     return AGENTS[props.agent].models.find((model) => model.id === id)
 })
 const triggerLabel = computed(() => currentModel.value?.label ?? AGENTS[props.agent].name)
 
 const value = computed({
-    get: () => optionValue(props.agent, settings.modelFor(props.agent)),
+    get: () => optionValue(props.agent, settings.modelFor(props.agent, props.sessionId)),
     set: (next: string | null) => {
         if (!next) return
         const [agent, model] = next.split(SEPARATOR) as [AgentId, string]
-        if (agent === props.agent) settings.setModel(agent, model)
+        if (agent === props.agent) settings.setModel(agent, model, props.sessionId)
         else emit('switchAgent', { agent, model })
     },
 })

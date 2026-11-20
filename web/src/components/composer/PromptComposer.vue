@@ -24,6 +24,7 @@ const props = withDefaults(
     defineProps<{
         draftKey: string
         agent: AgentId
+        sessionId?: string
         placeholder: string
         history?: string[]
         busy?: boolean
@@ -186,6 +187,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                 </FileInputTrigger>
                 <ModelSelect
                     :agent="agent"
+                    :session-id="sessionId"
                     @switch-agent="(choice) => emit('switchAgent', choice)"
                 />
                 <ModeSelect />
@@ -210,7 +212,7 @@ defineExpose({ focus: () => editor.value?.focus() })
                     </div>
                 </slot>
                 <span class="composer-bar-spacer" />
-                <UsageIndicator :agent="agent" :running="running" />
+                <UsageIndicator :agent="agent" :session-id="sessionId" :running="running" />
                 <ComposerSendControls
                     :running="running"
                     :stopping="stopping"

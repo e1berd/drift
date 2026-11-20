@@ -83,8 +83,10 @@ watch(agents.connected, (list) => {
 
 const created = {
     mutation: {
-        onSuccess: ({ session }: CreateSessionResponse) =>
-            router.push({ name: 'session', params: { sessionId: session.id } }),
+        onSuccess: ({ session }: CreateSessionResponse) => {
+            settings.setModel(session.agent, settings.modelFor(session.agent), session.id)
+            return router.push({ name: 'session', params: { sessionId: session.id } })
+        },
         onError: (error: unknown) => toast.error(errorMessage(error)),
     },
 }
