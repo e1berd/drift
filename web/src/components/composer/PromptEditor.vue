@@ -6,6 +6,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 
 import ScrollPane from '@/components/ScrollPane.vue'
+import { PastedText } from '@/components/composer/pasted-text/pastedText'
 
 const props = defineProps<{
     modelValue: string
@@ -82,6 +83,7 @@ const editor = useEditor({
             underline: false,
         }),
         Placeholder.configure({ placeholder: () => props.placeholder }),
+        PastedText,
         Keys,
     ],
     editorProps: {
