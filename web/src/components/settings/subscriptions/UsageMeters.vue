@@ -88,7 +88,7 @@ const windows = computed(() =>
         </div>
         <Button
             :aria-label="t('refresh')"
-            :title="t('refresh')"
+            v-tooltip="t('refresh')"
             :disabled="refresh.isPending.value || usage.isFetching.value"
             @click="refresh.mutate()"
         >
