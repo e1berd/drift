@@ -35,6 +35,27 @@
         }
     }
 
+    .row-action {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: 0;
+        border-radius: calc(var(--ui-radius) / 2);
+        background: none;
+        color: var(--ui-muted-foreground);
+        cursor: pointer;
+
+        &:hover:not([data-disabled]),
+        &[data-open] {
+            background: none;
+            color: var(--ui-foreground);
+        }
+    }
+
     .status-tag {
         display: inline-flex;
         align-items: center;

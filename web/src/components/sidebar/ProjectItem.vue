@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
-import { PhFolderSimple } from '@phosphor-icons/vue'
+import { PhFolderSimple, PhPlus } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { Input } from '@ui-sdk/vue/input'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@ui-sdk/vue/collapsible'
@@ -122,6 +122,15 @@ useInfiniteSentinel(sentinel, () => {
                     <span class="ml-auto text-muted tabular-nums">{{ project.sessionCount }}</span>
                 </span>
             </CollapsibleTrigger>
+            <button
+                type="button"
+                class="row-action"
+                :aria-label="t('project.newChat')"
+                v-tooltip="t('project.newChat')"
+                @click="startChatInProject"
+            >
+                <PhPlus :size="16" weight="bold" />
+            </button>
             <ProjectMenu
                 @new-chat="startChatInProject"
                 @rename="startRename"

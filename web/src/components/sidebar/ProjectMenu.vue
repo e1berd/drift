@@ -24,7 +24,7 @@ function choose(value: string) {
 <template>
     <Menu @action="choose">
         <MenuTrigger
-            class="project-menu-trigger"
+            class="row-action"
             :aria-label="t('project.actions')"
             v-tooltip="t('project.actions')"
         >
@@ -46,22 +46,3 @@ function choose(value: string) {
         </MenuContent>
     </Menu>
 </template>
-
-<style scoped>
-.project-menu-trigger {
-    flex: none;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: 0;
-    border-radius: calc(var(--ui-radius) / 2);
-    background: none;
-    color: var(--ui-muted-foreground);
-
-    &:hover:not([data-disabled]),
-    &[data-open] {
-        background: none;
-        color: var(--ui-foreground);
-    }
-}
-</style>
