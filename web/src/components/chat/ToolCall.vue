@@ -1,84 +1,93 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { PhArrowsIn, PhArrowsOut, PhCheck } from '@phosphor-icons/vue'
-import { Button } from '@ui-sdk/vue/button'
+import {
+    PhCaretRight,
+    PhCheck,
+    PhFilePlus,
+    PhFileText,
+    PhGlobe,
+    PhListChecks,
+    PhMagnifyingGlass,
+    PhPencilSimple,
+    PhRobot,
+    PhTerminal,
+    PhWarningCircle,
+    PhWrench,
+} from '@phosphor-icons/vue'
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from '@ui-sdk/vue/collapsible'
 import { useI18n } from 'vue-i18n'
+
+import type { Component } from 'vue'
 
 import type { MessageBody } from '@/gen'
 
 import RunSpinner from '@/components/RunSpinner.vue'
-import ScrollPane from '@/components/ScrollPane.vue'
+import ToolOutput from '@/components/chat/ToolOutput.vue'
+import ToolSummary from '@/components/chat/ToolSummary.vue'
+import type { ToolFamily } from '@/shared/toolCalls'
+import { shellCommand, toolFamily } from '@/shared/toolCalls'
 
-const VISIBLE_LINES = 12
+const ICONS: Record<ToolFamily, Component> = {
+    shell: PhTerminal,
+    edit: PhPencilSimple,
+    write: PhFilePlus,
+    read: PhFileText,
+    search: PhMagnifyingGlass,
+    web: PhGlobe,
+    todo: PhListChecks,
+    agent: PhRobot,
+    other: PhWrench,
+}
 
 const props = defineProps<{ body: MessageBody }>()
 const { t } = useI18n()
 
+const name = computed(() => props.body.name ?? '')
+const input = computed(() => props.body.input ?? '')
+const family = computed(() => toolFamily(name.value))
 const lines = computed(() => props.body.output ?? [])
 const status = computed(() => props.body.status ?? 'done')
-const open = ref(status.value === 'running' || lines.value.length <= VISIBLE_LINES)
-const full = ref(false)
-const fullLabel = computed(() => (full.value ? t('chat.collapse') : t('chat.expand')))
-
-function lineKind(line: string): string | undefined {
-    if (line.startsWith('@@')) return 'hunk'
-    if (line.startsWith('+') && !line.startsWith('+++')) return 'add'
-    if (line.startsWith('-') && !line.startsWith('---')) return 'del'
-    return undefined
-}
-
-function toggleFull() {
-    full.value = !full.value
-    if (full.value) open.value = true
-}
+const failed = computed(() => status.value === 'error' || status.value === 'stopped')
+const fullInput = computed(() =>
+    family.value === 'shell' ? shellCommand(input.value) : input.value,
+)
+const showsFullInput = computed(() => fullInput.value.includes('\n') || fullInput.value.length > 80)
+const expandable = computed(() => lines.value.length > 0 || showsFullInput.value)
+const open = ref(status.value === 'error' && lines.value.length > 0)
 </script>
 
 <template>
-    <Collapsible v-model:open="open" class="tool" :data-full="full || undefined">
-        <div class="flex items-start gap-1">
-            <CollapsibleTrigger class="min-w-0 flex-1">
-                <span class="tool-head">
-                    <b>{{ body.name }}</b>
-                    <span class="tool-input">{{ body.input }}</span>
-                    <span class="status-tag shrink-0">
-                        <template v-if="status === 'running'"
-                            ><RunSpinner :size="13" fast />{{ t('chat.running') }}</template
-                        >
-                        <span v-else-if="status === 'stopped'" class="text-danger">{{
-                            t('chat.stopped')
-                        }}</span>
-                        <span v-else-if="status === 'error'" class="text-danger">{{
-                            t('chat.failed')
-                        }}</span>
-                        <template v-else>{{ body.meta }}<PhCheck /></template>
-                    </span>
-                </span>
-            </CollapsibleTrigger>
-            <Button
-                :aria-label="fullLabel"
-                v-tooltip="fullLabel"
-                :aria-pressed="full"
-                @click="toggleFull"
-            >
-                <PhArrowsIn v-if="full" />
-                <PhArrowsOut v-else />
-            </Button>
-        </div>
-        <CollapsiblePanel>
-            <ScrollPane axis="both" class="tool-output" content-class="py-2">
-                <div
-                    v-for="(line, index) in lines"
-                    :key="index"
-                    class="tool-line"
-                    :data-line="lineKind(line)"
+    <Collapsible
+        v-model:open="open"
+        class="tool"
+        :data-status="status"
+        :data-expandable="expandable || undefined"
+        :disabled="!expandable"
+    >
+        <CollapsibleTrigger class="tool-head">
+            <component :is="ICONS[family]" class="tool-icon" />
+            <span class="tool-name">{{ name }}</span>
+            <ToolSummary :family="family" :input="input" />
+            <span class="tool-status status-tag">
+                <template v-if="status === 'running'"><RunSpinner :size="13" fast /></template>
+                <span v-else-if="failed" class="text-danger tool-failed"
+                    ><PhWarningCircle />{{
+                        status === 'stopped' ? t('chat.stopped') : t('chat.failed')
+                    }}</span
                 >
-                    {{ line || ' ' }}
-                </div>
-            </ScrollPane>
-            <Button v-if="!full && lines.length > VISIBLE_LINES" @click="toggleFull">
-                {{ t('chat.showAll', { count: lines.length }) }}
-            </Button>
+                <template v-else
+                    ><span v-if="body.meta">{{ body.meta }}</span><PhCheck class="tool-done"
+                /></template>
+            </span>
+            <PhCaretRight v-if="expandable" class="tool-caret" />
+        </CollapsibleTrigger>
+        <CollapsiblePanel class="tool-panel">
+            <pre
+                v-if="showsFullInput"
+                class="tool-input"
+                :data-shell="family === 'shell' || undefined"
+                >{{ fullInput }}</pre>
+            <ToolOutput v-if="lines.length" :lines="lines" />
         </CollapsiblePanel>
     </Collapsible>
 </template>
@@ -86,6 +95,17 @@ function toggleFull() {
 <style scoped>
 .tool {
     margin-inline-start: 36px;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-radius: var(--ui-radius);
+    transition:
+        border-color var(--dur-2),
+        background var(--dur-2);
+
+    &:has(> .tool-head[data-open]) {
+        border-color: var(--ui-border);
+        background: var(--ui-muted);
+    }
 
     @media (max-width: 760px) {
         margin-inline-start: 0;
@@ -94,59 +114,90 @@ function toggleFull() {
 
 .tool-head {
     display: flex;
+    width: 100%;
     min-width: 0;
-    flex: 1;
-    align-items: baseline;
-    gap: 8px;
-    font-family: var(--ui-font-mono);
-}
-
-.tool-input {
-    min-width: 0;
-    flex: 1;
-    overflow: hidden;
-    color: var(--ui-muted-foreground);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-
-    [data-full] & {
-        white-space: pre-wrap;
-        word-break: break-all;
-    }
-}
-
-.tool-output {
-    max-height: 248px;
+    align-items: center;
+    gap: calc(var(--ui-spacing) * 2);
+    min-height: 32px;
+    padding: calc(var(--ui-spacing) * 1) calc(var(--ui-spacing) * 2);
+    border: 0;
     border-radius: var(--ui-radius);
-    background: var(--ui-muted);
-    font-family: var(--ui-font-mono);
-    transition: max-height var(--dur-4) var(--ease-out);
+    background: none;
+    color: var(--ui-foreground);
+    font: inherit;
+    text-align: start;
 
-    [data-full] & {
-        max-height: 1800px;
-    }
+    [data-expandable] > & {
+        cursor: pointer;
 
-    & .tool-line {
-        padding-inline: 12px;
-        white-space: pre;
-        tab-size: 4;
-
-        [data-full] & {
-            white-space: pre-wrap;
-            word-break: break-all;
+        &:hover {
+            background: var(--ui-muted);
         }
     }
 
-    & [data-line='add'] {
-        background: var(--add-bg);
+    &:focus-visible {
+        outline: 2px solid var(--ui-ring-border);
+        outline-offset: -2px;
     }
+}
 
-    & [data-line='del'] {
-        background: var(--del-bg);
+.tool-icon {
+    flex: none;
+    color: var(--ui-muted-foreground);
+}
+
+.tool-name {
+    flex: none;
+    color: var(--ui-muted-foreground);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.tool-status {
+    flex: none;
+}
+
+.tool-failed {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tool-done {
+    color: var(--ui-muted-foreground);
+}
+
+.tool-caret {
+    flex: none;
+    color: var(--ui-muted-foreground);
+    transition: rotate var(--dur-2) var(--ease-out);
+
+    .tool-head[data-open] > & {
+        rotate: 90deg;
     }
+}
 
-    & [data-line='hunk'] {
+.tool-panel {
+    border-top: 1px solid var(--ui-border);
+}
+
+.tool-input {
+    margin: 0;
+    padding: calc(var(--ui-spacing) * 2) calc(var(--ui-spacing) * 3);
+    border-bottom: 1px solid var(--ui-border);
+    font-family: var(--ui-font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+
+    &[data-shell]::before {
+        content: '$ ';
         color: var(--ui-muted-foreground);
+    }
+
+    &:last-child {
+        border-bottom: 0;
     }
 }
 </style>

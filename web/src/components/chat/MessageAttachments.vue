@@ -1,77 +1,94 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { PhDownloadSimple } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { formatFileSize } from '@ui-sdk/vue/file-input'
 
+import AttachmentTile from '@/components/attachments/AttachmentTile.vue'
 import ImagePreview from '@/components/composer/ImagePreview.vue'
 import type { Attachment } from '@/gen'
 import { attachmentURL, isInlineImage } from '@/shared/attachments'
 
-const props = defineProps<{ attachments: Attachment[] }>()
+defineProps<{ attachments: Attachment[] }>()
 
 const preview = ref<{ url: string; name: string } | null>(null)
-const images = computed(() => props.attachments.filter((item) => isInlineImage(item.type)))
-const files = computed(() => props.attachments.filter((item) => !isInlineImage(item.type)))
 </script>
 
 <template>
-    <div class="flex flex-col items-end gap-2">
-        <div v-if="images.length" class="flex flex-wrap justify-end gap-2">
-            <Button
-                v-for="attachment in images"
-                :key="attachment.id"
-                :aria-label="attachment.name"
-                :title="attachment.name"
-                class="thumb"
-                @click="preview = { url: attachmentURL(attachment.id), name: attachment.name }"
+    <div class="message-attachments">
+        <template v-for="attachment in attachments" :key="attachment.id">
+            <AttachmentTile
+                v-if="isInlineImage(attachment.type)"
+                v-tooltip="attachment.name"
+                :name="attachment.name"
+                :image-url="attachmentURL(attachment.id)"
             >
-                <img :src="attachmentURL(attachment.id)" alt="" loading="lazy" decoding="async" />
-            </Button>
-        </div>
-        <a
-            v-for="attachment in files"
-            :key="attachment.id"
-            :href="attachmentURL(attachment.id)"
-            :download="attachment.name"
-            v-tooltip="attachment.name"
-            class="file"
-        >
-            <PhDownloadSimple class="shrink-0" />
-            <span class="min-w-0 truncate">{{ attachment.name }}</span>
-            <span class="shrink-0 text-muted">{{ formatFileSize(attachment.size) }}</span>
-        </a>
+                <template #lead>
+                    <Button
+                        :aria-label="attachment.name"
+                        @click="
+                            preview = { url: attachmentURL(attachment.id), name: attachment.name }
+                        "
+                    />
+                </template>
+            </AttachmentTile>
+            <a
+                v-else
+                v-tooltip="attachment.name"
+                :href="attachmentURL(attachment.id)"
+                :download="attachment.name"
+                class="message-file"
+            >
+                <AttachmentTile :name="attachment.name" :detail="formatFileSize(attachment.size)">
+                    <template #corner>
+                        <span class="message-file-download"><PhDownloadSimple /></span>
+                    </template>
+                </AttachmentTile>
+            </a>
+        </template>
     </div>
     <ImagePreview v-if="preview" :url="preview.url" :name="preview.name" @close="preview = null" />
 </template>
 
 <style scoped>
-.thumb {
-    width: auto;
-    height: 96px;
-    padding: 0;
-    overflow: hidden;
+.message-attachments {
+    display: flex;
+    max-width: 82%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: calc(var(--ui-spacing) * 2);
 
-    & img {
-        height: 100%;
-        max-width: 240px;
-        object-fit: cover;
+    & :deep(.tile) {
+        --tile-size: 72px;
+    }
+
+    & :deep(.tile-lead-image > [data-slot='button']) {
+        cursor: zoom-in;
     }
 }
 
-.file {
-    display: inline-flex;
-    align-items: center;
-    gap: calc(var(--ui-spacing) * 2);
-    max-width: min(360px, 100%);
-    padding: calc(var(--ui-spacing) * 1.5) calc(var(--ui-spacing) * 2.5);
-    border: 1px solid var(--ui-border);
-    border-radius: var(--ui-radius);
+.message-file {
+    display: contents;
     color: var(--ui-foreground);
     text-decoration: none;
 
-    &:hover {
+    & > :deep(.tile) {
+        transition: background var(--dur-1);
+    }
+
+    &:hover > :deep(.tile) {
         background: var(--ui-muted);
     }
+
+    & :deep(.tile-corner) {
+        top: 50%;
+        right: calc(var(--ui-spacing) * 3);
+        translate: 0 -50%;
+    }
+}
+
+.message-file-download {
+    display: grid;
+    color: var(--ui-muted-foreground);
 }
 </style>

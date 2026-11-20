@@ -89,6 +89,7 @@ function moveToReady(
             name: file.name ?? id,
             size: file.size ?? 0,
             type: file.type || 'application/octet-stream',
+            uploadKey: file.id,
         })
     setTimeout(() => {
         if (uploader.getFile(file.id)) uploader.removeFile(file.id)

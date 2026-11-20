@@ -124,8 +124,6 @@ chat:
     noSubscription: 'У агента нет активной подписки.'
     unsupportedAgent: 'Этот агент пока не запускается на сервере.'
     openSettings: 'Открыть настройки'
-  expand: 'Развернуть команду полностью'
-  collapse: 'Свернуть команду'
   showAll: 'Показать все {count} строк'
   jumpToEnd: 'К последнему сообщению'
 files:
@@ -151,7 +149,6 @@ settings:
   agentsLead: 'Подписки, через которые работают агенты. Текущая подписка агента используется в новых чатах.'
   passkeys: 'Ключи доступа'
 uploads:
-  progress: '{sent} из {total} · {percent}%'
   paused: 'на паузе'
   pause: 'Приостановить'
   resume: 'Продолжить'

@@ -13,6 +13,7 @@ import { reportError } from '@/shared/errors'
 import type { DraftUploads, PendingUpload } from '@/shared/uploads/draftUploads'
 import { applyMaxUploadBytes, draftUploads } from '@/shared/uploads/draftUploads'
 import { isRefusedForGood, uploadFailureStatus } from '@/shared/uploads/failures'
+import { forgetPreview } from '@/shared/uploads/previews'
 
 /** Files of a composer draft: added ones upload at once, with progress, pause and resume. */
 export function useComposerUploads(draftKey: MaybeRefOrGetter<string>) {
@@ -102,10 +103,12 @@ export function useComposerUploads(draftKey: MaybeRefOrGetter<string>) {
 
     function removePending(id: string) {
         draft.value.uploader.removeFile(id)
+        forgetPreview(id)
     }
 
     function removeReady(id: string) {
         const list = draft.value.ready
+        forgetPreview(list.value.find((attachment) => attachment.id === id)?.uploadKey)
         list.value = list.value.filter((attachment) => attachment.id !== id)
     }
 
@@ -120,6 +123,7 @@ export function useComposerUploads(draftKey: MaybeRefOrGetter<string>) {
     function takeReady(): ReadyAttachment[] {
         const taken = [...ready.value]
         draft.value.ready.value = []
+        for (const attachment of taken) forgetPreview(attachment.uploadKey)
         return taken
     }
 

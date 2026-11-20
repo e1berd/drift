@@ -124,8 +124,6 @@ chat:
     noSubscription: 'The agent has no active subscription.'
     unsupportedAgent: 'This agent cannot run on the server yet.'
     openSettings: 'Open settings'
-  expand: 'Expand the whole command'
-  collapse: 'Collapse the command'
   showAll: 'Show all {count} lines'
   jumpToEnd: 'Jump to latest'
 files:
@@ -151,7 +149,6 @@ settings:
   agentsLead: 'Subscriptions the agents run on. An agent uses its current subscription in new chats.'
   passkeys: 'Passkeys'
 uploads:
-  progress: '{sent} of {total} · {percent}%'
   paused: 'paused'
   pause: 'Pause'
   resume: 'Resume'

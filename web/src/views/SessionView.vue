@@ -175,6 +175,7 @@ const stop = useStopSession({
         <TabsPanel value="chat" class="session-pane">
             <SessionChatLayout :session-id="sessionId" :messages="messages" :running="running">
                 <ChatThread
+                    :key="sessionId"
                     :messages="messages"
                     :agent="agent"
                     :has-older="!!hasNextPage"

@@ -48,9 +48,9 @@ const label = computed(() => {
 </script>
 
 <template>
-    <div class="grid grid-cols-[20px_minmax(0,1fr)] gap-4" role="status" aria-live="polite">
-        <AgentLogo :agent="agent" :size="20" decorative />
-        <div class="flex min-w-0 flex-col gap-2">
+    <div class="grid grid-cols-[20px_minmax(0,1fr)] gap-x-4" role="status" aria-live="polite">
+        <AgentLogo v-if="partial" :agent="agent" :size="20" decorative />
+        <div class="col-start-2 flex min-w-0 flex-col gap-2">
             <MarkdownText v-if="partial" :source="partial" class="streaming" />
             <p class="m-0 flex gap-2 text-muted">
                 <span class="motion-shine">{{ label }}</span>

@@ -12,7 +12,7 @@
             margin-block-end: 0;
         }
 
-        & :is(p, ul, ol, pre, blockquote, table, hr, .markdown-scroll) {
+        & :is(p, ul, ol, pre, blockquote, table, hr, .markdown-scroll, .code-block) {
             margin-block: 0 calc(var(--ui-spacing) * 3);
         }
 
@@ -77,34 +77,82 @@
         }
 
         & .markdown-scroll {
-            border: 0;
-            border-radius: 0;
-            font-size: inherit;
+            overflow-x: auto;
+            scrollbar-width: thin;
+
+            & table {
+                margin: 0;
+            }
+        }
+
+        & .code-block {
+            margin-block: 0 calc(var(--ui-spacing) * 3);
+            overflow: hidden;
+            border: 1px solid var(--ui-border);
+            border-radius: var(--ui-radius);
+            background: var(--ui-muted);
             overflow-wrap: normal;
+        }
 
-            &:has(pre) {
-                border: 1px solid var(--ui-border);
-                border-radius: var(--ui-radius);
-                background: var(--ui-muted);
+        & .code-block-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: calc(var(--ui-spacing) * 2);
+            min-height: 32px;
+            padding-inline: calc(var(--ui-spacing) * 3) calc(var(--ui-spacing) * 1);
+            border-block-end: 1px solid var(--ui-border);
+            color: var(--ui-muted-foreground);
+            font-family: var(--ui-font-mono);
+            font-size: 0.75rem;
+        }
+
+        & .code-block-copy {
+            display: grid;
+            place-items: center;
+            width: 26px;
+            height: 26px;
+            border: 0;
+            border-radius: calc(var(--ui-radius) * 0.75);
+            background: none;
+            color: inherit;
+            cursor: pointer;
+            transition:
+                background var(--dur-1),
+                color var(--dur-1);
+
+            &:hover {
+                background: var(--ui-background);
+                color: var(--ui-foreground);
             }
 
-            & ui-scroll-area-content {
-                padding: 0;
+            &:focus-visible {
+                outline: 2px solid var(--ui-ring-border);
             }
 
-            & :is(pre, table) {
+            &[data-copied] {
+                color: var(--ui-primary);
+            }
+        }
+
+        & .code-block-scroll {
+            overflow-x: auto;
+            scrollbar-width: thin;
+
+            & pre {
                 margin: 0;
             }
         }
 
         & pre {
             padding: calc(var(--ui-spacing) * 3);
-            line-height: 1.5;
+            line-height: 1.55;
+            tab-size: 4;
 
             & code {
                 padding: 0;
                 background: none;
-                font-size: 0.875em;
+                font-size: 0.8125rem;
             }
         }
 

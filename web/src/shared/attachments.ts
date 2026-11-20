@@ -11,6 +11,7 @@ export interface ReadyAttachment {
     name: string
     size: number
     type: string
+    uploadKey?: string
 }
 
 /** Whether the server shows the attachment inline as an image rather than offering a download. */
