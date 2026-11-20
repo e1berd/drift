@@ -62,7 +62,11 @@ func (h *Handler) getUsage(c *echo.Context) error {
 	if _, err := os.Stat(home); err != nil {
 		return c.JSON(http.StatusOK, Usage{Windows: []UsageWindow{}, Unavailable: "signed_out", ReadTime: time.Now()})
 	}
-	usage := h.readUsage(c.Request().Context(), driver, home)
+	ctx := c.Request().Context()
+	if refresh {
+		ctx = agents.WithForcedUsage(ctx)
+	}
+	usage := h.readUsage(ctx, driver, home)
 	h.cacheUsage(id, usage)
 	return c.JSON(http.StatusOK, usage)
 }

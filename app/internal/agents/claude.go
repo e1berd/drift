@@ -129,7 +129,9 @@ func (d claude) Usage(ctx context.Context, home string) ([]Window, error) {
 			return nil, UsageUnavailable{Reason: "expired"}
 		}
 	}
-	return fetchClaudeUsage(ctx, http.DefaultClient, ClaudeUsageURL, creds.OAuth.AccessToken)
+	return claudeUsage.read(ctx, home, func(ctx context.Context) ([]Window, error) {
+		return fetchClaudeUsage(ctx, http.DefaultClient, ClaudeUsageURL, creds.OAuth.AccessToken)
+	})
 }
 
 func fetchClaudeUsage(ctx context.Context, client *http.Client, url, token string) ([]Window, error) {
@@ -148,6 +150,9 @@ func fetchClaudeUsage(ctx context.Context, client *http.Client, url, token strin
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		return nil, UsageUnavailable{Reason: "expired"}
+	}
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return nil, rateLimitedResponse("claude", resp)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("claude usage: %s", resp.Status)
