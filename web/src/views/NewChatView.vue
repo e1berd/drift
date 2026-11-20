@@ -23,6 +23,7 @@ import BrandMark from '@/components/BrandMark.vue'
 import TopBar from '@/components/TopBar.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
 import { useComposerSettings } from '@/composables/useComposerSettings'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 import { draftKey } from '@/composables/useDrafts'
 import { useAgents } from '@/composables/useAgents'
 import { useCreateSession, useCreateStandaloneSession } from '@/gen'
@@ -40,6 +41,14 @@ const router = useRouter()
 const { projects } = useProjects()
 const agents = useAgents()
 const settings = useComposerSettings()
+const narrow = useMediaQuery('(max-width: 760px)')
+const composerFocused = ref(false)
+const zen = computed(() => narrow.value && composerFocused.value)
+
+function onComposerFocusOut(event: FocusEvent) {
+    const wrapper = event.currentTarget as HTMLElement
+    if (!wrapper.contains(event.relatedTarget as Node | null)) composerFocused.value = false
+}
 
 const agent = ref<AgentId>(agents.connected.value.at(0) ?? 'claude')
 const NO_PROJECT = 'none'
@@ -111,57 +120,69 @@ function send({ text, attachments }: { text: string; attachments: ReadyAttachmen
     </TopBar>
     <ScrollPane
         class="motion-fade min-h-0 flex-1"
-        content-class="flex min-h-full items-center justify-center p-6 max-md:p-3"
+        :content-class="
+            zen
+                ? 'flex min-h-full items-start justify-center p-3'
+                : 'flex min-h-full items-center justify-center p-6 max-md:p-3'
+        "
     >
         <div class="flex w-full max-w-[720px] flex-col items-center gap-5">
-            <BrandMark :size="32" />
-            <h1 class="m-0 text-2xl font-semibold">{{ t('empty.title') }}</h1>
-            <p class="m-0 text-center text-muted">{{ t('empty.lead') }}</p>
+            <div v-show="!zen" class="contents">
+                <BrandMark :size="32" />
+                <h1 class="m-0 text-2xl font-semibold">
+                    {{ t('empty.title') }}
+                </h1>
+                <p class="m-0 text-center text-muted">{{ t('empty.lead') }}</p>
 
-            <SegmentedControl
-                v-if="agents.available.value.length"
-                v-model:value="agentValue"
-                :aria-label="t('composer.model')"
-            >
-                <SegmentedControlIndicator />
-                <SegmentedControlItem
-                    v-for="item in agents.available.value"
-                    :key="item.id"
-                    :value="item.id"
+                <SegmentedControl
+                    v-if="agents.available.value.length"
+                    v-model:value="agentValue"
+                    :aria-label="t('composer.model')"
                 >
-                    <AgentLogo :agent="item.id" decorative />{{ item.name }}
-                </SegmentedControlItem>
-            </SegmentedControl>
+                    <SegmentedControlIndicator />
+                    <SegmentedControlItem
+                        v-for="item in agents.available.value"
+                        :key="item.id"
+                        :value="item.id"
+                    >
+                        <AgentLogo :agent="item.id" decorative />{{ item.name }}
+                    </SegmentedControlItem>
+                </SegmentedControl>
+            </div>
 
-            <PromptComposer
-                :draft-key="draftKey(undefined, projectId)"
-                :agent="agent"
-                :placeholder="t('composer.placeholder.new', { agent: AGENTS[agent].name })"
-                :busy="creating"
-                autofocus
-                @send="send"
-                @switch-agent="switchAgent"
-            >
-                <template #start>
-                    <Select v-model:value="projectChoice" :items="projectItems">
-                        <SelectTrigger class="composer-select" :aria-label="t('composer.project')"
-                            ><SelectValue
-                        /></SelectTrigger>
-                        <SelectContent side="top" align="start">
-                            <SelectItem
-                                v-for="item in projectItems"
-                                :key="item.value"
-                                :value="item.value"
-                            >
-                                <SelectItemText>{{ item.label }}</SelectItemText>
-                                <SelectItemIndicator />
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </template>
-            </PromptComposer>
+            <div class="contents" @focusin="composerFocused = true" @focusout="onComposerFocusOut">
+                <PromptComposer
+                    :draft-key="draftKey(undefined, projectId)"
+                    :agent="agent"
+                    :placeholder="t('composer.placeholder.new', { agent: AGENTS[agent].name })"
+                    :busy="creating"
+                    :autofocus="!narrow"
+                    @send="send"
+                    @switch-agent="switchAgent"
+                >
+                    <template #start>
+                        <Select v-model:value="projectChoice" :items="projectItems">
+                            <SelectTrigger
+                                class="composer-select"
+                                :aria-label="t('composer.project')"
+                                ><SelectValue
+                            /></SelectTrigger>
+                            <SelectContent side="top" align="start">
+                                <SelectItem
+                                    v-for="item in projectItems"
+                                    :key="item.value"
+                                    :value="item.value"
+                                >
+                                    <SelectItemText>{{ item.label }}</SelectItemText>
+                                    <SelectItemIndicator />
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </template>
+                </PromptComposer>
+            </div>
 
-            <p class="m-0 text-muted">
+            <p v-show="!zen" class="m-0 text-muted">
                 {{ t('empty.connectHint') }}
                 <RouterLink to="/settings" class="underline underline-offset-4">{{
                     t('nav.settings').toLowerCase()
