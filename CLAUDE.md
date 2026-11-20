@@ -300,3 +300,13 @@ pnpm types:check
 - **Ошибки**: `reportError` из `@/shared/errors` (фильтрует отмены и HTTP-ошибки). Хранилище браузера — только через `@/shared/storage` (`storedRef`, `readStored`, `writeStored`).
 - **Стили**: везде дефолтная тема ui-sdk (`@ui-sdk/core/web.css`). Своей палитры, шрифтов и перекраски частей ui-sdk нет: кнопки — `Button` (`data-variant="solid"`/`"destructive"`), поля — `Input`/`Field`, выбор — `Select`/`SegmentedControl`, раскрытие — `Collapsible`. Свой CSS только для раскладки (сетка оболочки, строки списков в `styles/layout.css`) и на токенах `--ui-*`.
 - **Гейты фронтенда** (из `web/`): `pnpm format:check`, `pnpm lint`, `pnpm types:check`, `pnpm vitest run`. **Бэкенда** (из `app/`): `go vet ./...`, `go test ./...`, `sqlc generate` после правки `db/queries`.
+
+## 10. Работа через git worktree
+
+Любая задача выполняется в отдельном git worktree в папке `.wt` в корне репозитория; основной checkout не используется для правок.
+
+- Создание: `git worktree add .wt/<задача> -b <тип>/<задача> origin/master`.
+- Все команды (установка зависимостей, тесты, коммиты) выполняются внутри `.wt/<задача>`.
+- Незакоммиченные изменения в основном checkout не трогаются: ни `stash`, ни `pull`, ни `reset`.
+- После слияния worktree удаляется: `git worktree remove .wt/<задача>`.
+- Папка `.wt` в `.gitignore`.
