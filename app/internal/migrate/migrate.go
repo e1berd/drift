@@ -104,5 +104,10 @@ func collect(fsys fs.FS, dir string) ([]migration, error) {
 		list = append(list, migration{version: v, name: name})
 	}
 	sort.Slice(list, func(i, j int) bool { return list[i].version < list[j].version })
+	for i := 1; i < len(list); i++ {
+		if list[i].version == list[i-1].version {
+			return nil, fmt.Errorf("migrate: version %d used by both %q and %q", list[i].version, list[i-1].name, list[i].name)
+		}
+	}
 	return list, nil
 }
