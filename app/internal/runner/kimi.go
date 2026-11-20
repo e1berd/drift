@@ -7,20 +7,12 @@ import (
 	"github.com/e1berd/drift/app/internal/workspace"
 )
 
-var kimiModes = map[string]string{
-	"acceptEdits":       "-y",
-	"auto":              "--auto",
-	"plan":              "--plan",
-	"bypassPermissions": "--auto",
-}
-
+// Kimi Code 2.7 rejects every permission mode flag (--auto, --yolo, --plan) together with
+// --prompt and approves everything in prompt mode, so the session mode is not passed.
 func kimiArgs(req workspace.RunRequest, agentSessionID string) []string {
 	args := []string{"-p", req.Text, "--output-format", "stream-json"}
 	if req.Model != "" && req.Model != "default" {
 		args = append(args, "-m", req.Model)
-	}
-	if mode, ok := kimiModes[req.Mode]; ok {
-		args = append(args, mode)
 	}
 	if agentSessionID != "" {
 		args = append(args, "-S", agentSessionID)

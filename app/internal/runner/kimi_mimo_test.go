@@ -47,18 +47,18 @@ func TestKimiArgs(t *testing.T) {
 	req.Text = "hi"
 	args := kimiArgs(req, "k1")
 	got := strings.Join(args, " ")
-	want := "-p hi --output-format stream-json -m kimi-code/k3.1-pro -y -S k1"
+	want := "-p hi --output-format stream-json -m kimi-code/k3.1-pro -S k1"
 	if got != want {
 		t.Errorf("args %q, want %q", got, want)
 	}
 	req = runRequest("default", "plan")
 	req.Text = "hi"
 	args = kimiArgs(req, "")
-	if strings.Join(args, " ") != "-p hi --output-format stream-json --plan" {
+	if strings.Join(args, " ") != "-p hi --output-format stream-json" {
 		t.Errorf("args %q", args)
 	}
 	if args = kimiArgs(runRequest("default", "default"), ""); len(args) != 4 {
-		t.Errorf("default mode must pass no flag: %q", args)
+		t.Errorf("default model must pass no flag: %q", args)
 	}
 }
 
