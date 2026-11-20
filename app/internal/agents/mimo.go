@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -33,12 +34,19 @@ func (d mimo) StartLogin(home string) (*Login, error) {
 	})
 }
 
-type mimoAuth struct {
-	Xiaomi *struct {
-		Metadata struct {
-			UID string `json:"uid"`
-		} `json:"metadata"`
-	} `json:"xiaomi"`
+type mimoProvider struct {
+	Metadata struct {
+		UID string `json:"uid"`
+	} `json:"metadata"`
+}
+
+func xiaomiAccountUID(providers map[string]mimoProvider) string {
+	for name, provider := range providers {
+		if (name == "xiaomi" || strings.HasPrefix(name, "xiaomi-")) && provider.Metadata.UID != "" {
+			return provider.Metadata.UID
+		}
+	}
+	return ""
 }
 
 // Account reads the signed-in MiMo account from the credentials the CLI stored.
@@ -47,11 +55,15 @@ func (d mimo) Account(ctx context.Context, home string) (Account, error) {
 	if err != nil {
 		return Account{}, errors.New("mimo is not signed in")
 	}
-	var auth mimoAuth
-	if json.Unmarshal(raw, &auth) != nil || auth.Xiaomi == nil || auth.Xiaomi.Metadata.UID == "" {
+	var providers map[string]mimoProvider
+	if json.Unmarshal(raw, &providers) != nil {
 		return Account{}, errors.New("mimo is not signed in")
 	}
-	return Account{Email: auth.Xiaomi.Metadata.UID, Plan: mimoPlan}, nil
+	uid := xiaomiAccountUID(providers)
+	if uid == "" {
+		return Account{}, errors.New("mimo is not signed in")
+	}
+	return Account{Email: uid, Plan: mimoPlan}, nil
 }
 
 // Usage is not reported by the MiMo CLI for subscription sign-ins.
