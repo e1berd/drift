@@ -23,12 +23,20 @@ export const messageBodyStatusEnum = {
 
 export type MessageBodyStatusEnumKey = (typeof messageBodyStatusEnum)[keyof typeof messageBodyStatusEnum];
 
+export const messageBodyTargetEnum = {
+  file: 'file',
+  worktree: 'worktree',
+} as const;
+
+export type MessageBodyTargetEnumKey = (typeof messageBodyTargetEnum)[keyof typeof messageBodyTargetEnum];
+
 export const messageBodyCodeEnum = {
   stopped: 'stopped',
   failed: 'failed',
   noSubscription: 'noSubscription',
   unsupportedAgent: 'unsupportedAgent',
   usageWarning: 'usageWarning',
+  removed: 'removed',
 } as const;
 
 export type MessageBodyCodeEnumKey = (typeof messageBodyCodeEnum)[keyof typeof messageBodyCodeEnum];
@@ -44,6 +52,26 @@ export type MessageBody = {
    */
   status?: MessageBodyStatusEnumKey;
   meta?: string;
+  /**
+   * @description A Write tool call that created a new file.
+   * @type boolean | undefined
+   */
+  created?: boolean;
+  /**
+   * @description What a removed note is about.
+   * @type string | undefined
+   */
+  target?: MessageBodyTargetEnumKey;
+  /**
+   * @description The file or worktree of a removed note.
+   * @type string | undefined
+   */
+  path?: string;
+  /**
+   * @description Branch deleted together with the worktree of a removed note.
+   * @type string | undefined
+   */
+  branch?: string;
   /**
    * @description Why a system note was written; the client words it.
    * @type string | undefined

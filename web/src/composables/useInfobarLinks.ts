@@ -68,7 +68,7 @@ function measure(container: HTMLElement, links: InfobarLink[]): DrawnLink[] {
                 : chatBox.top,
             chatBox,
         )
-        if (cardBox && !source.hidden) cardLefts.push(cardBox.left - CARD_GAP)
+        if (card && cardBox && !source.hidden) cardLefts.push(columnLeft(card, origin) - CARD_GAP)
         shown.push(link)
         ends.push({
             id: link.key,
@@ -76,6 +76,7 @@ function measure(container: HTMLElement, links: InfobarLink[]): DrawnLink[] {
             targetY: target.y,
             sourceHidden: source.hidden,
             targetHidden: target.hidden,
+            sourceX: cardBox ? cardBox.left - CARD_GAP : undefined,
         })
     }
     const left = infobarBox.right
@@ -83,6 +84,11 @@ function measure(container: HTMLElement, links: InfobarLink[]): DrawnLink[] {
     return routeLinks(ends, { left, right: Math.max(right, left + FALLBACK_GUTTER / 2) }).map(
         (route, index) => ({ ...route, messageId: shown[index]!.messageId }),
     )
+}
+
+function columnLeft(card: HTMLElement, origin: DOMRect): number {
+    const column = card.parentElement ?? card
+    return column.getBoundingClientRect().left - origin.left
 }
 
 function messageIdUnder(target: EventTarget | null): string | null {

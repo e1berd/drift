@@ -1,10 +1,23 @@
 <script setup lang="ts">
+import { watch } from 'vue'
+import { useRoute } from 'vue-router'
+
 import FileEditor from '@/components/files/FileEditor.vue'
 import FilesSidebar from '@/components/files/FilesSidebar.vue'
 import { provideSessionFiles } from '@/composables/useSessionFiles'
+import { reportError } from '@/shared/errors'
 
 const props = defineProps<{ sessionId: string; title: string; hint?: string }>()
-provideSessionFiles(() => props.sessionId)
+const files = provideSessionFiles(() => props.sessionId)
+const route = useRoute()
+
+function openRequestedFile(path: unknown) {
+    if (typeof path !== 'string' || !path) return
+    const name = path.split('/').at(-1) ?? path
+    files.reveal({ name, path, dir: false }).catch(reportError)
+}
+
+watch(() => route.query.open, openRequestedFile, { immediate: true })
 </script>
 
 <template>

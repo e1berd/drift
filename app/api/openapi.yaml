@@ -403,12 +403,56 @@ paths:
       operationId: getGitSummary
       tags: [git]
       description: >-
-        What the session did in git, a singleton resource (AIP-156): lines changed from the
-        commit the session started at to the working tree, and the branches and worktrees its
-        agent created that still exist, each with the tool call that created it.
+        What the session did, a singleton resource (AIP-156): lines changed from the commit the
+        session started at to the working tree, and the activity log of branches, worktrees and
+        files its agent created, each with the tool call that created it; removed ones stay listed.
       responses:
         '200':
           description: The summary.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GitSummary' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/activity:removeFile:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: removeActivityFile
+      tags: [git]
+      description: >-
+        Custom method (AIP-136): deletes a file the session's agent created and records it as a
+        `removed` note in the transcript, which the agent reads with the next message. Files the
+        session did not create return 404, already removed ones 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RemoveActivityFileRequest' }
+      responses:
+        '200':
+          description: The summary after the removal.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GitSummary' }
+        default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/activity:removeWorktree:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: removeActivityWorktree
+      tags: [git]
+      description: >-
+        Custom method (AIP-136): removes a worktree the session's agent created, optionally with
+        its branch, and records a `removed` note. A worktree with changes needs `force` (409
+        otherwise); worktrees the session did not create return 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RemoveActivityWorktreeRequest' }
+      responses:
+        '200':
+          description: The summary after the removal.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/GitSummary' }
@@ -1212,10 +1256,14 @@ components:
             - continued
             - superseded
         meta: { type: string }
+        created: { type: boolean, description: A Write tool call that created a new file. }
+        target: { type: string, enum: [file, worktree], description: What a removed note is about. }
+        path: { type: string, description: The file or worktree of a removed note. }
+        branch: { type: string, description: Branch deleted together with the worktree of a removed note. }
         code:
           description: Why a system note was written; the client words it.
           type: string
-          enum: [stopped, failed, noSubscription, unsupportedAgent, usageWarning]
+          enum: [stopped, failed, noSubscription, unsupportedAgent, usageWarning, removed]
         attachments:
           type: array
           items: { $ref: '#/components/schemas/Attachment' }
@@ -1476,20 +1524,19 @@ components:
         truncated: { type: boolean }
     GitSummary:
       description: >-
-        Git overview of a session, a singleton resource (AIP-156). `base` is the abbreviated
-        commit the session started at; changes are counted from it, untracked files included.
+        Overview of a session, a singleton resource (AIP-156). `base` is the abbreviated commit
+        the session started at; changes are counted from it, untracked files included. Outside a
+        repository only created files appear in `activity`.
       type: object
-      required: [repository, changes, branches, worktrees]
+      required: [repository, changes, activity]
       properties:
         repository: { type: boolean }
         base: { type: string }
         changes: { $ref: '#/components/schemas/GitChangeSummary' }
-        branches:
+        activity:
+          description: Oldest first, in the order of the tool calls that created them.
           type: array
-          items: { $ref: '#/components/schemas/GitSessionBranch' }
-        worktrees:
-          type: array
-          items: { $ref: '#/components/schemas/GitSessionWorktree' }
+          items: { $ref: '#/components/schemas/ActivityEntry' }
     GitChangeSummary:
       type: object
       required: [additions, deletions, fileCount, files]
@@ -1508,24 +1555,42 @@ components:
         path: { type: string }
         additions: { type: integer }
         deletions: { type: integer }
-    GitSessionBranch:
+    ActivityEntry:
+      description: >-
+        A branch, worktree or file the session created. `removed` entries no longer exist;
+        `removedBy: user` marks those deleted from the info bar.
       type: object
-      required: [name, messageId, current, commits, unpushed]
+      required: [key, kind, messageId, name, removed]
       properties:
-        name: { type: string }
-        messageId: { type: string, description: The tool call message that created the branch. }
+        key: { type: string, description: Unique within the session, kind and name. }
+        kind: { type: string, enum: [branch, worktree, file] }
+        messageId: { type: string, description: The tool call message that created it. }
+        name:
+          type: string
+          description: >-
+            Branch name; worktree path relative to the parent of the session folder, under ~ or
+            absolute; file path as the agent wrote it, relative to the session folder or absolute.
+        removed: { type: boolean }
+        removedBy: { type: string, enum: [user] }
+        removeTime: { type: string, format: date-time }
+        branch: { type: string, description: Branch checked out in a worktree. }
         current: { type: boolean }
         upstream: { type: string }
-        commits: { type: integer, description: Commits on the branch since the session base. }
-        unpushed: { type: integer, description: Commits not on the upstream; 0 without one. }
-    GitSessionWorktree:
+        commits: { type: integer, description: Commits on a branch since the session base. }
+        unpushed: { type: integer, description: Commits of a branch not on its upstream. }
+        changes: { type: integer, description: Changed and untracked files in a worktree. }
+    RemoveActivityFileRequest:
       type: object
-      required: [path, messageId, changes]
+      required: [name]
       properties:
-        path: { type: string, description: Relative to the parent of the session folder, else under ~ or absolute. }
-        branch: { type: string }
-        messageId: { type: string, description: The tool call message that created the worktree. }
-        changes: { type: integer, description: Changed and untracked files in the worktree. }
+        name: { type: string, description: The `name` of a file entry. }
+    RemoveActivityWorktreeRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, description: The `name` of a worktree entry. }
+        force: { type: boolean, description: Required when the worktree has changes; they are lost. }
+        deleteBranch: { type: boolean, description: Also delete the branch checked out in it, even unmerged. }
     GitBranch:
       type: object
       required: [name, current]

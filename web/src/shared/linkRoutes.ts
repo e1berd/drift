@@ -4,6 +4,7 @@ export interface LinkEnds {
     targetY: number
     sourceHidden: boolean
     targetHidden: boolean
+    sourceX?: number
 }
 
 export interface Gutter {
@@ -115,7 +116,7 @@ function verticalWithGaps(x: number, from: number, to: number, gaps: number[]): 
 function pathOf(link: LinkEnds, lane: number, gutter: Gutter, gaps: number[]): string {
     const start = link.sourceHidden
         ? `M${lane} ${link.sourceY}`
-        : `M${gutter.right} ${link.sourceY} H${lane}`
+        : `M${link.sourceX ?? gutter.right} ${link.sourceY} H${lane}`
     return `${start} ${verticalWithGaps(lane, link.sourceY, link.targetY, gaps)} H${gutter.left}`
 }
 

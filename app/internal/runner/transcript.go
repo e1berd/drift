@@ -54,11 +54,12 @@ type noteBody struct {
 }
 
 type toolBody struct {
-	Name   string   `json:"name"`
-	Input  string   `json:"input"`
-	Output []string `json:"output,omitempty"`
-	Status string   `json:"status"`
-	Meta   string   `json:"meta,omitempty"`
+	Name    string   `json:"name"`
+	Input   string   `json:"input"`
+	Output  []string `json:"output,omitempty"`
+	Status  string   `json:"status"`
+	Meta    string   `json:"meta,omitempty"`
+	Created bool     `json:"created,omitempty"`
 }
 
 // Activity is what the agent is doing right now; it is sent to clients and never stored.
@@ -84,6 +85,7 @@ type transcript struct {
 	r       *Runner
 	owner   string
 	session pgtype.UUID
+	dir     string
 	tools   map[string]*openTool
 	order   []string
 
@@ -160,7 +162,7 @@ func (t *transcript) activity(phase, tool, text string, tokens int) {
 }
 
 func (t *transcript) startTool(callID, name, input string) {
-	body := toolBody{Name: name, Input: clip(input, maxInputRunes), Status: toolRunning}
+	body := toolBody{Name: name, Input: clip(input, maxInputRunes), Status: toolRunning, Created: t.createsFile(name, input)}
 	m, ok := t.add("assistant", "tool", body)
 	if !ok {
 		return

@@ -128,11 +128,23 @@ WHERE m.kind = 'limit' AND m.body ->> 'status' = 'scheduled';
 -- name: SetSessionGitBase :exec
 UPDATE sessions SET git_base = $2 WHERE id = $1 AND git_base = '';
 
--- name: ListSessionGitCalls :many
-SELECT id, (body ->> 'name')::text AS name, (body ->> 'input')::text AS input FROM messages
-WHERE session_id = $1 AND kind = 'tool'
-  AND (body ->> 'name' = 'EnterWorktree' OR (body ->> 'name' = 'Bash' AND body ->> 'input' LIKE '%git%'))
+-- name: ListSessionActivity :many
+SELECT id, kind, body, created_at FROM messages
+WHERE session_id = $1
+  AND ((kind = 'tool' AND (body ->> 'name' IN ('EnterWorktree', 'Write', 'Edit')
+                           OR (body ->> 'name' = 'Bash' AND body ->> 'input' LIKE '%git%')))
+       OR (kind = 'note' AND body ->> 'code' = 'removed'))
 ORDER BY created_at, id;
+
+-- name: ListUndeliveredRemovals :many
+SELECT id, body FROM messages
+WHERE session_id = $1 AND kind = 'note' AND body ->> 'code' = 'removed'
+  AND coalesce((body ->> 'delivered')::boolean, false) = false
+ORDER BY created_at, id;
+
+-- name: MarkRemovalsDelivered :exec
+UPDATE messages SET body = jsonb_set(body, '{delivered}', 'true')
+WHERE id = ANY(sqlc.arg(ids)::uuid[]);
 
 -- name: GetSessionGitBase :one
 SELECT git_base FROM sessions WHERE id = $1;

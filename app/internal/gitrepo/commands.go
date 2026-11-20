@@ -11,6 +11,7 @@ type ToolCall struct {
 	MessageID string
 	Name      string
 	Input     string
+	Created   bool
 }
 
 // CreatedRef is a branch or a worktree that a tool call of the session created.
@@ -18,6 +19,7 @@ type CreatedRef struct {
 	MessageID string
 	Branch    string
 	Worktree  string
+	File      string
 	Dir       string
 }
 
@@ -29,17 +31,33 @@ var branchKeepFlags = map[string]bool{
 
 var worktreeValueFlags = map[string]bool{"--reason": true}
 
-// CreatedRefs reads the agent's tool calls and returns, in order, every branch and worktree they created.
+// CreatedRefs reads the agent's tool calls and returns, in order, every branch, worktree and file they created.
 func CreatedRefs(calls []ToolCall) []CreatedRef {
 	refs := make([]CreatedRef, 0, 4)
 	for _, call := range calls {
 		switch call.Name {
 		case "Bash":
 			refs = append(refs, refsOfShell(call.MessageID, call.Input)...)
+		case "Write":
+			if call.Created && strings.TrimSpace(call.Input) != "" {
+				refs = append(refs, CreatedRef{MessageID: call.MessageID, File: strings.TrimSpace(call.Input)})
+			}
+		case "Edit":
+			refs = append(refs, addedFiles(call.MessageID, call.Input)...)
 		case "EnterWorktree":
 			if name := enteredWorktreeName(call.Input); name != "" {
 				refs = append(refs, CreatedRef{MessageID: call.MessageID, Worktree: name})
 			}
+		}
+	}
+	return refs
+}
+
+func addedFiles(messageID, input string) []CreatedRef {
+	var refs []CreatedRef
+	for line := range strings.SplitSeq(input, "\n") {
+		if name, ok := strings.CutPrefix(strings.TrimSpace(line), "add "); ok && name != "" {
+			refs = append(refs, CreatedRef{MessageID: messageID, File: strings.TrimSpace(name)})
 		}
 	}
 	return refs

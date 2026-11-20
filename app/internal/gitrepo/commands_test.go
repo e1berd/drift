@@ -16,6 +16,9 @@ func TestCreatedRefsFindsBranchesAndWorktreesInShellCommands(t *testing.T) {
 		{MessageID: "m7", Name: "EnterWorktree", Input: `{"name":"agent-tree"}`},
 		{MessageID: "m8", Name: "Read", Input: "git checkout -b ignored"},
 		{MessageID: "m9", Name: "Bash", Input: "echo git checkout -b not-git"},
+		{MessageID: "m10", Name: "Write", Input: "docs/new.md", Created: true},
+		{MessageID: "m11", Name: "Write", Input: "docs/existing.md"},
+		{MessageID: "m12", Name: "Edit", Input: "add web/a.ts\nupdate web/b.ts"},
 	}
 	want := []CreatedRef{
 		{MessageID: "m1", Branch: "feat/status"},
@@ -25,6 +28,8 @@ func TestCreatedRefsFindsBranchesAndWorktreesInShellCommands(t *testing.T) {
 		{MessageID: "m5", Branch: "hotfix", Worktree: "../hotfix"},
 		{MessageID: "m6", Worktree: "../scratch"},
 		{MessageID: "m7", Worktree: "agent-tree"},
+		{MessageID: "m10", File: "docs/new.md"},
+		{MessageID: "m12", File: "web/a.ts"},
 	}
 	if got := CreatedRefs(calls); !reflect.DeepEqual(got, want) {
 		t.Fatalf("CreatedRefs:\n got %+v\nwant %+v", got, want)

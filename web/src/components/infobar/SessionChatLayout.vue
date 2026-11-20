@@ -2,14 +2,18 @@
 import { computed, useTemplateRef } from 'vue'
 import { Drawer, DrawerBackdrop, DrawerContent, DrawerTitle } from '@ui-sdk/vue/drawer'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import InfobarLinks from '@/components/infobar/InfobarLinks.vue'
+import RemoveEntryDialog from '@/components/infobar/RemoveEntryDialog.vue'
 import SessionInfobar from '@/components/infobar/SessionInfobar.vue'
-import { summaryLinks } from '@/components/infobar/linkKeys'
+import { activityLinks } from '@/components/infobar/linkKeys'
+import { provideActivityActions } from '@/composables/useActivityActions'
+import { useActivityRemoval } from '@/composables/useActivityRemoval'
 import { useInfobar } from '@/composables/useInfobar'
 import { useInfobarLinks } from '@/composables/useInfobarLinks'
 import { useSessionSummary } from '@/composables/useSessionSummary'
-import type { Message } from '@/gen'
+import type { ActivityEntry, Message } from '@/gen'
 
 const props = defineProps<{ sessionId: string; messages: Message[]; running: boolean }>()
 
@@ -22,7 +26,7 @@ const summary = useSessionSummary(
     () => props.messages,
 )
 const layout = useTemplateRef<HTMLElement>('layout')
-const links = computed(() => (shown.value ? summaryLinks(summary.data.value) : []))
+const links = computed(() => (shown.value ? activityLinks(summary.data.value) : []))
 const { routes, activeMessageId } = useInfobarLinks(layout, links)
 
 function reveal(messageId: string) {
@@ -31,6 +35,30 @@ function reveal(messageId: string) {
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
     card?.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' })
 }
+
+const router = useRouter()
+
+function canOpen(entry: ActivityEntry): boolean {
+    const outsideFolder = /^(\/|~|\.\.\/)/.test(entry.name)
+    return entry.kind === 'file' && !entry.removed && !outsideFolder
+}
+
+function open(entry: ActivityEntry) {
+    closeDrawer()
+    void router.push({
+        name: 'session',
+        params: { sessionId: props.sessionId, tab: 'files' },
+        query: { open: entry.name },
+    })
+}
+
+const removeDialog = useTemplateRef<InstanceType<typeof RemoveEntryDialog>>('removeDialog')
+const { remove } = useActivityRemoval(
+    () => props.sessionId,
+    () => removeDialog.value?.ask,
+)
+
+provideActivityActions({ reveal, open, remove, canOpen })
 </script>
 
 <template>
@@ -43,7 +71,6 @@ function reveal(messageId: string) {
             :failed="summary.isError.value"
             :running="running"
             :active-message-id="activeMessageId"
-            @reveal="reveal"
         />
         <Drawer v-else v-model:open="drawerOpen" side="left">
             <DrawerBackdrop />
@@ -56,12 +83,12 @@ function reveal(messageId: string) {
                     :failed="summary.isError.value"
                     :running="running"
                     :active-message-id="null"
-                    @reveal="reveal"
                 />
             </DrawerContent>
         </Drawer>
         <div class="chat-column"><slot /></div>
         <InfobarLinks v-if="shown" :routes="routes" :active-message-id="activeMessageId" />
+        <RemoveEntryDialog ref="removeDialog" />
     </div>
 </template>
 

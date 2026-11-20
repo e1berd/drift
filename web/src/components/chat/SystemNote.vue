@@ -1,17 +1,31 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 
 import type { MessageBody } from '@/gen'
 
-defineProps<{ body: MessageBody }>()
+const props = defineProps<{ body: MessageBody }>()
 const { t } = useI18n()
+
+function removalKey(body: MessageBody): string {
+    if (body.target === 'file') return 'chat.notes.removedFile'
+    return body.branch ? 'chat.notes.removedWorktreeBranch' : 'chat.notes.removedWorktree'
+}
+
+const sentence = computed(() => {
+    const body = props.body
+    if (!body.code) return ''
+    if (body.code === 'removed')
+        return t(removalKey(body), { path: body.path, branch: body.branch })
+    return t(`chat.notes.${body.code}`)
+})
 </script>
 
 <template>
     <div class="flex flex-col items-center gap-1 self-center text-center text-muted">
         <p class="m-0">
-            <template v-if="body.code">{{ t(`chat.notes.${body.code}`) }}</template>
+            {{ sentence }}
             <RouterLink
                 v-if="body.code === 'noSubscription'"
                 :to="{ name: 'settings' }"

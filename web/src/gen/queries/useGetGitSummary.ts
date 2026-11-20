@@ -27,7 +27,7 @@ export function getGitSummaryQueryOptions({ path }: { path: MaybeRefOrGetter<Get
 
 /**
  * `GET /sessions/{sessionId}/git/summary`
- * @description What the session did in git, a singleton resource (AIP-156): lines changed from the commit the session started at to the working tree, and the branches and worktrees its agent created that still exist, each with the tool call that created it.
+ * @description What the session did, a singleton resource (AIP-156): lines changed from the commit the session started at to the working tree, and the activity log of branches, worktrees and files its agent created, each with the tool call that created it; removed ones stay listed.
  */
 export function useGetGitSummary<TData = GetGitSummaryStatus200, TQueryData = GetGitSummaryStatus200, TQueryKey extends QueryKey = GetGitSummaryQueryKey>({ path }: { path: MaybeRefOrGetter<GetGitSummaryOptions['path']> }, options: {
   query?: Partial<UseQueryOptions<GetGitSummaryStatus200, ResponseErrorConfig<Error>, TData, TQueryData, TQueryKey>> & { client?: QueryClient },

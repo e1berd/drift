@@ -16,7 +16,7 @@ export type GetGitSummaryPath = {
 };
 
 /**
- * @description Git overview of a session, a singleton resource (AIP-156). `base` is the abbreviated commit the session started at; changes are counted from it, untracked files included.
+ * @description Overview of a session, a singleton resource (AIP-156). `base` is the abbreviated commit the session started at; changes are counted from it, untracked files included. Outside a repository only created files appear in `activity`.
  * @type object
  */
 export type GetGitSummaryStatus200 = GitSummary;

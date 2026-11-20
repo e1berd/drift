@@ -497,29 +497,37 @@ func (q *Queries) ListScheduledContinuations(ctx context.Context) ([]ListSchedul
 	return items, nil
 }
 
-const listSessionGitCalls = `-- name: ListSessionGitCalls :many
-SELECT id, (body ->> 'name')::text AS name, (body ->> 'input')::text AS input FROM messages
-WHERE session_id = $1 AND kind = 'tool'
-  AND (body ->> 'name' = 'EnterWorktree' OR (body ->> 'name' = 'Bash' AND body ->> 'input' LIKE '%git%'))
+const listSessionActivity = `-- name: ListSessionActivity :many
+SELECT id, kind, body, created_at FROM messages
+WHERE session_id = $1
+  AND ((kind = 'tool' AND (body ->> 'name' IN ('EnterWorktree', 'Write', 'Edit')
+                           OR (body ->> 'name' = 'Bash' AND body ->> 'input' LIKE '%git%')))
+       OR (kind = 'note' AND body ->> 'code' = 'removed'))
 ORDER BY created_at, id
 `
 
-type ListSessionGitCallsRow struct {
-	ID    pgtype.UUID `json:"id"`
-	Name  string      `json:"name"`
-	Input string      `json:"input"`
+type ListSessionActivityRow struct {
+	ID        pgtype.UUID        `json:"id"`
+	Kind      string             `json:"kind"`
+	Body      []byte             `json:"body"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
-func (q *Queries) ListSessionGitCalls(ctx context.Context, sessionID pgtype.UUID) ([]ListSessionGitCallsRow, error) {
-	rows, err := q.db.Query(ctx, listSessionGitCalls, sessionID)
+func (q *Queries) ListSessionActivity(ctx context.Context, sessionID pgtype.UUID) ([]ListSessionActivityRow, error) {
+	rows, err := q.db.Query(ctx, listSessionActivity, sessionID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListSessionGitCallsRow
+	var items []ListSessionActivityRow
 	for rows.Next() {
-		var i ListSessionGitCallsRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.Input); err != nil {
+		var i ListSessionActivityRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Kind,
+			&i.Body,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -634,6 +642,48 @@ func (q *Queries) ListStandaloneSessions(ctx context.Context, arg ListStandalone
 		return nil, err
 	}
 	return items, nil
+}
+
+const listUndeliveredRemovals = `-- name: ListUndeliveredRemovals :many
+SELECT id, body FROM messages
+WHERE session_id = $1 AND kind = 'note' AND body ->> 'code' = 'removed'
+  AND coalesce((body ->> 'delivered')::boolean, false) = false
+ORDER BY created_at, id
+`
+
+type ListUndeliveredRemovalsRow struct {
+	ID   pgtype.UUID `json:"id"`
+	Body []byte      `json:"body"`
+}
+
+func (q *Queries) ListUndeliveredRemovals(ctx context.Context, sessionID pgtype.UUID) ([]ListUndeliveredRemovalsRow, error) {
+	rows, err := q.db.Query(ctx, listUndeliveredRemovals, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUndeliveredRemovalsRow
+	for rows.Next() {
+		var i ListUndeliveredRemovalsRow
+		if err := rows.Scan(&i.ID, &i.Body); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markRemovalsDelivered = `-- name: MarkRemovalsDelivered :exec
+UPDATE messages SET body = jsonb_set(body, '{delivered}', 'true')
+WHERE id = ANY($1::uuid[])
+`
+
+func (q *Queries) MarkRemovalsDelivered(ctx context.Context, ids []pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, markRemovalsDelivered, ids)
+	return err
 }
 
 const renameProject = `-- name: RenameProject :one

@@ -3,18 +3,20 @@
 * Do not edit manually.
 */
 
+import type { ActivityEntry } from './ActivityEntry'
 import type { GitChangeSummary } from './GitChangeSummary'
-import type { GitSessionBranch } from './GitSessionBranch'
-import type { GitSessionWorktree } from './GitSessionWorktree'
 
 /**
- * @description Git overview of a session, a singleton resource (AIP-156). `base` is the abbreviated commit the session started at; changes are counted from it, untracked files included.
+ * @description Overview of a session, a singleton resource (AIP-156). `base` is the abbreviated commit the session started at; changes are counted from it, untracked files included. Outside a repository only created files appear in `activity`.
  * @type object
  */
 export type GitSummary = {
   repository: boolean;
   base?: string;
   changes: GitChangeSummary;
-  branches: GitSessionBranch[];
-  worktrees: GitSessionWorktree[];
+  /**
+   * @description Oldest first, in the order of the tool calls that created them.
+   * @type array
+   */
+  activity: ActivityEntry[];
 };
