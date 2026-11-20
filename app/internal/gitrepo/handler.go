@@ -26,6 +26,7 @@ type FolderResolver func(ctx context.Context, owner, session string) (id, folder
 // Handler serves /sessions/{session}/git and its custom methods.
 type Handler struct {
 	resolve FolderResolver
+	history History
 	locks   sync.Map
 }
 
@@ -34,10 +35,17 @@ func New(resolve FolderResolver) *Handler {
 	return &Handler{resolve: resolve}
 }
 
+// WithHistory enables the session summary, which needs the transcript and the base commit of a session.
+func (h *Handler) WithHistory(history History) *Handler {
+	h.history = history
+	return h
+}
+
 // Register mounts the routes on a group that already requires a signed-in identity.
 // Colons of custom methods are escaped, otherwise echo reads them as path parameters.
 func (h *Handler) Register(g *echo.Group) {
 	g.GET("/sessions/:session/git", h.getStatus)
+	g.GET("/sessions/:session/git/summary", h.getSummary)
 	g.GET("/sessions/:session/git/diff", h.getDiff)
 	g.GET("/sessions/:session/git/branches", h.listBranches)
 	g.GET("/sessions/:session/git/commits", h.listCommits)
@@ -77,6 +85,27 @@ func (h *Handler) getStatus(c *echo.Context) error {
 	}
 	status, err := r.status(c.Request().Context())
 	return h.reply(c, status, err)
+}
+
+func (h *Handler) getSummary(c *echo.Context) error {
+	ctx := c.Request().Context()
+	id, folder, err := h.resolve(ctx, identity.From(c), c.Param("session"))
+	if err != nil {
+		return err
+	}
+	r, err := open(folder)
+	if err != nil {
+		return err
+	}
+	var base string
+	var calls []ToolCall
+	if h.history != nil {
+		if base, calls, err = h.history(ctx, id); err != nil {
+			return err
+		}
+	}
+	summary, err := r.summary(ctx, base, calls)
+	return h.reply(c, summary, err)
 }
 
 func (h *Handler) getDiff(c *echo.Context) error {

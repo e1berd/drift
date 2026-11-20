@@ -33,6 +33,7 @@ type Querier interface {
 	GetProject(ctx context.Context, arg GetProjectParams) (Project, error)
 	GetRunContext(ctx context.Context, arg GetRunContextParams) (GetRunContextRow, error)
 	GetSession(ctx context.Context, arg GetSessionParams) (Session, error)
+	GetSessionGitBase(ctx context.Context, id pgtype.UUID) (string, error)
 	GetSessionMessage(ctx context.Context, arg GetSessionMessageParams) (Message, error)
 	GetSubscription(ctx context.Context, arg GetSubscriptionParams) (Subscription, error)
 	ListAttachmentData(ctx context.Context, arg ListAttachmentDataParams) ([]ListAttachmentDataRow, error)
@@ -41,6 +42,7 @@ type Querier interface {
 	ListMessages(ctx context.Context, arg ListMessagesParams) ([]Message, error)
 	ListProjects(ctx context.Context, arg ListProjectsParams) ([]ListProjectsRow, error)
 	ListScheduledContinuations(ctx context.Context) ([]ListScheduledContinuationsRow, error)
+	ListSessionGitCalls(ctx context.Context, sessionID pgtype.UUID) ([]ListSessionGitCallsRow, error)
 	ListSessions(ctx context.Context, arg ListSessionsParams) ([]Session, error)
 	ListStandaloneSessions(ctx context.Context, arg ListStandaloneSessionsParams) ([]Session, error)
 	ListStoredAttachmentIDs(ctx context.Context, ids []pgtype.UUID) ([]pgtype.UUID, error)
@@ -56,6 +58,7 @@ type Querier interface {
 	SearchSessions(ctx context.Context, arg SearchSessionsParams) ([]Session, error)
 	SetAgentSessionID(ctx context.Context, arg SetAgentSessionIDParams) error
 	SetCurrentSubscription(ctx context.Context, arg SetCurrentSubscriptionParams) (Subscription, error)
+	SetSessionGitBase(ctx context.Context, arg SetSessionGitBaseParams) error
 	SetSessionStatus(ctx context.Context, arg SetSessionStatusParams) (Session, error)
 	TouchSession(ctx context.Context, id pgtype.UUID) error
 	UpdateInstanceSettings(ctx context.Context, maxUploadBytes int64) (UpdateInstanceSettingsRow, error)

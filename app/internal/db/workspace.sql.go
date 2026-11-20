@@ -77,7 +77,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 }
 
 const createSession = `-- name: CreateSession :one
-INSERT INTO sessions (project_id, owner_id, title, agent) VALUES ($1, $2, $3, $4) RETURNING id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id
+INSERT INTO sessions (project_id, owner_id, title, agent) VALUES ($1, $2, $3, $4) RETURNING id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id, git_base
 `
 
 type CreateSessionParams struct {
@@ -105,6 +105,7 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.AgentSessionID,
+		&i.GitBase,
 	)
 	return i, err
 }
@@ -212,7 +213,7 @@ func (q *Queries) GetProject(ctx context.Context, arg GetProjectParams) (Project
 }
 
 const getRunContext = `-- name: GetRunContext :one
-SELECT s.id, s.project_id, s.owner_id, s.title, s.agent, s.status, s.created_at, s.updated_at, s.agent_session_id, p.path AS project_path FROM sessions s LEFT JOIN projects p ON p.id = s.project_id
+SELECT s.id, s.project_id, s.owner_id, s.title, s.agent, s.status, s.created_at, s.updated_at, s.agent_session_id, s.git_base, p.path AS project_path FROM sessions s LEFT JOIN projects p ON p.id = s.project_id
 WHERE s.id = $1 AND s.owner_id = $2
 `
 
@@ -231,6 +232,7 @@ type GetRunContextRow struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 	AgentSessionID string             `json:"agent_session_id"`
+	GitBase        string             `json:"git_base"`
 	ProjectPath    pgtype.Text        `json:"project_path"`
 }
 
@@ -247,13 +249,14 @@ func (q *Queries) GetRunContext(ctx context.Context, arg GetRunContextParams) (G
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.AgentSessionID,
+		&i.GitBase,
 		&i.ProjectPath,
 	)
 	return i, err
 }
 
 const getSession = `-- name: GetSession :one
-SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id FROM sessions WHERE id = $1 AND owner_id = $2
+SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id, git_base FROM sessions WHERE id = $1 AND owner_id = $2
 `
 
 type GetSessionParams struct {
@@ -274,8 +277,20 @@ func (q *Queries) GetSession(ctx context.Context, arg GetSessionParams) (Session
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.AgentSessionID,
+		&i.GitBase,
 	)
 	return i, err
+}
+
+const getSessionGitBase = `-- name: GetSessionGitBase :one
+SELECT git_base FROM sessions WHERE id = $1
+`
+
+func (q *Queries) GetSessionGitBase(ctx context.Context, id pgtype.UUID) (string, error) {
+	row := q.db.QueryRow(ctx, getSessionGitBase, id)
+	var git_base string
+	err := row.Scan(&git_base)
+	return git_base, err
 }
 
 const getSessionMessage = `-- name: GetSessionMessage :one
@@ -482,8 +497,41 @@ func (q *Queries) ListScheduledContinuations(ctx context.Context) ([]ListSchedul
 	return items, nil
 }
 
+const listSessionGitCalls = `-- name: ListSessionGitCalls :many
+SELECT id, (body ->> 'name')::text AS name, (body ->> 'input')::text AS input FROM messages
+WHERE session_id = $1 AND kind = 'tool'
+  AND (body ->> 'name' = 'EnterWorktree' OR (body ->> 'name' = 'Bash' AND body ->> 'input' LIKE '%git%'))
+ORDER BY created_at, id
+`
+
+type ListSessionGitCallsRow struct {
+	ID    pgtype.UUID `json:"id"`
+	Name  string      `json:"name"`
+	Input string      `json:"input"`
+}
+
+func (q *Queries) ListSessionGitCalls(ctx context.Context, sessionID pgtype.UUID) ([]ListSessionGitCallsRow, error) {
+	rows, err := q.db.Query(ctx, listSessionGitCalls, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSessionGitCallsRow
+	for rows.Next() {
+		var i ListSessionGitCallsRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.Input); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSessions = `-- name: ListSessions :many
-SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id FROM sessions
+SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id, git_base FROM sessions
 WHERE project_id = $1 AND owner_id = $2
   AND ($4::timestamptz IS NULL
        OR (updated_at, id) < ($4::timestamptz, $5::uuid))
@@ -524,6 +572,7 @@ func (q *Queries) ListSessions(ctx context.Context, arg ListSessionsParams) ([]S
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.AgentSessionID,
+			&i.GitBase,
 		); err != nil {
 			return nil, err
 		}
@@ -536,7 +585,7 @@ func (q *Queries) ListSessions(ctx context.Context, arg ListSessionsParams) ([]S
 }
 
 const listStandaloneSessions = `-- name: ListStandaloneSessions :many
-SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id FROM sessions
+SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id, git_base FROM sessions
 WHERE owner_id = $1 AND project_id IS NULL
   AND ($3::timestamptz IS NULL
        OR (updated_at, id) < ($3::timestamptz, $4::uuid))
@@ -575,6 +624,7 @@ func (q *Queries) ListStandaloneSessions(ctx context.Context, arg ListStandalone
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.AgentSessionID,
+			&i.GitBase,
 		); err != nil {
 			return nil, err
 		}
@@ -665,7 +715,7 @@ func (q *Queries) ResetRunningSessions(ctx context.Context) error {
 }
 
 const searchSessions = `-- name: SearchSessions :many
-SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id FROM sessions
+SELECT id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id, git_base FROM sessions
 WHERE owner_id = $1
   AND title ILIKE '%' || $3::text || '%'
   AND ($4::timestamptz IS NULL
@@ -707,6 +757,7 @@ func (q *Queries) SearchSessions(ctx context.Context, arg SearchSessionsParams) 
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.AgentSessionID,
+			&i.GitBase,
 		); err != nil {
 			return nil, err
 		}
@@ -732,8 +783,22 @@ func (q *Queries) SetAgentSessionID(ctx context.Context, arg SetAgentSessionIDPa
 	return err
 }
 
+const setSessionGitBase = `-- name: SetSessionGitBase :exec
+UPDATE sessions SET git_base = $2 WHERE id = $1 AND git_base = ''
+`
+
+type SetSessionGitBaseParams struct {
+	ID      pgtype.UUID `json:"id"`
+	GitBase string      `json:"git_base"`
+}
+
+func (q *Queries) SetSessionGitBase(ctx context.Context, arg SetSessionGitBaseParams) error {
+	_, err := q.db.Exec(ctx, setSessionGitBase, arg.ID, arg.GitBase)
+	return err
+}
+
 const setSessionStatus = `-- name: SetSessionStatus :one
-UPDATE sessions SET status = $2, updated_at = now() WHERE id = $1 RETURNING id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id
+UPDATE sessions SET status = $2, updated_at = now() WHERE id = $1 RETURNING id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id, git_base
 `
 
 type SetSessionStatusParams struct {
@@ -754,6 +819,7 @@ func (q *Queries) SetSessionStatus(ctx context.Context, arg SetSessionStatusPara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.AgentSessionID,
+		&i.GitBase,
 	)
 	return i, err
 }
@@ -797,7 +863,7 @@ SET title = coalesce($3, title),
     agent_session_id = CASE WHEN coalesce($4, agent) = agent THEN agent_session_id ELSE '' END,
     updated_at = now()
 WHERE id = $1 AND owner_id = $2
-RETURNING id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id
+RETURNING id, project_id, owner_id, title, agent, status, created_at, updated_at, agent_session_id, git_base
 `
 
 type UpdateSessionParams struct {
@@ -825,6 +891,7 @@ func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (S
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.AgentSessionID,
+		&i.GitBase,
 	)
 	return i, err
 }

@@ -396,6 +396,23 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/GitStatus' }
         default: { $ref: '#/components/responses/Error' }
+  /sessions/{sessionId}/git/summary:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: getGitSummary
+      tags: [git]
+      description: >-
+        What the session did in git, a singleton resource (AIP-156): lines changed from the
+        commit the session started at to the working tree, and the branches and worktrees its
+        agent created that still exist, each with the tool call that created it.
+      responses:
+        '200':
+          description: The summary.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GitSummary' }
+        default: { $ref: '#/components/responses/Error' }
   /sessions/{sessionId}/git/diff:
     parameters:
       - $ref: '#/components/parameters/SessionId'
@@ -1457,6 +1474,58 @@ components:
         staged: { type: boolean }
         diff: { type: string, description: Unified diff as git prints it. }
         truncated: { type: boolean }
+    GitSummary:
+      description: >-
+        Git overview of a session, a singleton resource (AIP-156). `base` is the abbreviated
+        commit the session started at; changes are counted from it, untracked files included.
+      type: object
+      required: [repository, changes, branches, worktrees]
+      properties:
+        repository: { type: boolean }
+        base: { type: string }
+        changes: { $ref: '#/components/schemas/GitChangeSummary' }
+        branches:
+          type: array
+          items: { $ref: '#/components/schemas/GitSessionBranch' }
+        worktrees:
+          type: array
+          items: { $ref: '#/components/schemas/GitSessionWorktree' }
+    GitChangeSummary:
+      type: object
+      required: [additions, deletions, fileCount, files]
+      properties:
+        additions: { type: integer }
+        deletions: { type: integer }
+        fileCount: { type: integer }
+        files:
+          description: Up to five files with the most changed lines.
+          type: array
+          items: { $ref: '#/components/schemas/GitFileStat' }
+    GitFileStat:
+      type: object
+      required: [path, additions, deletions]
+      properties:
+        path: { type: string }
+        additions: { type: integer }
+        deletions: { type: integer }
+    GitSessionBranch:
+      type: object
+      required: [name, messageId, current, commits, unpushed]
+      properties:
+        name: { type: string }
+        messageId: { type: string, description: The tool call message that created the branch. }
+        current: { type: boolean }
+        upstream: { type: string }
+        commits: { type: integer, description: Commits on the branch since the session base. }
+        unpushed: { type: integer, description: Commits not on the upstream; 0 without one. }
+    GitSessionWorktree:
+      type: object
+      required: [path, messageId, changes]
+      properties:
+        path: { type: string, description: Relative to the parent of the session folder, else under ~ or absolute. }
+        branch: { type: string }
+        messageId: { type: string, description: The tool call message that created the worktree. }
+        changes: { type: integer, description: Changed and untracked files in the worktree. }
     GitBranch:
       type: object
       required: [name, current]

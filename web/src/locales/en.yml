@@ -55,6 +55,9 @@ empty:
   lead: 'Pick an agent and describe the task. Without a project, the agent works in an empty folder of this chat.'
   notConnected: 'not connected'
   connectHint: 'Connect agents in'
+infobar:
+  hide: 'Hide session status'
+  show: 'Show session status'
 tabs:
   label: 'Session views'
   chat: 'Chat'

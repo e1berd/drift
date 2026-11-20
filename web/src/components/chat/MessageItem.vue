@@ -29,7 +29,11 @@ defineProps<{ message: Message; agent: AgentId }>()
     </div>
 
     <ThinkingBlock v-else-if="message.kind === 'thinking'" :body="message.body" />
-    <ToolCall v-else-if="message.kind === 'tool'" :body="message.body" />
+    <ToolCall
+        v-else-if="message.kind === 'tool'"
+        :body="message.body"
+        :data-message-id="message.id"
+    />
 
     <QuestionCard v-else-if="message.kind === 'question'" :message="message" :agent="agent" />
     <LimitCard v-else-if="message.kind === 'limit'" :message="message" />

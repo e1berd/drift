@@ -144,7 +144,7 @@ func run() (string, error) {
 	terminals := terminal.New(terminal.DetectShell(cfg.Shell), workspaceHandler.SessionFolder, log)
 	workspaceHandler.WithTerminals(terminals).Register(api)
 	terminals.Register(api)
-	gitrepo.New(workspaceHandler.SessionFolder).Register(api)
+	gitrepo.New(workspaceHandler.SessionFolder).WithHistory(workspaceHandler.SessionGitHistory).Register(api)
 	subs, err := subscriptions.New(ctx, pool, hub, cli, log)
 	if err != nil {
 		return "", err

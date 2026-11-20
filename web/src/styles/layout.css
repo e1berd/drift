@@ -56,6 +56,34 @@
         }
     }
 
+    .infobar-section {
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--ui-spacing) * 2);
+    }
+
+    .infobar-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 0;
+        color: var(--ui-muted-foreground);
+        font-size: calc(var(--ui-font-size) - 0.0625rem);
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    .infobar-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 0;
+        margin-inline: calc(var(--ui-spacing) * -2);
+        padding: 0;
+        list-style: none;
+    }
+
     .status-tag {
         display: inline-flex;
         align-items: center;

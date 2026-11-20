@@ -62,6 +62,7 @@ type Session struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 	AgentSessionID string             `json:"agent_session_id"`
+	GitBase        string             `json:"git_base"`
 }
 
 type Subscription struct {

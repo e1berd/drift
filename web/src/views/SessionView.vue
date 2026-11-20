@@ -4,9 +4,11 @@ import {
     PhChatCircle,
     PhFile,
     PhGitBranch,
+    PhInfo,
     PhTerminal,
     PhTerminalWindow,
 } from '@phosphor-icons/vue'
+import { Button } from '@ui-sdk/vue/button'
 import { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from '@ui-sdk/vue/tabs'
 import { toast } from '@ui-sdk/vue/toast'
 import { useRoute, useRouter } from 'vue-router'
@@ -18,6 +20,8 @@ import ChatThread from '@/components/chat/ChatThread.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
 import SwitchFamilyDialog from '@/components/composer/SwitchFamilyDialog.vue'
 import PanePlaceholder from '@/components/PanePlaceholder.vue'
+import SessionChatLayout from '@/components/infobar/SessionChatLayout.vue'
+import { useInfobar } from '@/composables/useInfobar'
 import { useComposerSettings } from '@/composables/useComposerSettings'
 import { draftKey } from '@/composables/useDrafts'
 import { useEventStream } from '@/composables/useEventStream'
@@ -42,6 +46,8 @@ const TABS = [
 ] as const
 
 const { t } = useI18n()
+const infobar = useInfobar()
+const infobarLabel = computed(() => (infobar.open.value ? t('infobar.hide') : t('infobar.show')))
 const route = useRoute()
 const router = useRouter()
 
@@ -148,43 +154,55 @@ const stop = useStopSession({
                 <span v-if="running" class="status-tag motion-fade" v-tooltip="AGENTS[agent].name">
                     <RunSpinner /><span class="max-md:sr-only">{{ AGENTS[agent].name }}</span>
                 </span>
+                <Button
+                    v-if="tab === 'chat'"
+                    class="max-md:hidden"
+                    :aria-label="infobarLabel"
+                    :aria-pressed="infobar.open.value"
+                    :title="infobarLabel"
+                    @click="infobar.toggle()"
+                >
+                    <PhInfo />
+                </Button>
             </template>
         </TopBar>
 
         <TabsPanel value="chat" class="session-pane">
-            <ChatThread
-                :messages="messages"
-                :agent="agent"
-                :has-older="!!hasNextPage"
-                :loading-older="isFetchingNextPage"
-                @load-older="fetchNextPage()"
-            >
-                <template #after>
-                    <AgentActivity
-                        v-if="running && session.data.value"
-                        :agent="agent"
-                        :activity="activity"
-                        :running-tool="runningTool"
-                        :since="session.data.value.updateTime"
-                    />
-                </template>
-            </ChatThread>
-            <div class="flex-none px-6 pb-4 max-md:px-3 max-md:pb-3">
-                <PromptComposer
-                    :draft-key="draftKey(sessionId)"
+            <SessionChatLayout :session-id="sessionId" :messages="messages" :running="running">
+                <ChatThread
+                    :messages="messages"
                     :agent="agent"
-                    :history="history"
-                    :placeholder="placeholder"
-                    :busy="post.isPending.value || update.isPending.value"
-                    :running="running"
-                    :stopping="stop.isPending.value"
-                    autofocus
-                    @send="send"
-                    @stop="stop.mutate({ path: { sessionId } })"
-                    @switch-agent="switchAgent"
-                />
-                <SwitchFamilyDialog ref="switchDialog" />
-            </div>
+                    :has-older="!!hasNextPage"
+                    :loading-older="isFetchingNextPage"
+                    @load-older="fetchNextPage()"
+                >
+                    <template #after>
+                        <AgentActivity
+                            v-if="running && session.data.value"
+                            :agent="agent"
+                            :activity="activity"
+                            :running-tool="runningTool"
+                            :since="session.data.value.updateTime"
+                        />
+                    </template>
+                </ChatThread>
+                <div class="flex-none px-6 pb-4 max-md:px-3 max-md:pb-3">
+                    <PromptComposer
+                        :draft-key="draftKey(sessionId)"
+                        :agent="agent"
+                        :history="history"
+                        :placeholder="placeholder"
+                        :busy="post.isPending.value || update.isPending.value"
+                        :running="running"
+                        :stopping="stop.isPending.value"
+                        autofocus
+                        @send="send"
+                        @stop="stop.mutate({ path: { sessionId } })"
+                        @switch-agent="switchAgent"
+                    />
+                    <SwitchFamilyDialog ref="switchDialog" />
+                </div>
+            </SessionChatLayout>
         </TabsPanel>
         <TabsPanel value="cli" class="session-pane"
             ><PanePlaceholder :icon="PhTerminal"

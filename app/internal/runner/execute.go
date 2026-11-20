@@ -55,6 +55,9 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 	}
 	defer r.release()
 	r.supersedeOpenCards(req.Owner, req.Session)
+	if rc.GitBase == "" {
+		r.rememberGitBase(ctx, req.Session, dir)
+	}
 
 	saveSessionID := func(id string) {
 		if err := r.q.SetAgentSessionID(r.ctx, db.SetAgentSessionIDParams{ID: req.Session, AgentSessionID: id}); err != nil {
