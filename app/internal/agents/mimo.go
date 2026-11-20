@@ -40,23 +40,59 @@ type mimoProvider struct {
 	} `json:"metadata"`
 }
 
+func xiaomiProviderName(name string) bool {
+	return name == "xiaomi" || strings.HasPrefix(name, "xiaomi-")
+}
+
 func xiaomiAccountUID(providers map[string]mimoProvider) string {
 	for name, provider := range providers {
-		if (name == "xiaomi" || strings.HasPrefix(name, "xiaomi-")) && provider.Metadata.UID != "" {
+		if xiaomiProviderName(name) && provider.Metadata.UID != "" {
 			return provider.Metadata.UID
 		}
 	}
 	return ""
 }
 
-// Account reads the signed-in MiMo account from the credentials the CLI stored.
-func (d mimo) Account(ctx context.Context, home string) (Account, error) {
+func readMimoProviders(home string) (map[string]mimoProvider, error) {
 	raw, err := os.ReadFile(filepath.Join(home, ".local", "share", "mimocode", "auth.json"))
 	if err != nil {
-		return Account{}, errors.New("mimo is not signed in")
+		return nil, err
 	}
 	var providers map[string]mimoProvider
-	if json.Unmarshal(raw, &providers) != nil {
+	if err := json.Unmarshal(raw, &providers); err != nil {
+		return nil, err
+	}
+	return providers, nil
+}
+
+const mimoSignedInModel = "mimo-v2.6-pro"
+
+// MimoModel picks the model of the provider the account signed in with. Without -m the
+// CLI falls back to the plain "xiaomi" provider, which token plan sign-ins such as
+// "xiaomi-token-plan-sgp" have no key for, and every run fails with "Invalid API Key".
+func MimoModel(home, requested string) string {
+	if requested != "" && requested != "default" {
+		return requested
+	}
+	providers, err := readMimoProviders(home)
+	if err != nil {
+		return requested
+	}
+	if _, ok := providers["xiaomi"]; ok {
+		return requested
+	}
+	for name := range providers {
+		if xiaomiProviderName(name) {
+			return name + "/" + mimoSignedInModel
+		}
+	}
+	return requested
+}
+
+// Account reads the signed-in MiMo account from the credentials the CLI stored.
+func (d mimo) Account(ctx context.Context, home string) (Account, error) {
+	providers, err := readMimoProviders(home)
+	if err != nil {
 		return Account{}, errors.New("mimo is not signed in")
 	}
 	uid := xiaomiAccountUID(providers)

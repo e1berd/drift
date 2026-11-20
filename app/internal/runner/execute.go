@@ -66,6 +66,10 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 			log.Warn("save agent session id", "err", err)
 		}
 	}
+	home := r.cli.Home(uuidString(sub.ID))
+	if rc.Agent == "mimo" {
+		req.Model = agents.MimoModel(home, req.Model)
+	}
 	plan, err := r.plan(rc.Agent, req, rc.AgentSessionID, dir, t, saveSessionID)
 	if err != nil {
 		log.Warn("prepare agent run", "err", err)
@@ -75,7 +79,7 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 	defer plan.cleanup()
 	cmd := exec.CommandContext(ctx, plan.bin, plan.args...)
 	cmd.Dir = dir
-	cmd.Env = agentEnv(r.cli, rc.Agent, r.cli.Home(uuidString(sub.ID)))
+	cmd.Env = agentEnv(r.cli, rc.Agent, home)
 	cmd.Stdin = strings.NewReader(plan.stdin)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error { return signalGroup(cmd.Process.Pid, syscall.SIGINT) }

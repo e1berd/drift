@@ -45,3 +45,22 @@ func TestMimoAccountRejectsOtherProviders(t *testing.T) {
 		}
 	}
 }
+
+func TestMimoModelUsesSignedInProvider(t *testing.T) {
+	cases := []struct {
+		name, auth, requested, want string
+	}{
+		{"token plan default", `{"xiaomi-token-plan-sgp":{"type":"api","key":"k","metadata":{"uid":"42"}}}`, "default", "xiaomi-token-plan-sgp/mimo-v2.6-pro"},
+		{"token plan empty", `{"xiaomi-token-plan-sgp":{"metadata":{"uid":"42"}}}`, "", "xiaomi-token-plan-sgp/mimo-v2.6-pro"},
+		{"explicit model", `{"xiaomi-token-plan-sgp":{"metadata":{"uid":"42"}}}`, "xiaomi/mimo-v2.6-flash", "xiaomi/mimo-v2.6-flash"},
+		{"xiaomi account", `{"xiaomi":{"metadata":{"uid":"42"}}}`, "default", "default"},
+		{"not signed in", `not json`, "default", "default"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := MimoModel(writeMimoAuth(t, c.auth), c.requested); got != c.want {
+				t.Fatalf("MimoModel = %q, want %q", got, c.want)
+			}
+		})
+	}
+}
