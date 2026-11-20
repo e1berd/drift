@@ -89,21 +89,27 @@ type kimiCredentials struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	ExpiresAt    int64  `json:"expires_at"`
+	ExpiresIn    int64  `json:"expires_in"`
 }
 
-func readKimiCredentials(home string) (kimiCredentials, error) {
-	var creds kimiCredentials
+func kimiCredentialsPath(home string) (string, error) {
 	key := readKimiConfig(home).oauthKey
 	if key == "" {
 		entries, err := os.ReadDir(filepath.Join(home, "credentials"))
 		if err != nil || len(entries) == 0 {
-			return creds, errors.New("kimi is not signed in")
+			return "", errors.New("kimi is not signed in")
 		}
-		key = "credentials/" + entries[0].Name()
-	} else if !strings.HasPrefix(key, "credentials/") {
-		key = "credentials/" + filepath.Base(key) + ".json"
+		return filepath.Join(home, "credentials", entries[0].Name()), nil
 	}
-	raw, err := os.ReadFile(filepath.Join(home, key))
+	if strings.HasPrefix(key, "credentials/") {
+		return filepath.Join(home, key), nil
+	}
+	return filepath.Join(home, "credentials", filepath.Base(key)+".json"), nil
+}
+
+func readKimiCredentials(path string) (kimiCredentials, error) {
+	var creds kimiCredentials
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return creds, errors.New("kimi is not signed in")
 	}
@@ -120,38 +126,43 @@ func (c kimiCredentials) expired(now time.Time) bool {
 	return c.ExpiresAt > 0 && time.Unix(c.ExpiresAt, 0).Before(now.Add(kimiTokenSkew))
 }
 
-func writeKimiCredentials(home, key string, creds kimiCredentials) error {
-	raw, err := json.Marshal(creds)
+func writeKimiCredentials(path string, creds kimiCredentials) error {
+	stored := map[string]any{}
+	if raw, err := os.ReadFile(path); err == nil {
+		_ = json.Unmarshal(raw, &stored)
+	}
+	stored["access_token"] = creds.AccessToken
+	stored["refresh_token"] = creds.RefreshToken
+	stored["expires_at"] = creds.ExpiresAt
+	if creds.ExpiresIn > 0 {
+		stored["expires_in"] = creds.ExpiresIn
+	}
+	raw, err := json.Marshal(stored)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(home, key), raw, 0o600)
+	return os.WriteFile(path, raw, 0o600)
 }
 
 // ensureKimiToken returns a usable access token, refreshing it against the OAuth host when the
 // stored one is close to expiry.
 func ensureKimiToken(ctx context.Context, home string) (string, error) {
-	cfg := readKimiConfig(home)
-	creds, err := readKimiCredentials(home)
+	path, err := kimiCredentialsPath(home)
+	if err != nil {
+		return "", err
+	}
+	creds, err := readKimiCredentials(path)
 	if err != nil {
 		return "", err
 	}
 	if !creds.expired(time.Now()) {
 		return creds.AccessToken, nil
 	}
-	refreshed, err := refreshKimiToken(ctx, http.DefaultClient, cfg.oauthHost, creds.RefreshToken)
+	refreshed, err := refreshKimiToken(ctx, http.DefaultClient, readKimiConfig(home).oauthHost, creds.RefreshToken)
 	if err != nil {
 		return "", err
 	}
-	key := cfg.oauthKey
-	if key == "" {
-		entries, _ := os.ReadDir(filepath.Join(home, "credentials"))
-		if len(entries) == 0 {
-			return "", errors.New("kimi is not signed in")
-		}
-		key = "credentials/" + entries[0].Name()
-	}
-	if err := writeKimiCredentials(home, key, refreshed); err != nil {
+	if err := writeKimiCredentials(path, refreshed); err != nil {
 		return "", err
 	}
 	return refreshed.AccessToken, nil
@@ -199,6 +210,7 @@ func refreshKimiToken(ctx context.Context, client *http.Client, oauthHost, refre
 		AccessToken:  out.AccessToken,
 		RefreshToken: out.RefreshToken,
 		ExpiresAt:    time.Now().Add(time.Duration(out.ExpiresIn) * time.Second).Unix(),
+		ExpiresIn:    out.ExpiresIn,
 	}, nil
 }
 
