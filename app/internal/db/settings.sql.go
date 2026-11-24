@@ -12,34 +12,42 @@ import (
 )
 
 const getInstanceSettings = `-- name: GetInstanceSettings :one
-SELECT max_upload_bytes, update_time FROM instance_settings
+SELECT max_upload_bytes, default_frontend, update_time FROM instance_settings
 `
 
 type GetInstanceSettingsRow struct {
-	MaxUploadBytes int64              `json:"max_upload_bytes"`
-	UpdateTime     pgtype.Timestamptz `json:"update_time"`
+	MaxUploadBytes  int64              `json:"max_upload_bytes"`
+	DefaultFrontend string             `json:"default_frontend"`
+	UpdateTime      pgtype.Timestamptz `json:"update_time"`
 }
 
 func (q *Queries) GetInstanceSettings(ctx context.Context) (GetInstanceSettingsRow, error) {
 	row := q.db.QueryRow(ctx, getInstanceSettings)
 	var i GetInstanceSettingsRow
-	err := row.Scan(&i.MaxUploadBytes, &i.UpdateTime)
+	err := row.Scan(&i.MaxUploadBytes, &i.DefaultFrontend, &i.UpdateTime)
 	return i, err
 }
 
 const updateInstanceSettings = `-- name: UpdateInstanceSettings :one
-UPDATE instance_settings SET max_upload_bytes = $1, update_time = now()
-RETURNING max_upload_bytes, update_time
+UPDATE instance_settings
+SET max_upload_bytes = $1, default_frontend = $2, update_time = now()
+RETURNING max_upload_bytes, default_frontend, update_time
 `
 
-type UpdateInstanceSettingsRow struct {
-	MaxUploadBytes int64              `json:"max_upload_bytes"`
-	UpdateTime     pgtype.Timestamptz `json:"update_time"`
+type UpdateInstanceSettingsParams struct {
+	MaxUploadBytes  int64  `json:"max_upload_bytes"`
+	DefaultFrontend string `json:"default_frontend"`
 }
 
-func (q *Queries) UpdateInstanceSettings(ctx context.Context, maxUploadBytes int64) (UpdateInstanceSettingsRow, error) {
-	row := q.db.QueryRow(ctx, updateInstanceSettings, maxUploadBytes)
+type UpdateInstanceSettingsRow struct {
+	MaxUploadBytes  int64              `json:"max_upload_bytes"`
+	DefaultFrontend string             `json:"default_frontend"`
+	UpdateTime      pgtype.Timestamptz `json:"update_time"`
+}
+
+func (q *Queries) UpdateInstanceSettings(ctx context.Context, arg UpdateInstanceSettingsParams) (UpdateInstanceSettingsRow, error) {
+	row := q.db.QueryRow(ctx, updateInstanceSettings, arg.MaxUploadBytes, arg.DefaultFrontend)
 	var i UpdateInstanceSettingsRow
-	err := row.Scan(&i.MaxUploadBytes, &i.UpdateTime)
+	err := row.Scan(&i.MaxUploadBytes, &i.DefaultFrontend, &i.UpdateTime)
 	return i, err
 }

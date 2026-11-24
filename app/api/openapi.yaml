@@ -16,6 +16,7 @@ tags:
   - name: drafts
   - name: attachments
   - name: settings
+  - name: frontends
   - name: uploads
     description: tus resumable uploads, driven by tus-js-client through Uppy rather than generated code.
   - name: files
@@ -806,6 +807,18 @@ paths:
             '*/*':
               schema: { type: string, format: binary }
         default: { $ref: '#/components/responses/Error' }
+  /frontends:
+    get:
+      operationId: listFrontends
+      description: Drift interfaces built into this instance (AIP-132), the default one first. A page shows the one in the `ui` cookie, else the instance default.
+      tags: [frontends]
+      responses:
+        '200':
+          description: The interfaces.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListFrontendsResponse' }
+        default: { $ref: '#/components/responses/Error' }
   /settings:
     get:
       operationId: getSettings
@@ -1226,15 +1239,34 @@ components:
         name: { type: string }
         size: { type: integer, format: int64 }
         type: { type: string, description: Media type detected from the bytes or the extension. }
+    Frontend:
+      description: A Drift interface (AIP-122 resource `frontends/{frontend}`); texts are in the request language.
+      type: object
+      required: [name, displayName, description]
+      properties:
+        name: { type: string, example: frontends/default }
+        displayName: { type: string }
+        description: { type: string }
+    ListFrontendsResponse:
+      type: object
+      required: [frontends]
+      properties:
+        frontends:
+          type: array
+          items: { $ref: '#/components/schemas/Frontend' }
     Settings:
       description: Instance-wide settings (AIP-156 singleton).
       type: object
-      required: [maxUploadBytes, updateTime]
+      required: [maxUploadBytes, defaultFrontend, updateTime]
       properties:
         maxUploadBytes:
           description: Largest file one upload may carry.
           type: integer
           format: int64
+        defaultFrontend:
+          description: Name of the interface visitors get until they pick their own.
+          type: string
+          example: frontends/default
         updateTime: { type: string, format: date-time }
     SettingsInput:
       type: object
@@ -1244,6 +1276,7 @@ components:
           format: int64
           minimum: 10000000
           maximum: 1000000000000
+        defaultFrontend: { type: string }
     MessageBody:
       type: object
       properties:

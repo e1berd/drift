@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter @drift/app-default dev",
     "build": "run-p types:check \"build-only {@}\" --",
-    "build-only": "pnpm --filter @drift/app-default build-only",
+    "build-only": "pnpm --filter './apps/*' build-only",
     "preview": "pnpm --filter @drift/app-default preview",
     "test:unit": "vitest",
     "test:e2e": "pnpm --filter @drift/app-default test:e2e",

@@ -21,7 +21,7 @@ const MIN_GB = 0.1
 const MAX_GB = 1000
 
 const { t } = useI18n()
-const { session } = useSession()
+const { isOwner } = useSession()
 const queryClient = useQueryClient()
 const settings = useGetSettings()
 const update = useUpdateSettings({
@@ -34,7 +34,6 @@ const update = useUpdateSettings({
     },
 })
 
-const isOwner = computed(() => session.value?.identity.metadata_public?.role === 'superuser')
 const savedGb = computed(() =>
     settings.data.value ? roundGb(settings.data.value.maxUploadBytes / GB) : null,
 )

@@ -1,0 +1,7 @@
+{
+  "name": { "ru": "Стандартный", "en": "Default" },
+  "description": {
+    "ru": "Исходный интерфейс Drift на ui-sdk",
+    "en": "The original Drift interface, built on ui-sdk"
+  }
+}
