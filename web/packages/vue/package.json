@@ -1,0 +1,24 @@
+{
+  "name": "@drift/vue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./api": "./src/api/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@drift/sdk": "workspace:*",
+    "@tanstack/vue-query": "catalog:",
+    "@uppy/core": "catalog:",
+    "@uppy/golden-retriever": "6.0.1",
+    "@uppy/tus": "6.0.1",
+    "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "vue": "catalog:"
+  },
+  "peerDependencies": {
+    "vue": "catalog:"
+  }
+}

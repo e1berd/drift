@@ -28,7 +28,7 @@ func parsePages() (*pages, error) {
 }
 
 // Color schemes of the theme switcher; the browser keeps the choice in colorSchemeCookie
-// (createColorScheme + createCookieStorage in web/src/shared/preferences.ts).
+// (createColorScheme + createCookieStorage in web/apps/default/src/shared/preferences.ts).
 const colorSchemeCookie = "color-scheme"
 
 var colorSchemes = []string{"system", "light", "dark"}

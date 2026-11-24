@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/**/__tests__/*"],
+  "exclude": [],
+  "compilerOptions": {
+    "types": ["node", "jsdom"],
+    "tsBuildInfoFile": "../../node_modules/.tmp/sdk.test.tsbuildinfo"
+  }
+}

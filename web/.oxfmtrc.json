@@ -2,5 +2,10 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "semi": false,
   "singleQuote": true,
-  "ignorePatterns": ["src/gen/**", "pnpm-lock.yaml"]
+  "ignorePatterns": [
+    "packages/sdk/src/api/types/**",
+    "packages/sdk/src/api/clients/**",
+    "packages/vue/src/api/queries/**",
+    "pnpm-lock.yaml"
+  ]
 }

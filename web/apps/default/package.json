@@ -1,0 +1,52 @@
+{
+  "name": "@drift/app-default",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build-only": "vite build",
+    "preview": "vite preview",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/language-data": "6.5.2",
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.15",
+    "@drift/sdk": "workspace:*",
+    "@drift/vue": "workspace:*",
+    "@formkit/auto-animate": "0.10.2",
+    "@lezer/highlight": "^1.2.5",
+    "@lobehub/icons-static-svg": "1.103.0",
+    "@phosphor-icons/vue": "2.2.1",
+    "@tanstack/vue-query": "catalog:",
+    "@tiptap/core": "3.34.0",
+    "@tiptap/extensions": "3.34.0",
+    "@tiptap/pm": "3.34.0",
+    "@tiptap/starter-kit": "3.34.0",
+    "@tiptap/vue-3": "3.34.0",
+    "@ui-sdk/core": "0.1.0-beta.5",
+    "@ui-sdk/vue": "0.1.0-beta.5",
+    "@ui-sdk/web": "0.1.0-beta.5",
+    "@uppy/core": "catalog:",
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/addon-web-links": "0.12.0",
+    "@xterm/xterm": "6.0.0",
+    "codemirror": "6.0.2",
+    "htmx.org": "2.0.11",
+    "hyperscript.org": "0.9.94",
+    "vue": "catalog:",
+    "vue-i18n": "^11.4.20",
+    "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "@intlify/unplugin-vue-i18n": "^11.2.8",
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "tailwindcss": "^4.3.5",
+    "vite": "^8.2.2",
+    "vite-plugin-vue-devtools": "^8.2.1"
+  }
+}

@@ -34,4 +34,4 @@ tasks:
   typecheck:
     desc: Проверить TypeScript
     cmds:
-      - pnpm exec vue-tsc --noEmit
+      - pnpm types:check
