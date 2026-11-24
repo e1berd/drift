@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 
 import ScrollPane from '@/components/ScrollPane.vue'
 import { useInfiniteSentinel } from '@drift/vue/composables/useInfiniteSentinel'
-import { useSessionGit } from '@/composables/useSessionGit'
+import { useSessionGit } from '@drift/vue/composables/useSessionGit'
 import { useListGitCommitsInfinite } from '@drift/vue/api'
 import { errorMessage } from '@drift/sdk/errors'
 import { relativeTime } from '@drift/sdk/time'

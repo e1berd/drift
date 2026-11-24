@@ -14,7 +14,7 @@ import { useI18n } from 'vue-i18n'
 
 import AttachmentTile from '@/components/attachments/AttachmentTile.vue'
 import type { AttachmentState } from '@drift/sdk/attachmentState'
-import type { ComposerTile } from '@/components/composer/composerTile'
+import type { ComposerTile } from '@drift/vue/uploads/composerTile'
 import { attachmentURL, isInlineImage } from '@drift/sdk/attachments'
 import { knownPreview, localPreview } from '@drift/sdk/uploads/previews'
 

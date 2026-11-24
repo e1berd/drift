@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n'
 import DeliveryOffer from '@/components/delivery/DeliveryOffer.vue'
 import DeliveryProgress from '@/components/delivery/DeliveryProgress.vue'
 import DeliverySkipConfirm from '@/components/delivery/DeliverySkipConfirm.vue'
-import { useDelivery, watchRelaunch } from '@/composables/useDelivery'
+import { useDelivery, watchRelaunch } from '@drift/vue/composables/useDelivery'
 import { reportError } from '@drift/sdk/errors'
 
 const { t } = useI18n()

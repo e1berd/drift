@@ -6,7 +6,7 @@ import {
     SegmentedControlItem,
 } from '@ui-sdk/vue/segmented-control'
 
-import type { AgentId } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
 
 import AgentLogo from '@/components/AgentLogo.vue'
 

@@ -14,7 +14,7 @@ import { useI18n } from 'vue-i18n'
 import ReleaseNotes from '@/components/delivery/ReleaseNotes.vue'
 import ReleaseSelect from '@/components/delivery/ReleaseSelect.vue'
 import { useListReleases } from '@drift/vue/api'
-import { useDelivery } from '@/composables/useDelivery'
+import { useDelivery } from '@drift/vue/composables/useDelivery'
 import { reportError } from '@drift/sdk/errors'
 
 const open = defineModel<boolean>('open', { required: true })

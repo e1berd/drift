@@ -23,7 +23,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { useEventStream } from '@drift/vue/composables/useEventStream'
-import { useLocale } from '@/composables/useLocale'
+import { useLocale } from '@drift/vue/composables/useLocale'
 import { useSession } from '@drift/vue/composables/useSession'
 import { useShell } from '@drift/vue/composables/useShell'
 import { colorScheme } from '@/shared/preferences'

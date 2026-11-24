@@ -1,8 +1,8 @@
 import { useI18n } from 'vue-i18n'
 
-import type { Locale } from '@/shared/preferences'
+import type { Locale } from '@drift/sdk/locale'
 
-import { saveLocale } from '@/shared/preferences'
+import { saveLocale } from '@drift/sdk/locale'
 
 /** Current interface language; switching it also saves the cookie the server renders auth pages with. */
 export function useLocale() {

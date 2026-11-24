@@ -10,13 +10,13 @@ import {
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 
-import type { AgentId } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
 
 import UsageMiniMeter from '@/components/composer/usage/UsageMiniMeter.vue'
 import UsageMeters from '@/components/settings/subscriptions/UsageMeters.vue'
-import { useAgentUsage } from '@/composables/useAgentUsage'
+import { useAgentUsage } from '@drift/vue/composables/useAgentUsage'
 import { reportError } from '@drift/sdk/errors'
-import { AGENTS } from '@/shared/agents'
+import { AGENTS } from '@drift/sdk/agents'
 
 const props = withDefaults(
     defineProps<{ agent: AgentId; sessionId?: string; running?: boolean }>(),

@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 
-import type { AgentId } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
 
-import { useListSubscriptions } from '@drift/vue/api'
-import { AGENTS } from '@/shared/agents'
+import { useListSubscriptions } from '../api'
+import { AGENTS } from '@drift/sdk/agents'
 
 /** Agents with a signed-in subscription; only these are offered for a new chat. */
 export function useAgents() {

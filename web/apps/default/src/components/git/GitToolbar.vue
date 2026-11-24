@@ -11,7 +11,7 @@ import { Button } from '@ui-sdk/vue/button'
 import { useI18n } from 'vue-i18n'
 
 import GitBranchMenu from '@/components/git/GitBranchMenu.vue'
-import { useSessionGit } from '@/composables/useSessionGit'
+import { useSessionGit } from '@drift/vue/composables/useSessionGit'
 import { reportError } from '@drift/sdk/errors'
 
 const { t } = useI18n()

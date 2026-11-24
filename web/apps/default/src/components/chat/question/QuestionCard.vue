@@ -4,10 +4,10 @@ import { Button } from '@ui-sdk/vue/button'
 import { useI18n } from 'vue-i18n'
 
 import QuestionField from '@/components/chat/question/QuestionField.vue'
-import { useQuestionAnswers } from '@/composables/useQuestionAnswers'
+import { useQuestionAnswers } from '@drift/vue/composables/useQuestionAnswers'
 import type { Message } from '@drift/vue/api'
-import type { AgentId } from '@/shared/agents'
-import { AGENTS } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
+import { AGENTS } from '@drift/sdk/agents'
 
 const props = defineProps<{ message: Message; agent: AgentId }>()
 const { t } = useI18n()

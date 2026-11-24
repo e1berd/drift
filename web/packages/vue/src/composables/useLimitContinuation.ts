@@ -1,18 +1,17 @@
 import { computed, toValue } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
-import { toast } from '@ui-sdk/vue/toast'
 
 import {
     useCancelContinueAfterLimit,
     useContinueAfterLimit,
     useScheduleContinueAfterLimit,
-} from '@drift/vue/api'
-import type { Message } from '@drift/vue/api'
-import { errorMessage } from '@drift/sdk/errors'
+} from '../api'
+import type { Message } from '../api'
+import { useErrorNotice } from '../notifier'
 
 /** Continuing a session whose subscription ran out: now, after the reset, or not at all. */
 export function useLimitContinuation(message: MaybeRefOrGetter<Message>) {
-    const options = { mutation: { onError: (error: unknown) => toast.error(errorMessage(error)) } }
+    const options = { mutation: { onError: useErrorNotice() } }
     const now = useContinueAfterLimit(options)
     const schedule = useScheduleContinueAfterLimit(options)
     const cancel = useCancelContinueAfterLimit(options)

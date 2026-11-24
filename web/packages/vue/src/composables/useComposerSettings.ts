@@ -1,6 +1,6 @@
-import type { AgentId } from '@/shared/agents'
-import { AGENTS, type PermissionMode } from '@/shared/agents'
-import { storedRef } from '@drift/vue/storedRef'
+import type { AgentId } from '@drift/sdk/agents'
+import { AGENTS, type PermissionMode } from '@drift/sdk/agents'
+import { storedRef } from '../storedRef'
 
 interface ComposerSettings {
     models: Partial<Record<AgentId, string>>

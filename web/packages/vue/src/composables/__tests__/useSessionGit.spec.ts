@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import type { GitStatus } from '@drift/vue/api'
+import type { GitStatus } from '../../api'
 
-import { followSelection, isSessionGitQuery } from '@/composables/useSessionGit'
+import { followSelection, isSessionGitQuery } from '../useSessionGit'
 import {
     getGitDiffQueryKey,
     getGitStatusQueryKey,
     getSessionQueryKey,
     listGitCommitsInfiniteQueryKey,
-} from '@drift/vue/api'
+} from '../../api'
 
 const SESSION = '0b6f6a52-6f3c-4a8e-9d2c-3e0f5a1b2c3d'
 

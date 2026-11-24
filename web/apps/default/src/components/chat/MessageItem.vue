@@ -5,7 +5,7 @@ import { toast } from '@ui-sdk/vue/toast'
 import { useI18n } from 'vue-i18n'
 
 import type { Message } from '@drift/vue/api'
-import type { AgentId } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
 
 import AgentLogo from '@/components/AgentLogo.vue'
 import MarkdownText from '@/components/chat/MarkdownText.vue'

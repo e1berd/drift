@@ -8,11 +8,25 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
+    "@codemirror/language": "catalog:",
+    "@codemirror/language-data": "catalog:",
+    "@codemirror/state": "catalog:",
+    "@codemirror/view": "catalog:",
     "@drift/sdk": "workspace:*",
     "@tanstack/vue-query": "catalog:",
+    "@tiptap/core": "catalog:",
+    "@tiptap/extensions": "catalog:",
+    "@tiptap/pm": "catalog:",
+    "@tiptap/starter-kit": "catalog:",
+    "@tiptap/vue-3": "catalog:",
     "@uppy/core": "catalog:",
     "@uppy/golden-retriever": "6.0.1",
     "@uppy/tus": "6.0.1",
+    "@xterm/addon-fit": "catalog:",
+    "@xterm/addon-web-links": "catalog:",
+    "@xterm/xterm": "catalog:",
+    "codemirror": "catalog:",
+    "vue-i18n": "catalog:",
     "vue-router": "catalog:"
   },
   "devDependencies": {

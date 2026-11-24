@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 
 import ComposerAttachmentTile from '@/components/composer/ComposerAttachmentTile.vue'
-import type { ComposerTile } from '@/components/composer/composerTile'
-import type { useComposerUploads } from '@/composables/useComposerUploads'
+import type { ComposerTile } from '@drift/vue/uploads/composerTile'
+import type { useComposerUploads } from '@drift/vue/composables/useComposerUploads'
 
 const props = defineProps<{ uploads: ReturnType<typeof useComposerUploads> }>()
 const emit = defineEmits<{ open: [url: string, name: string] }>()

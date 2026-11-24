@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n'
 
 import AddSubscription from '@/components/settings/subscriptions/AddSubscription.vue'
 import SubscriptionItem from '@/components/settings/subscriptions/SubscriptionItem.vue'
-import { useAgents } from '@/composables/useAgents'
+import { useAgents } from '@drift/vue/composables/useAgents'
 
 const { t } = useI18n()
 const { subscriptions, query } = useAgents()

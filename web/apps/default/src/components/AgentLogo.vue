@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { AgentId } from '@/shared/agents'
-import { AGENTS } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
+import { AGENTS } from '@drift/sdk/agents'
 
 const props = withDefaults(defineProps<{ agent: AgentId; size?: number; decorative?: boolean }>(), {
     size: 16,

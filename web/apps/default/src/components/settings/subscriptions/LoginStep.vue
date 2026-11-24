@@ -10,7 +10,7 @@ import { useI18n } from 'vue-i18n'
 import type { Subscription, SubscriptionLogin } from '@drift/vue/api'
 
 import RunSpinner from '@/components/RunSpinner.vue'
-import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
+import { useSubscriptionActions } from '@drift/vue/composables/useSubscriptionActions'
 import { reportError } from '@drift/sdk/errors'
 
 const props = defineProps<{ subscription: Subscription; login: SubscriptionLogin }>()

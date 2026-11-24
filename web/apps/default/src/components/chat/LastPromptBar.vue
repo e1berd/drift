@@ -3,7 +3,7 @@ import { computed, onScopeDispose, ref, watch } from 'vue'
 import { PhArrowUp } from '@phosphor-icons/vue'
 import { useI18n } from 'vue-i18n'
 
-import { flashMessage, messageElement } from '@/composables/useChatScroll'
+import { flashMessage, messageElement } from '@drift/vue/composables/useChatScroll'
 import { useSessionMessages } from '@drift/vue/composables/useMessageWindow'
 
 const props = defineProps<{ viewport: HTMLElement | null }>()

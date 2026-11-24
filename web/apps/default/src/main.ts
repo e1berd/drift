@@ -9,6 +9,8 @@ import router from './router'
 import { setupI18n } from './i18n'
 import { vTooltip } from '@/shared/tooltip/tooltip'
 import { applyColorScheme } from '@/shared/preferences'
+import { toastNotifier } from '@/shared/notifier'
+import { createNotifierPlugin } from '@drift/vue/notifier'
 
 applyColorScheme()
 
@@ -23,6 +25,7 @@ const queryClient = new QueryClient({
 
 const app = createApp(App)
 
+app.use(createNotifierPlugin(toastNotifier))
 app.use(router)
 app.use(i18n)
 app.use(VueQueryPlugin, { queryClient })

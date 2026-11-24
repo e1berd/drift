@@ -11,10 +11,11 @@ import {
 } from '@ui-sdk/vue/select'
 import { useI18n } from 'vue-i18n'
 
-import type { AgentId, PermissionMode } from '@/shared/agents'
+import type { AgentId, PermissionMode } from '@drift/sdk/agents'
 
-import { useComposerSettings } from '@/composables/useComposerSettings'
-import { AGENTS } from '@/shared/agents'
+import { useComposerSettings } from '@drift/vue/composables/useComposerSettings'
+import { AGENTS } from '@drift/sdk/agents'
+import { MODE_ICONS } from '@/shared/modeIcons'
 
 const props = defineProps<{ agent: AgentId }>()
 const { t } = useI18n()
@@ -42,7 +43,9 @@ const current = computed(
         :aria-label="`${t('composer.permissions')}: ${current.label}. ${t(current.hint)}`"
         v-tooltip="t(current.hint)"
     >
-        <span class="composer-select-icon"><component :is="current.icon" weight="bold" /></span>
+        <span class="composer-select-icon"
+            ><component :is="MODE_ICONS[current.glyph]" weight="bold"
+        /></span>
         <span class="composer-select-label">{{ current.short }}</span>
     </span>
     <Select v-else v-model:value="value" :items="items">
@@ -52,7 +55,9 @@ const current = computed(
             :aria-label="`${t('composer.permissions')}: ${current.label}`"
             v-tooltip="current.label"
         >
-            <span class="composer-select-icon"><component :is="current.icon" weight="bold" /></span>
+            <span class="composer-select-icon"
+                ><component :is="MODE_ICONS[current.glyph]" weight="bold"
+            /></span>
             <span class="composer-select-label">{{ current.short }}</span>
         </SelectTrigger>
         <SelectContent side="top" align="end">
@@ -63,7 +68,9 @@ const current = computed(
                 :data-mode="mode.id"
                 v-tooltip="t(mode.hint)"
             >
-                <SelectItemIcon><component :is="mode.icon" weight="bold" /></SelectItemIcon>
+                <SelectItemIcon
+                    ><component :is="MODE_ICONS[mode.glyph]" weight="bold"
+                /></SelectItemIcon>
                 <SelectItemText>{{ mode.label }}</SelectItemText>
                 <SelectItemIndicator />
             </SelectItem>

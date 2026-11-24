@@ -1,5 +1,5 @@
 import type { ReadyAttachment } from '@drift/sdk/attachments'
-import type { PendingUpload } from '@drift/vue/uploads/draftUploads'
+import type { PendingUpload } from './draftUploads'
 
 /** One attachment in the composer, still uploading or ready; the key survives the switch. */
 export type ComposerTile =

@@ -9,8 +9,8 @@ import type { Subscription } from '@drift/vue/api'
 import AgentLogo from '@/components/AgentLogo.vue'
 import LoginStep from '@/components/settings/subscriptions/LoginStep.vue'
 import UsageMeters from '@/components/settings/subscriptions/UsageMeters.vue'
-import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
-import { AGENTS } from '@/shared/agents'
+import { useSubscriptionActions } from '@drift/vue/composables/useSubscriptionActions'
+import { AGENTS } from '@drift/sdk/agents'
 
 const props = defineProps<{ subscription: Subscription }>()
 const { t } = useI18n()

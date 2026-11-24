@@ -2,18 +2,22 @@ import { mergeAttributes, Node } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { VueNodeViewRenderer } from '@tiptap/vue-3'
 
-import PastedTextNodeView from './PastedTextNodeView.vue'
+import type { Component } from 'vue'
 
 export interface PastedTextOptions {
     minChars: number
     minLines: number
+    nodeView: Component | null
 }
 
 export function countLines(text: string): number {
     return text.split('\n').length
 }
 
-export function isLargePaste(text: string, { minChars, minLines }: PastedTextOptions): boolean {
+export function isLargePaste(
+    text: string,
+    { minChars, minLines }: Pick<PastedTextOptions, 'minChars' | 'minLines'>,
+): boolean {
     return text.length >= minChars || countLines(text) >= minLines
 }
 
@@ -30,7 +34,7 @@ export const PastedText = Node.create<PastedTextOptions>({
     draggable: false,
 
     addOptions() {
-        return { minChars: 1500, minLines: 20 }
+        return { minChars: 1500, minLines: 20, nodeView: null }
     },
 
     addAttributes() {
@@ -56,7 +60,7 @@ export const PastedText = Node.create<PastedTextOptions>({
     },
 
     addNodeView() {
-        return VueNodeViewRenderer(PastedTextNodeView)
+        return this.options.nodeView ? VueNodeViewRenderer(this.options.nodeView) : null
     },
 
     addProseMirrorPlugins() {

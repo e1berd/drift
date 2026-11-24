@@ -13,12 +13,12 @@ import {
 } from '@ui-sdk/vue/select'
 import { useI18n } from 'vue-i18n'
 
-import type { AgentId, AgentModel } from '@/shared/agents'
+import type { AgentId, AgentModel } from '@drift/sdk/agents'
 
 import AgentLogo from '@/components/AgentLogo.vue'
-import { useAgents } from '@/composables/useAgents'
-import { useComposerSettings } from '@/composables/useComposerSettings'
-import { AGENTS } from '@/shared/agents'
+import { useAgents } from '@drift/vue/composables/useAgents'
+import { useComposerSettings } from '@drift/vue/composables/useComposerSettings'
+import { AGENTS } from '@drift/sdk/agents'
 
 const props = defineProps<{ agent: AgentId; sessionId?: string }>()
 const emit = defineEmits<{ switchAgent: [choice: { agent: AgentId; model: string }] }>()

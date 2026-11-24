@@ -1,12 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
-import type * as TiptapVue from '@tiptap/vue-3'
-
-vi.mock('@tiptap/vue-3', async (importOriginal) => ({
-    ...(await importOriginal<typeof TiptapVue>()),
-    VueNodeViewRenderer: () => () => null,
-}))
 
 import { isLargePaste, normalizePaste, PastedText } from '../pastedText'
 

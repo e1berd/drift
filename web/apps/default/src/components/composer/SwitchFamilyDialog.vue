@@ -10,10 +10,10 @@ import {
 } from '@ui-sdk/vue/alert-dialog'
 import { useI18n } from 'vue-i18n'
 
-import type { AgentId } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
 
 import AgentLogo from '@/components/AgentLogo.vue'
-import { AGENTS } from '@/shared/agents'
+import { AGENTS } from '@drift/sdk/agents'
 
 interface SwitchQuestion {
     agent: AgentId

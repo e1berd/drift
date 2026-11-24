@@ -1,17 +1,11 @@
 import { computed, ref, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { toast } from '@ui-sdk/vue/toast'
+import { useErrorNotice } from '../notifier'
 
-import type { Delivery } from '@drift/vue/api'
+import type { Delivery } from '../api'
 
-import {
-    getDeliveryQueryKey,
-    useCheckDelivery,
-    useGetDelivery,
-    useInstallRelease,
-} from '@drift/vue/api'
-import { errorMessage } from '@drift/sdk/errors'
-import { storedRef } from '@drift/vue/storedRef'
+import { getDeliveryQueryKey, useCheckDelivery, useGetDelivery, useInstallRelease } from '../api'
+import { storedRef } from '../storedRef'
 
 interface Snooze {
     version: string
@@ -47,6 +41,7 @@ function reloadOnceRelaunched(delivery: Delivery | undefined, onFailed: (version
 
 /** Update state of the instance: the running version, the latest release and an update in progress. */
 export function useDelivery() {
+    const showError = useErrorNotice()
     const qc = useQueryClient()
     const query = useGetDelivery({
         query: {
@@ -70,7 +65,7 @@ export function useDelivery() {
     )
 
     const store = (data: Delivery) => qc.setQueryData(getDeliveryQueryKey(), data)
-    const onError = (error: unknown) => toast.error(errorMessage(error))
+    const onError = showError
     const installMutation = useInstallRelease({ mutation: { onSuccess: store, onError } })
     const checkMutation = useCheckDelivery({ mutation: { onSuccess: store, onError } })
 

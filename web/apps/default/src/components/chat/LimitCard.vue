@@ -4,7 +4,7 @@ import { PhHourglassMedium } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { useI18n } from 'vue-i18n'
 
-import { useLimitContinuation } from '@/composables/useLimitContinuation'
+import { useLimitContinuation } from '@drift/vue/composables/useLimitContinuation'
 import type { Message } from '@drift/vue/api'
 import { formatReset, formatResetClock, secondsUntil, usageWindowKind } from '@drift/sdk/usage'
 

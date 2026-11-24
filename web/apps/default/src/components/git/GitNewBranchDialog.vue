@@ -12,7 +12,7 @@ import { Field, FieldLabel } from '@ui-sdk/vue/field'
 import { Input } from '@ui-sdk/vue/input'
 import { useI18n } from 'vue-i18n'
 
-import { useSessionGit } from '@/composables/useSessionGit'
+import { useSessionGit } from '@drift/vue/composables/useSessionGit'
 import { reportError } from '@drift/sdk/errors'
 
 const open = defineModel<boolean>('open', { required: true })

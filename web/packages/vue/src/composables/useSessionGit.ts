@@ -1,9 +1,9 @@
 import { computed, inject, provide, ref, toValue, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { toast } from '@ui-sdk/vue/toast'
+import { useErrorNotice } from '../notifier'
 
 import type { InjectionKey, MaybeRefOrGetter } from 'vue'
-import type { GitFileChange, GitStatus } from '@drift/vue/api'
+import type { GitFileChange, GitStatus } from '../api'
 
 import {
     getGitStatusQueryKey,
@@ -16,8 +16,7 @@ import {
     usePushGitBranch,
     useStageGitPaths,
     useUnstageGitPaths,
-} from '@drift/vue/api'
-import { errorMessage } from '@drift/sdk/errors'
+} from '../api'
 
 const STATUS_URL = '/sessions/:sessionId/git'
 
@@ -56,6 +55,7 @@ export function followSelection(
 }
 
 function createSessionGit(sessionId: MaybeRefOrGetter<string>) {
+    const showError = useErrorNotice()
     const qc = useQueryClient()
     const path = computed(() => ({ sessionId: toValue(sessionId) }))
     const status = useGetGitStatus(
@@ -89,7 +89,7 @@ function createSessionGit(sessionId: MaybeRefOrGetter<string>) {
     const mutation = {
         mutation: {
             onSuccess: applyStatus,
-            onError: (error: unknown) => toast.error(errorMessage(error)),
+            onError: showError,
         },
     }
     const actions = {

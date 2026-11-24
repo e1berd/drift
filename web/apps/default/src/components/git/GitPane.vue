@@ -14,7 +14,7 @@ import GitCommitBox from '@/components/git/GitCommitBox.vue'
 import GitDiff from '@/components/git/GitDiff.vue'
 import GitHistory from '@/components/git/GitHistory.vue'
 import GitToolbar from '@/components/git/GitToolbar.vue'
-import { provideSessionGit } from '@/composables/useSessionGit'
+import { provideSessionGit } from '@drift/vue/composables/useSessionGit'
 import { errorMessage } from '@drift/sdk/errors'
 
 const props = defineProps<{ sessionId: string }>()
