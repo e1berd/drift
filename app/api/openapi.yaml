@@ -618,12 +618,27 @@ paths:
     get:
       operationId: listMessages
       tags: [sessions]
+      description: >-
+        Reads a contiguous window of the transcript in chronological order. Both bounds are
+        inclusive message ids. Without bounds it returns the newest messages; with only start
+        it reads forward from start; with only end it reads back up to end; with both it reads
+        forward from start and stops at end. A variant of AIP-158 pagination where the cursor
+        is a message id, so a client can address the window in its own URL.
       parameters:
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/PageToken'
+        - name: page_size
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 256, default: 64 }
+        - name: start
+          in: query
+          description: First message of the window.
+          schema: { $ref: '#/components/schemas/MessageId' }
+        - name: end
+          in: query
+          description: Last message of the window.
+          schema: { $ref: '#/components/schemas/MessageId' }
       responses:
         '200':
-          description: A page of messages, newest first.
+          description: A window of messages, oldest first.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ListMessagesResponse' }
@@ -1062,7 +1077,7 @@ components:
       name: messageId
       in: path
       required: true
-      schema: { type: string, format: uuid }
+      schema: { $ref: '#/components/schemas/MessageId' }
     DraftKey:
       name: key
       in: path
@@ -1314,11 +1329,18 @@ components:
           items: { $ref: '#/components/schemas/Answer' }
         model: { type: string, maxLength: 100 }
         mode: { $ref: '#/components/schemas/PermissionMode' }
+    MessageId:
+      description: >-
+        TypeID of a message: "msg_" and the UUIDv7 in 26 Crockford base32 characters
+        (https://github.com/jetify-com/typeid/tree/main/spec).
+      type: string
+      pattern: '^msg_[0-7][0-9a-hjkmnp-tv-z]{25}$'
+      example: msg_01h455vb4pex5vsknk084sn02q
     Message:
       type: object
       required: [id, sessionId, role, kind, body, createTime]
       properties:
-        id: { type: string, format: uuid }
+        id: { $ref: '#/components/schemas/MessageId' }
         sessionId: { type: string, format: uuid }
         role:
           type: string
@@ -1340,12 +1362,22 @@ components:
         mode: { $ref: '#/components/schemas/PermissionMode' }
     ListMessagesResponse:
       type: object
-      required: [messages]
+      required: [messages, hasOlder, hasNewer]
       properties:
         messages:
           type: array
           items: { $ref: '#/components/schemas/Message' }
-        nextPageToken: { type: string }
+        hasOlder:
+          type: boolean
+          description: Messages exist before the first one returned.
+        hasNewer:
+          type: boolean
+          description: Messages exist after the last one returned.
+        lastPrompt:
+          description: >-
+            The newest user message with text or attachments in the whole session, even when
+            it lies outside the window.
+          allOf: [{ $ref: '#/components/schemas/Message' }]
     Draft:
       type: object
       required: [key, text, deviceId, updateTime]
@@ -1564,7 +1596,9 @@ components:
       properties:
         key: { type: string, description: Unique within the session, kind and name. }
         kind: { type: string, enum: [branch, worktree, file] }
-        messageId: { type: string, description: The tool call message that created it. }
+        messageId:
+          description: The tool call message that created it.
+          allOf: [{ $ref: '#/components/schemas/MessageId' }]
         name:
           type: string
           description: >-

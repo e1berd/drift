@@ -7,7 +7,7 @@ import { useGetGitSummary } from '@/gen'
 
 const REFRESH_DELAY_MS = 400
 
-function finishedToolCount(messages: Message[]): number {
+function finishedToolCount(messages: readonly Message[]): number {
     return messages.filter(
         (message) => message.kind === 'tool' && message.body.status !== 'running',
     ).length
@@ -16,7 +16,7 @@ function finishedToolCount(messages: Message[]): number {
 /** The git summary of a session, refreshed whenever one of the agent's tool calls finishes. */
 export function useSessionSummary(
     sessionId: MaybeRefOrGetter<string>,
-    messages: MaybeRefOrGetter<Message[]>,
+    messages: MaybeRefOrGetter<readonly Message[]>,
 ) {
     const path = computed(() => ({ sessionId: toValue(sessionId) }))
     const summary = useGetGitSummary(

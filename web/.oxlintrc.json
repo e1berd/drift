@@ -40,5 +40,23 @@
     "prefer-object-has-own": "error",
     "unicorn/prefer-structured-clone": "error"
   },
-  "ignorePatterns": ["src/gen/**", "dist/**"]
+  "ignorePatterns": ["src/gen/**", "dist/**"],
+  "overrides": [
+    {
+      "files": ["src/sdk/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["vue", "vue-*", "@vue/*", "@ui-sdk/*", "@tanstack/*", "@/*"],
+                "message": "src/sdk stays framework-agnostic so any Drift interface can reuse it."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

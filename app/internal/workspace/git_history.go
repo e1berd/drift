@@ -7,6 +7,7 @@ import (
 
 	"github.com/e1berd/drift/app/internal/db"
 	"github.com/e1berd/drift/app/internal/gitrepo"
+	"github.com/e1berd/drift/app/internal/typeid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v5"
 )
@@ -63,7 +64,7 @@ func readActivityRow(history *gitrepo.History, row db.ListSessionActivityRow) {
 		var note RemovalNote
 		if json.Unmarshal(row.Body, &note) == nil {
 			history.Removals = append(history.Removals, gitrepo.Removal{
-				SourceID: note.SourceID, Target: note.Target, Name: note.Path, Branch: note.Branch, Time: row.CreatedAt.Time,
+				SourceID: typeid.NormalizeMessageID(note.SourceID), Target: note.Target, Name: note.Path, Branch: note.Branch, Time: row.CreatedAt.Time,
 			})
 		}
 		return
@@ -71,7 +72,7 @@ func readActivityRow(history *gitrepo.History, row db.ListSessionActivityRow) {
 	var tool activityTool
 	if json.Unmarshal(row.Body, &tool) == nil {
 		history.Calls = append(history.Calls, gitrepo.ToolCall{
-			MessageID: uuidString(row.ID), Name: tool.Name, Input: tool.Input, Created: tool.Created,
+			MessageID: typeid.MessageID(row.ID), Name: tool.Name, Input: tool.Input, Created: tool.Created,
 		})
 	}
 }

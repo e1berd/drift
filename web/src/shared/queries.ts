@@ -5,7 +5,6 @@ import type { MaybeRefOrGetter } from 'vue'
 
 import {
     useGetSession,
-    useListMessagesInfinite,
     useListProjectsInfinite,
     useListSessionsInfinite,
     useListStandaloneSessionsInfinite,
@@ -55,16 +54,4 @@ export function useSession(sessionId: MaybeRefOrGetter<string>) {
         { path: computed(() => ({ sessionId: toValue(sessionId) })) },
         { query: { enabled: () => !!toValue(sessionId) } },
     )
-}
-
-/** Messages of a session; pages go back in time, the list is returned oldest first. */
-export function useMessages(sessionId: MaybeRefOrGetter<string>) {
-    const query = useListMessagesInfinite(
-        { path: computed(() => ({ sessionId: toValue(sessionId) })) },
-        { query: { enabled: () => !!toValue(sessionId) } },
-    )
-    const messages = computed(() =>
-        (query.data.value?.pages.flatMap((page) => page.messages) ?? []).toReversed(),
-    )
-    return { ...query, messages }
 }

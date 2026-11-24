@@ -4,7 +4,6 @@ import type { InfiniteData, QueryClient } from '@tanstack/vue-query'
 import type {
     Delivery,
     Draft,
-    ListMessagesResponse,
     ListProjectsResponse,
     ListSessionsResponse,
     Message,
@@ -17,7 +16,6 @@ import type {
 import {
     getDeliveryQueryKey,
     getSessionQueryKey,
-    listMessagesInfiniteQueryKey,
     listProjectsInfiniteQueryKey,
     listSessionsInfiniteQueryKey,
     listStandaloneSessionsInfiniteQueryKey,
@@ -160,35 +158,6 @@ function onProjectDeleted(qc: QueryClient, { id }: { id: string }) {
     updateSearchResults(qc, (items) => items.filter((item) => item.projectId !== id))
 }
 
-function onMessageCreated(qc: QueryClient, message: Message) {
-    qc.setQueryData<Pages<ListMessagesResponse>>(
-        listMessagesInfiniteQueryKey({ path: { sessionId: message.sessionId } }),
-        (data) =>
-            mapPages(
-                data,
-                (page) => page.messages,
-                (page, messages) => ({ ...page, messages }),
-                (items, index) =>
-                    index === 0 && !items.some((item) => item.id === message.id)
-                        ? [message, ...items]
-                        : items,
-            ),
-    )
-}
-
-function onMessageUpdated(qc: QueryClient, message: Message) {
-    qc.setQueryData<Pages<ListMessagesResponse>>(
-        listMessagesInfiniteQueryKey({ path: { sessionId: message.sessionId } }),
-        (data) =>
-            mapPages(
-                data,
-                (page) => page.messages,
-                (page, messages) => ({ ...page, messages }),
-                (items) => items.map((item) => (item.id === message.id ? message : item)),
-            ),
-    )
-}
-
 function setActivity(sessionId: string, activity: SessionActivity | null) {
     const next = new Map(activities.value)
     if (activity) next.set(sessionId, activity)
@@ -236,10 +205,7 @@ function apply(qc: QueryClient, event: WireEvent) {
         case 'session.deleted':
             return onSessionDeleted(qc, event.data as { id: string; projectId?: string })
         case 'message.created':
-            onAgentMessage(event.data as Message)
-            return onMessageCreated(qc, event.data as Message)
-        case 'message.updated':
-            return onMessageUpdated(qc, event.data as Message)
+            return onAgentMessage(event.data as Message)
         case 'draft.updated':
         case 'draft.deleted':
             return applyDraftEvent(event.type, event.data as Partial<Draft>, event.origin)

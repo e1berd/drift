@@ -27,6 +27,7 @@ export function listMessagesQueryOptions({ path, query }: { path: MaybeRefOrGett
 
 /**
  * `GET /sessions/{sessionId}/messages`
+ * @description Reads a contiguous window of the transcript in chronological order. Both bounds are inclusive message ids. Without bounds it returns the newest messages; with only start it reads forward from start; with only end it reads back up to end; with both it reads forward from start and stops at end. A variant of AIP-158 pagination where the cursor is a message id, so a client can address the window in its own URL.
  */
 export function useListMessages<TData = ListMessagesStatus200, TQueryData = ListMessagesStatus200, TQueryKey extends QueryKey = ListMessagesQueryKey>({ path, query }: { path: MaybeRefOrGetter<ListMessagesOptions['path']>; query?: MaybeRefOrGetter<ListMessagesOptions['query']> }, options: {
   query?: Partial<UseQueryOptions<ListMessagesStatus200, ResponseErrorConfig<Error>, TData, TQueryData, TQueryKey>> & { client?: QueryClient },

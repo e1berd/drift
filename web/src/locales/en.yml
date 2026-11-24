@@ -115,6 +115,7 @@ modes:
 chat:
   today: 'Today'
   olderLoading: 'Loading earlier messages…'
+  newerLoading: 'Loading later messages…'
   thought: 'Thought for'
   thinking: 'Thinking…'
   running: 'running'

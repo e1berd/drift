@@ -31,7 +31,8 @@ import { errorMessage } from '@/shared/errors'
 import { AGENTS } from '@/shared/agents'
 import type { AgentId } from '@/shared/agents'
 import { useI18n } from 'vue-i18n'
-import { useMessages, useProjects, useSession } from '@/shared/queries'
+import { provideSessionMessages } from '@/composables/useMessageWindow'
+import { useProjects, useSession } from '@/shared/queries'
 
 const FilesPane = defineAsyncComponent(() => import('@/components/files/FilesPane.vue'))
 const GitPane = defineAsyncComponent(() => import('@/components/git/GitPane.vue'))
@@ -69,7 +70,8 @@ const { projects } = useProjects()
 const project = computed(() =>
     projects.value.find((item) => item.id === session.data.value?.projectId),
 )
-const { messages, hasNextPage, isFetchingNextPage, fetchNextPage } = useMessages(sessionId)
+const sessionMessages = provideSessionMessages(sessionId)
+const messages = sessionMessages.messages
 
 const agent = computed(() => session.data.value?.agent ?? 'claude')
 const running = computed(() => session.data.value?.status === 'running')
@@ -87,6 +89,7 @@ const placeholder = computed(() => {
     return t('composer.placeholder.reply', { agent: name })
 })
 const runningTool = computed(() => {
+    if (sessionMessages.state.value.hasNewer) return undefined
     const last = messages.value.at(-1)
     return last?.kind === 'tool' && last.body.status === 'running' ? last.body.name : undefined
 })
@@ -174,14 +177,7 @@ const stop = useStopSession({
 
         <TabsPanel value="chat" class="session-pane">
             <SessionChatLayout :session-id="sessionId" :messages="messages" :running="running">
-                <ChatThread
-                    :key="sessionId"
-                    :messages="messages"
-                    :agent="agent"
-                    :has-older="!!hasNextPage"
-                    :loading-older="isFetchingNextPage"
-                    @load-older="fetchNextPage()"
-                >
+                <ChatThread :key="sessionId" :agent="agent">
                     <template #after>
                         <AgentActivity
                             v-if="running && session.data.value"

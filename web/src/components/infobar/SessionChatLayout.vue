@@ -12,10 +12,11 @@ import { provideActivityActions } from '@/composables/useActivityActions'
 import { useActivityRemoval } from '@/composables/useActivityRemoval'
 import { useInfobar } from '@/composables/useInfobar'
 import { useInfobarLinks } from '@/composables/useInfobarLinks'
+import { useSessionMessages } from '@/composables/useMessageWindow'
 import { useSessionSummary } from '@/composables/useSessionSummary'
 import type { ActivityEntry, Message } from '@/gen'
 
-const props = defineProps<{ sessionId: string; messages: Message[]; running: boolean }>()
+const props = defineProps<{ sessionId: string; messages: readonly Message[]; running: boolean }>()
 
 const { t } = useI18n()
 const { narrow, docked, drawerOpen, closeDrawer } = useInfobar()
@@ -29,8 +30,11 @@ const layout = useTemplateRef<HTMLElement>('layout')
 const links = computed(() => (shown.value ? activityLinks(summary.data.value) : []))
 const { routes, activeMessageId } = useInfobarLinks(layout, links)
 
+const sessionMessages = useSessionMessages()
+
 function reveal(messageId: string) {
     closeDrawer()
+    if (!sessionMessages.reveal(messageId)) return
     const card = layout.value?.querySelector(`[data-message-id="${CSS.escape(messageId)}"]`)
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
     card?.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' })

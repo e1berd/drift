@@ -7,5 +7,19 @@ import type { Message } from './Message'
 
 export type ListMessagesResponse = {
   messages: Message[];
-  nextPageToken?: string;
+  /**
+   * @description Messages exist before the first one returned.
+   * @type boolean
+   */
+  hasOlder: boolean;
+  /**
+   * @description Messages exist after the last one returned.
+   * @type boolean
+   */
+  hasNewer: boolean;
+  /**
+   * @description The newest user message with text or attachments in the whole session, even when it lies outside the window.
+   * @type object | undefined
+   */
+  lastPrompt?: Message;
 };

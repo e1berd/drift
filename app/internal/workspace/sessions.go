@@ -248,39 +248,6 @@ func (h *Handler) deleteSession(c *echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-type listMessagesResponse struct {
-	Messages      []Message `json:"messages"`
-	NextPageToken string    `json:"nextPageToken,omitempty"`
-}
-
-func (h *Handler) listMessages(c *echo.Context) error {
-	s, err := h.session(c)
-	if err != nil {
-		return err
-	}
-	before, beforeID, err := decodeCursor(c)
-	if err != nil {
-		return err
-	}
-	size := pageSize(c)
-	rows, err := h.q.ListMessages(c.Request().Context(), db.ListMessagesParams{
-		SessionID: s.ID, Limit: size + 1, BeforeCreated: before, BeforeID: beforeID,
-	})
-	if err != nil {
-		return err
-	}
-	out := listMessagesResponse{Messages: make([]Message, 0, len(rows))}
-	for i, m := range rows {
-		if int32(i) == size {
-			last := rows[i-1]
-			out.NextPageToken = encodeCursor(last.CreatedAt, last.ID)
-			break
-		}
-		out.Messages = append(out.Messages, messageDTO(m))
-	}
-	return c.JSON(http.StatusOK, out)
-}
-
 type messageInput struct {
 	runOptions
 	Text          string   `json:"text"`

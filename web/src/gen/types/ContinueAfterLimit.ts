@@ -4,6 +4,7 @@
 */
 
 import type { Error } from './Error'
+import type { MessageId } from './MessageId'
 
 export type ContinueAfterLimitPath = {
   /**
@@ -13,11 +14,12 @@ export type ContinueAfterLimitPath = {
    */
   sessionId: string;
   /**
-   * @description
-   * Format: `uuid`
+   * @description TypeID of a message: "msg_" and the UUIDv7 in 26 Crockford base32 characters (https://github.com/jetify-com/typeid/tree/main/spec).
+   * @pattern ^msg_[0-7][0-9a-hjkmnp-tv-z]{25}$
+   * @example msg_01h455vb4pex5vsknk084sn02q
    * @type string
    */
-  messageId: string;
+  messageId: MessageId;
 };
 
 export type ContinueAfterLimitStatus204 = unknown;

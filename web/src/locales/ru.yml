@@ -115,6 +115,7 @@ modes:
 chat:
   today: 'Сегодня'
   olderLoading: 'Загружаем ранние сообщения…'
+  newerLoading: 'Загружаем следующие сообщения…'
   thought: 'Рассуждал'
   thinking: 'Рассуждает…'
   running: 'выполняется'

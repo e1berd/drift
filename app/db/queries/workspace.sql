@@ -68,13 +68,44 @@ UPDATE sessions SET updated_at = now() WHERE id = $1;
 -- name: DeleteSession :execrows
 DELETE FROM sessions WHERE id = $1 AND owner_id = $2;
 
--- name: ListMessages :many
+-- name: GetMessagePosition :one
+SELECT created_at, id FROM messages WHERE id = $1 AND session_id = $2;
+
+-- name: ListMessagesUpTo :many
 SELECT * FROM messages
 WHERE session_id = $1
-  AND (sqlc.narg(before_created)::timestamptz IS NULL
-       OR (created_at, id) < (sqlc.narg(before_created)::timestamptz, sqlc.narg(before_id)::uuid))
+  AND (sqlc.narg(end_created)::timestamptz IS NULL
+       OR (created_at, id) <= (sqlc.narg(end_created)::timestamptz, sqlc.narg(end_id)::uuid))
 ORDER BY created_at DESC, id DESC
 LIMIT $2;
+
+-- name: ListMessagesFrom :many
+SELECT * FROM messages
+WHERE session_id = $1
+  AND (created_at, id) >= (sqlc.arg(start_created)::timestamptz, sqlc.arg(start_id)::uuid)
+  AND (sqlc.narg(end_created)::timestamptz IS NULL
+       OR (created_at, id) <= (sqlc.narg(end_created)::timestamptz, sqlc.narg(end_id)::uuid))
+ORDER BY created_at, id
+LIMIT $2;
+
+-- name: HasMessagesBefore :one
+SELECT EXISTS (
+    SELECT 1 FROM messages
+    WHERE session_id = $1 AND (created_at, id) < (sqlc.arg(created)::timestamptz, sqlc.arg(id)::uuid)
+);
+
+-- name: HasMessagesAfter :one
+SELECT EXISTS (
+    SELECT 1 FROM messages
+    WHERE session_id = $1 AND (created_at, id) > (sqlc.arg(created)::timestamptz, sqlc.arg(id)::uuid)
+);
+
+-- name: GetLastPrompt :one
+SELECT * FROM messages
+WHERE session_id = $1 AND role = 'user'
+  AND (coalesce(body ->> 'text', '') <> '' OR jsonb_array_length(coalesce(body -> 'attachments', '[]')) > 0)
+ORDER BY created_at DESC, id DESC
+LIMIT 1;
 
 -- name: CreateMessage :one
 INSERT INTO messages (session_id, role, kind, body) VALUES ($1, $2, $3, $4) RETURNING *;

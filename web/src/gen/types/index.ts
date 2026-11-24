@@ -84,6 +84,7 @@ export type { ListTreeOptions, ListTreePath, ListTreeQuery, ListTreeResponse, Li
 export type { LoginCodeInput } from './LoginCodeInput'
 export type { Message, MessageKindEnumKey, MessageRoleEnumKey } from './Message'
 export type { MessageBody, MessageBodyCodeEnumKey, MessageBodyStatusEnumKey, MessageBodyTargetEnumKey } from './MessageBody'
+export type { MessageId } from './MessageId'
 export type { MessageInput } from './MessageInput'
 export type { PermissionModeKey } from './PermissionMode'
 export type { Project } from './Project'
