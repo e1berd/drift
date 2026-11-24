@@ -95,23 +95,6 @@ composer:
   remoteTyping: 'Typing on another device'
   remoteDraft: 'Draft from another device'
   clear: 'Clear'
-models:
-  default: 'From CLI config'
-  opus: 'Most capable, for hard tasks'
-  sonnet: 'Balanced speed and quality'
-  haiku: 'Fast for small edits'
-  fromConfig: 'From the agent CLI settings'
-  kimiPro: 'Flagship K3.1 Pro for hard tasks'
-  kimiK3: 'K3 for everyday tasks'
-  kimiCoding: 'K2.8 Preview'
-modes:
-  default: 'Ask before edits and commands'
-  acceptEdits: 'Edit files without asking'
-  auto: 'The agent decides what is safe to run'
-  plan: 'Read and plan only, no changes'
-  bypass: 'No prompts at all. Sandboxes only'
-  kimiPrompt: 'Kimi Code in prompt mode runs edits and commands without asking; the mode cannot be changed'
-  mimoBuild: 'Build agent: edits files and runs commands'
 chat:
   today: 'Today'
   olderLoading: 'Loading earlier messages…'

@@ -42,7 +42,7 @@ const ASK_MODE: PermissionModeMeta = {
     id: 'default',
     label: 'Ask permissions',
     short: 'Ask',
-    hint: 'modes.default',
+    hint: 'drift.modes.default',
     glyph: 'ask',
 }
 
@@ -50,7 +50,7 @@ const ACCEPT_EDITS_MODE: PermissionModeMeta = {
     id: 'acceptEdits',
     label: 'Accept edits',
     short: 'Edits',
-    hint: 'modes.acceptEdits',
+    hint: 'drift.modes.acceptEdits',
     glyph: 'edits',
 }
 
@@ -58,7 +58,7 @@ const AUTO_MODE: PermissionModeMeta = {
     id: 'auto',
     label: 'Auto mode',
     short: 'Auto',
-    hint: 'modes.auto',
+    hint: 'drift.modes.auto',
     glyph: 'auto',
 }
 
@@ -66,7 +66,7 @@ const PLAN_MODE: PermissionModeMeta = {
     id: 'plan',
     label: 'Plan mode',
     short: 'Plan',
-    hint: 'modes.plan',
+    hint: 'drift.modes.plan',
     glyph: 'plan',
 }
 
@@ -74,17 +74,17 @@ const BYPASS_MODE: PermissionModeMeta = {
     id: 'bypassPermissions',
     label: 'Bypass permissions',
     short: 'Bypass',
-    hint: 'modes.bypass',
+    hint: 'drift.modes.bypass',
     glyph: 'bypass',
 }
 
 /** Permission modes named as in Claude Code; colours live in `styles/tokens.css` as `--mode-<id>`. */
 const PERMISSION_MODES = [ASK_MODE, ACCEPT_EDITS_MODE, AUTO_MODE, PLAN_MODE, BYPASS_MODE]
 
-const KIMI_PROMPT_MODE: PermissionModeMeta = { ...AUTO_MODE, hint: 'modes.kimiPrompt' }
+const KIMI_PROMPT_MODE: PermissionModeMeta = { ...AUTO_MODE, hint: 'drift.modes.kimiPrompt' }
 
 const MIMO_MODES: PermissionModeMeta[] = [
-    { id: 'auto', label: 'Build', short: 'Build', hint: 'modes.mimoBuild', glyph: 'build' },
+    { id: 'auto', label: 'Build', short: 'Build', hint: 'drift.modes.mimoBuild', glyph: 'build' },
     { ...PLAN_MODE, label: 'Plan' },
 ]
 
@@ -97,9 +97,9 @@ export const AGENTS: Record<AgentId, AgentMeta> = {
         logo: claudeLogo,
         modes: PERMISSION_MODES,
         models: [
-            { id: 'opus', label: 'Opus', hint: 'models.opus' },
-            { id: 'sonnet', label: 'Sonnet', hint: 'models.sonnet' },
-            { id: 'haiku', label: 'Haiku', hint: 'models.haiku' },
+            { id: 'opus', label: 'Opus', hint: 'drift.models.opus' },
+            { id: 'sonnet', label: 'Sonnet', hint: 'drift.models.sonnet' },
+            { id: 'haiku', label: 'Haiku', hint: 'drift.models.haiku' },
         ],
     },
     codex: {
@@ -108,7 +108,7 @@ export const AGENTS: Record<AgentId, AgentMeta> = {
         cli: 'codex',
         logo: codexLogo,
         modes: PERMISSION_MODES,
-        models: [{ id: 'default', hint: 'models.fromConfig' }],
+        models: [{ id: 'default', hint: 'drift.models.fromConfig' }],
     },
     antigravity: {
         id: 'antigravity',
@@ -116,7 +116,7 @@ export const AGENTS: Record<AgentId, AgentMeta> = {
         cli: 'agy',
         logo: antigravityLogo,
         modes: PERMISSION_MODES,
-        models: [{ id: 'default', hint: 'models.fromConfig' }],
+        models: [{ id: 'default', hint: 'drift.models.fromConfig' }],
     },
     kimi: {
         id: 'kimi',
@@ -125,10 +125,10 @@ export const AGENTS: Record<AgentId, AgentMeta> = {
         logo: kimiLogo,
         modes: [KIMI_PROMPT_MODE],
         models: [
-            { id: 'default', hint: 'models.default' },
-            { id: 'kimi-code/k3.1-pro', label: 'K3.1 Pro', hint: 'models.kimiPro' },
-            { id: 'kimi-code/k3', label: 'K3', hint: 'models.kimiK3' },
-            { id: 'kimi-code/kimi-for-coding', label: 'K2.8', hint: 'models.kimiCoding' },
+            { id: 'default', hint: 'drift.models.default' },
+            { id: 'kimi-code/k3.1-pro', label: 'K3.1 Pro', hint: 'drift.models.kimiPro' },
+            { id: 'kimi-code/k3', label: 'K3', hint: 'drift.models.kimiK3' },
+            { id: 'kimi-code/kimi-for-coding', label: 'K2.8', hint: 'drift.models.kimiCoding' },
         ],
     },
     mimo: {
@@ -137,6 +137,6 @@ export const AGENTS: Record<AgentId, AgentMeta> = {
         cli: 'mimo',
         logo: mimoLogo,
         modes: MIMO_MODES,
-        models: [{ id: 'default', hint: 'models.fromConfig' }],
+        models: [{ id: 'default', hint: 'drift.models.fromConfig' }],
     },
 }

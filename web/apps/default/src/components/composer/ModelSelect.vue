@@ -28,7 +28,7 @@ const agents = useAgents()
 
 const SEPARATOR = '/'
 const optionValue = (agent: AgentId, model: string) => `${agent}${SEPARATOR}${model}`
-const itemLabel = (model: AgentModel) => model.label ?? t('models.default')
+const itemLabel = (model: AgentModel) => model.label ?? t('drift.models.default')
 
 const families = computed(() =>
     agents.all.filter((family) => family.id === props.agent || agents.isConnected(family.id)),

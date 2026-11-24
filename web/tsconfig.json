@@ -1,11 +1,26 @@
 {
   "files": [],
   "references": [
-    { "path": "./tsconfig.node.json" },
-    { "path": "./packages/sdk/tsconfig.json" },
-    { "path": "./packages/sdk/tsconfig.test.json" },
-    { "path": "./packages/vue/tsconfig.json" },
-    { "path": "./packages/vue/tsconfig.test.json" },
-    { "path": "./apps/default/tsconfig.json" }
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./packages/sdk/tsconfig.json"
+    },
+    {
+      "path": "./packages/sdk/tsconfig.test.json"
+    },
+    {
+      "path": "./packages/vue/tsconfig.json"
+    },
+    {
+      "path": "./packages/vue/tsconfig.test.json"
+    },
+    {
+      "path": "./apps/default/tsconfig.json"
+    },
+    {
+      "path": "./apps/vuetify/tsconfig.json"
+    }
   ]
 }

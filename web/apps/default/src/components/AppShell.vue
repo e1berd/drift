@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
 import { Drawer, DrawerBackdrop, DrawerContent, DrawerTitle } from '@ui-sdk/vue/drawer'
 import { Preferences, usePreference } from '@ui-sdk/vue/preferences'
 import {
@@ -15,18 +14,14 @@ import AppToasts from '@/components/AppToasts.vue'
 import DeliveryPrompt from '@/components/delivery/DeliveryPrompt.vue'
 import { useMediaQuery } from '@drift/vue/composables/useMediaQuery'
 import { provideShell } from '@drift/vue/composables/useShell'
-import { startEventStream } from '@drift/vue/composables/useEventStream'
-import { loadDrafts } from '@drift/vue/composables/useDrafts'
-import { useRealtimeNotice } from '@drift/vue/composables/useRealtimeNotice'
-import { reportError } from '@drift/sdk/errors'
+import { useDriftStartup } from '@drift/vue/composables/useDriftStartup'
 import { useI18n } from 'vue-i18n'
 import { shellPreferences, sidebarSide } from '@/shared/preferences'
 
 const { t } = useI18n()
-const qc = useQueryClient()
 const side = usePreference(sidebarSide)
 const narrow = useMediaQuery('(max-width: 760px)')
-useRealtimeNotice()
+useDriftStartup()
 
 const shell = createResizableController()
 const collapsed = ref(false)
@@ -61,8 +56,6 @@ provideShell({
 
 onMounted(() => {
     syncCollapsed()
-    startEventStream(qc)
-    loadDrafts().catch(reportError)
 })
 </script>
 
