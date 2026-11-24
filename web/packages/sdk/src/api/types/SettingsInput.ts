@@ -12,4 +12,5 @@ export type SettingsInput = {
    * @type integer | undefined
    */
   maxUploadBytes?: number;
+  defaultFrontend?: string;
 };

@@ -16,6 +16,12 @@ export type Settings = {
    */
   maxUploadBytes: number;
   /**
+   * @description Name of the interface visitors get until they pick their own.
+   * @example frontends/default
+   * @type string
+   */
+  defaultFrontend: string;
+  /**
    * @description
    * Format: `date-time`
    * @type string

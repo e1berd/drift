@@ -29,9 +29,10 @@ type Draft struct {
 }
 
 type InstanceSetting struct {
-	Singleton      bool               `json:"singleton"`
-	MaxUploadBytes int64              `json:"max_upload_bytes"`
-	UpdateTime     pgtype.Timestamptz `json:"update_time"`
+	Singleton       bool               `json:"singleton"`
+	MaxUploadBytes  int64              `json:"max_upload_bytes"`
+	UpdateTime      pgtype.Timestamptz `json:"update_time"`
+	DefaultFrontend string             `json:"default_frontend"`
 }
 
 type Message struct {

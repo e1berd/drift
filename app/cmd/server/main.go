@@ -84,7 +84,7 @@ func run() (string, error) {
 		return "", err
 	}
 
-	fe, err := frontend.New(cfg.ViteDevURL)
+	fe, err := frontend.New(cfg.ViteDevURL, cfg.ViteDevFrontend)
 	if err != nil {
 		return "", err
 	}
@@ -124,8 +124,9 @@ func run() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	instanceSettings := settings.New(pool)
+	instanceSettings := settings.New(pool, fe.Has)
 	instanceSettings.Register(api)
+	frontend.RegisterAPI(api, fe, translations)
 	uploadServer, err := uploads.New(attachments, pool, instanceSettings, log)
 	if err != nil {
 		return "", err
@@ -157,7 +158,15 @@ func run() (string, error) {
 	updates.Register(api)
 	go updates.Watch(ctx)
 
-	e.Any("/*", echo.WrapHandler(fe), authHandler.RequireSession)
+	defaultFrontend := func(ctx context.Context) string {
+		id, err := instanceSettings.DefaultFrontend(ctx)
+		if err != nil {
+			log.Error("read default frontend", "err", err)
+			return frontend.DefaultID
+		}
+		return id
+	}
+	e.Any("/*", echo.WrapHandler(fe.Handler(defaultFrontend)), authHandler.RequireSession)
 
 	log.Info("listening", "addr", cfg.Addr, "version", delivery.Version(), "public_url", cfg.PublicURL.String(), "workspace_root", cfg.WorkspaceRoot)
 	serveErr := echo.StartConfig{Address: cfg.Addr, HideBanner: true}.Start(ctx, e)

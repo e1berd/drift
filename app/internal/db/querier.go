@@ -68,7 +68,7 @@ type Querier interface {
 	SetSessionGitBase(ctx context.Context, arg SetSessionGitBaseParams) error
 	SetSessionStatus(ctx context.Context, arg SetSessionStatusParams) (Session, error)
 	TouchSession(ctx context.Context, id pgtype.UUID) error
-	UpdateInstanceSettings(ctx context.Context, maxUploadBytes int64) (UpdateInstanceSettingsRow, error)
+	UpdateInstanceSettings(ctx context.Context, arg UpdateInstanceSettingsParams) (UpdateInstanceSettingsRow, error)
 	UpdateMessageBody(ctx context.Context, arg UpdateMessageBodyParams) (Message, error)
 	UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error)
 	UpsertDraft(ctx context.Context, arg UpsertDraftParams) (Draft, error)

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ScrollPane from '@/components/ScrollPane.vue'
 import TopBar from '@/components/TopBar.vue'
+import FrontendSettings from '@/components/settings/FrontendSettings.vue'
 import InterfaceSettings from '@/components/settings/InterfaceSettings.vue'
 import PasskeySettings from '@/components/settings/PasskeySettings.vue'
 import UploadSettings from '@/components/settings/UploadSettings.vue'
@@ -19,6 +20,7 @@ const { t } = useI18n()
     <ScrollPane class="min-h-0 flex-1">
         <div class="motion-fade mx-auto flex max-w-[640px] flex-col gap-10 px-6 py-8 max-md:px-4">
             <InterfaceSettings />
+            <FrontendSettings />
             <SubscriptionSettings />
             <UploadSettings />
             <PasskeySettings />

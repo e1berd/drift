@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node24/tsconfig.json",
-  "include": ["kubb.config.*", "vitest.config.*", "packages/*/vitest.config.*"],
+  "include": ["kubb.config.*", "vitest.config.*", "vite.drift.ts", "packages/*/vitest.config.*"],
   "compilerOptions": {
     "module": "preserve",
     "moduleResolution": "bundler",

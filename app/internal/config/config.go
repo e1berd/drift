@@ -15,6 +15,7 @@ type Config struct {
 	KratosPublicURL *url.URL
 	KratosAdminURL  *url.URL
 	ViteDevURL      *url.URL
+	ViteDevFrontend string
 	WorkspaceRoot   string
 	ChatsRoot       string
 	AgentsRoot      string
@@ -61,6 +62,7 @@ func Load() (*Config, error) {
 	cfg.KimiBin = os.Getenv("DRIFT_KIMI_BIN")
 	cfg.MimoBin = os.Getenv("DRIFT_MIMO_BIN")
 	cfg.DeliveryRepo = env("DRIFT_DELIVERY_REPO", "e1berd/drift")
+	cfg.ViteDevFrontend = env("VITE_DEV_FRONTEND", "default")
 
 	urls := []struct {
 		dst      **url.URL

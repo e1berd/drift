@@ -1,9 +1,10 @@
-import { readonly, ref } from 'vue'
+import { computed, readonly, ref } from 'vue'
 
 import { kratos, type KratosSession } from '@drift/sdk/kratos'
 
 const session = ref<KratosSession | null>(null)
 const loading = ref(false)
+const isOwner = computed(() => session.value?.identity.metadata_public?.role === 'superuser')
 
 /** Current Kratos session, shared across the app. */
 export function useSession() {
@@ -21,5 +22,5 @@ export function useSession() {
         }
     }
 
-    return { session: readonly(session), loading: readonly(loading), refresh }
+    return { session: readonly(session), loading: readonly(loading), isOwner, refresh }
 }
