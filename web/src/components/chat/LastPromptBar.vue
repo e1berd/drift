@@ -3,51 +3,63 @@ import { computed, onScopeDispose, ref, watch } from 'vue'
 import { PhArrowUp } from '@phosphor-icons/vue'
 import { useI18n } from 'vue-i18n'
 
-import type { Message } from '@/gen'
+import { flashMessage, messageElement } from '@/composables/useChatScroll'
+import { useSessionMessages } from '@/composables/useMessageWindow'
 
-const props = defineProps<{ message?: Message; viewport: HTMLElement | null }>()
+const props = defineProps<{ viewport: HTMLElement | null }>()
 const { t } = useI18n()
+const session = useSessionMessages()
 
-const outOfView = ref(false)
-const summary = computed(() => {
-    const text = props.message?.body.text?.trim()
-    if (text) return text
-    return t('attachments', { count: props.message?.body.attachments?.length ?? 0 })
+const prompt = computed(() => session.state.value.lastPrompt)
+const loaded = computed(() =>
+    session.state.value.messages.some((message) => message.id === prompt.value?.id),
+)
+const aboveWindow = computed(() => {
+    const first = session.state.value.messages.at(0)
+    return !!prompt.value && !!first && prompt.value.createTime < first.createTime
 })
+const scrolledPast = ref(false)
+const visible = computed(
+    () => !!prompt.value && (loaded.value ? scrolledPast.value : aboveWindow.value),
+)
 
-function messageElement(): HTMLElement | null {
-    if (!props.viewport || !props.message) return null
-    return props.viewport.querySelector<HTMLElement>(
-        `[data-message-id="${CSS.escape(props.message.id)}"]`,
-    )
-}
+const summary = computed(() => {
+    const text = prompt.value?.body.text?.trim()
+    if (text) return text
+    return t('attachments', { count: prompt.value?.body.attachments?.length ?? 0 })
+})
 
 let observer: IntersectionObserver | null = null
 
-function observeMessage() {
+function observePrompt() {
     observer?.disconnect()
-    outOfView.value = false
-    const target = messageElement()
+    scrolledPast.value = false
+    const target = prompt.value && messageElement(props.viewport, prompt.value.id)
     if (!target || !props.viewport || typeof IntersectionObserver === 'undefined') return
     observer = new IntersectionObserver(
-        ([entry]) => (outOfView.value = !!entry && !entry.isIntersecting),
+        ([entry]) => {
+            const top = entry?.rootBounds?.top ?? 0
+            scrolledPast.value =
+                !!entry && !entry.isIntersecting && entry.boundingClientRect.bottom <= top
+        },
         { root: props.viewport },
     )
     observer.observe(target)
 }
 
-watch(() => [props.message?.id, props.viewport] as const, observeMessage, {
+watch(() => [prompt.value?.id, loaded.value, props.viewport] as const, observePrompt, {
     immediate: true,
     flush: 'post',
 })
 onScopeDispose(() => observer?.disconnect())
 
 function jump() {
-    const target = messageElement()
+    const id = prompt.value?.id
+    if (!id || !session.reveal(id)) return
+    const target = messageElement(props.viewport, id)
     if (!target) return
     target.scrollIntoView({ block: 'start', behavior: 'smooth' })
-    target.classList.remove('motion-flash')
-    requestAnimationFrame(() => target.classList.add('motion-flash'))
+    flashMessage(target)
 }
 </script>
 
@@ -55,8 +67,8 @@ function jump() {
     <button
         type="button"
         class="last-prompt"
-        :data-visible="(message && outOfView) || undefined"
-        :inert="!(message && outOfView)"
+        :data-visible="visible || undefined"
+        :inert="!visible"
         @click="jump"
     >
         <span class="last-prompt-text">{{ summary }}</span>

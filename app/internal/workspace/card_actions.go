@@ -9,6 +9,7 @@ import (
 	"github.com/e1berd/drift/app/internal/askuser"
 	"github.com/e1berd/drift/app/internal/db"
 	"github.com/e1berd/drift/app/internal/identity"
+	"github.com/e1berd/drift/app/internal/typeid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/labstack/echo/v5"
 )
@@ -29,8 +30,8 @@ func (h *Handler) messageCustomMethod(c *echo.Context) error {
 		return err
 	}
 	raw, method, _ := strings.Cut(c.Param("message"), ":")
-	var message pgtype.UUID
-	if err := message.Scan(raw); err != nil || h.runner == nil {
+	message, err := typeid.ParseMessageID(raw)
+	if err != nil || h.runner == nil {
 		return echo.NewHTTPError(http.StatusNotFound, "not found")
 	}
 	owner := identity.From(c)

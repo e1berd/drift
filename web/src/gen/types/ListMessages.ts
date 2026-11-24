@@ -5,6 +5,7 @@
 
 import type { Error } from './Error'
 import type { ListMessagesResponse } from './ListMessagesResponse'
+import type { MessageId } from './MessageId'
 
 export type ListMessagesPath = {
   /**
@@ -18,11 +19,25 @@ export type ListMessagesPath = {
 export type ListMessagesQuery = {
   /**
    * @minimum 1
-   * @maximum 100
+   * @maximum 256
+   * @default 64
    * @type integer | undefined
    */
   page_size?: number;
-  page_token?: string;
+  /**
+   * @description First message of the window.
+   * @pattern ^msg_[0-7][0-9a-hjkmnp-tv-z]{25}$
+   * @example msg_01h455vb4pex5vsknk084sn02q
+   * @type string | undefined
+   */
+  start?: MessageId;
+  /**
+   * @description Last message of the window.
+   * @pattern ^msg_[0-7][0-9a-hjkmnp-tv-z]{25}$
+   * @example msg_01h455vb4pex5vsknk084sn02q
+   * @type string | undefined
+   */
+  end?: MessageId;
 };
 
 export type ListMessagesStatus200 = ListMessagesResponse;

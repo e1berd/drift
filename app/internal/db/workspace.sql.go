@@ -189,6 +189,49 @@ func (q *Queries) DeleteSession(ctx context.Context, arg DeleteSessionParams) (i
 	return result.RowsAffected(), nil
 }
 
+const getLastPrompt = `-- name: GetLastPrompt :one
+SELECT id, session_id, role, kind, body, created_at FROM messages
+WHERE session_id = $1 AND role = 'user'
+  AND (coalesce(body ->> 'text', '') <> '' OR jsonb_array_length(coalesce(body -> 'attachments', '[]')) > 0)
+ORDER BY created_at DESC, id DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLastPrompt(ctx context.Context, sessionID pgtype.UUID) (Message, error) {
+	row := q.db.QueryRow(ctx, getLastPrompt, sessionID)
+	var i Message
+	err := row.Scan(
+		&i.ID,
+		&i.SessionID,
+		&i.Role,
+		&i.Kind,
+		&i.Body,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getMessagePosition = `-- name: GetMessagePosition :one
+SELECT created_at, id FROM messages WHERE id = $1 AND session_id = $2
+`
+
+type GetMessagePositionParams struct {
+	ID        pgtype.UUID `json:"id"`
+	SessionID pgtype.UUID `json:"session_id"`
+}
+
+type GetMessagePositionRow struct {
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID        pgtype.UUID        `json:"id"`
+}
+
+func (q *Queries) GetMessagePosition(ctx context.Context, arg GetMessagePositionParams) (GetMessagePositionRow, error) {
+	row := q.db.QueryRow(ctx, getMessagePosition, arg.ID, arg.SessionID)
+	var i GetMessagePositionRow
+	err := row.Scan(&i.CreatedAt, &i.ID)
+	return i, err
+}
+
 const getProject = `-- name: GetProject :one
 SELECT id, owner_id, name, path, created_at, updated_at FROM projects WHERE id = $1 AND owner_id = $2
 `
@@ -316,6 +359,46 @@ func (q *Queries) GetSessionMessage(ctx context.Context, arg GetSessionMessagePa
 	return i, err
 }
 
+const hasMessagesAfter = `-- name: HasMessagesAfter :one
+SELECT EXISTS (
+    SELECT 1 FROM messages
+    WHERE session_id = $1 AND (created_at, id) > ($2::timestamptz, $3::uuid)
+)
+`
+
+type HasMessagesAfterParams struct {
+	SessionID pgtype.UUID        `json:"session_id"`
+	Created   pgtype.Timestamptz `json:"created"`
+	ID        pgtype.UUID        `json:"id"`
+}
+
+func (q *Queries) HasMessagesAfter(ctx context.Context, arg HasMessagesAfterParams) (bool, error) {
+	row := q.db.QueryRow(ctx, hasMessagesAfter, arg.SessionID, arg.Created, arg.ID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const hasMessagesBefore = `-- name: HasMessagesBefore :one
+SELECT EXISTS (
+    SELECT 1 FROM messages
+    WHERE session_id = $1 AND (created_at, id) < ($2::timestamptz, $3::uuid)
+)
+`
+
+type HasMessagesBeforeParams struct {
+	SessionID pgtype.UUID        `json:"session_id"`
+	Created   pgtype.Timestamptz `json:"created"`
+	ID        pgtype.UUID        `json:"id"`
+}
+
+func (q *Queries) HasMessagesBefore(ctx context.Context, arg HasMessagesBeforeParams) (bool, error) {
+	row := q.db.QueryRow(ctx, hasMessagesBefore, arg.SessionID, arg.Created, arg.ID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const listDrafts = `-- name: ListDrafts :many
 SELECT owner_id, key, text, device_id, updated_at FROM drafts WHERE owner_id = $1 ORDER BY updated_at DESC
 `
@@ -346,28 +429,81 @@ func (q *Queries) ListDrafts(ctx context.Context, ownerID string) ([]Draft, erro
 	return items, nil
 }
 
-const listMessages = `-- name: ListMessages :many
+const listMessagesFrom = `-- name: ListMessagesFrom :many
+SELECT id, session_id, role, kind, body, created_at FROM messages
+WHERE session_id = $1
+  AND (created_at, id) >= ($3::timestamptz, $4::uuid)
+  AND ($5::timestamptz IS NULL
+       OR (created_at, id) <= ($5::timestamptz, $6::uuid))
+ORDER BY created_at, id
+LIMIT $2
+`
+
+type ListMessagesFromParams struct {
+	SessionID    pgtype.UUID        `json:"session_id"`
+	Limit        int32              `json:"limit"`
+	StartCreated pgtype.Timestamptz `json:"start_created"`
+	StartID      pgtype.UUID        `json:"start_id"`
+	EndCreated   pgtype.Timestamptz `json:"end_created"`
+	EndID        pgtype.UUID        `json:"end_id"`
+}
+
+func (q *Queries) ListMessagesFrom(ctx context.Context, arg ListMessagesFromParams) ([]Message, error) {
+	rows, err := q.db.Query(ctx, listMessagesFrom,
+		arg.SessionID,
+		arg.Limit,
+		arg.StartCreated,
+		arg.StartID,
+		arg.EndCreated,
+		arg.EndID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Message
+	for rows.Next() {
+		var i Message
+		if err := rows.Scan(
+			&i.ID,
+			&i.SessionID,
+			&i.Role,
+			&i.Kind,
+			&i.Body,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMessagesUpTo = `-- name: ListMessagesUpTo :many
 SELECT id, session_id, role, kind, body, created_at FROM messages
 WHERE session_id = $1
   AND ($3::timestamptz IS NULL
-       OR (created_at, id) < ($3::timestamptz, $4::uuid))
+       OR (created_at, id) <= ($3::timestamptz, $4::uuid))
 ORDER BY created_at DESC, id DESC
 LIMIT $2
 `
 
-type ListMessagesParams struct {
-	SessionID     pgtype.UUID        `json:"session_id"`
-	Limit         int32              `json:"limit"`
-	BeforeCreated pgtype.Timestamptz `json:"before_created"`
-	BeforeID      pgtype.UUID        `json:"before_id"`
+type ListMessagesUpToParams struct {
+	SessionID  pgtype.UUID        `json:"session_id"`
+	Limit      int32              `json:"limit"`
+	EndCreated pgtype.Timestamptz `json:"end_created"`
+	EndID      pgtype.UUID        `json:"end_id"`
 }
 
-func (q *Queries) ListMessages(ctx context.Context, arg ListMessagesParams) ([]Message, error) {
-	rows, err := q.db.Query(ctx, listMessages,
+func (q *Queries) ListMessagesUpTo(ctx context.Context, arg ListMessagesUpToParams) ([]Message, error) {
+	rows, err := q.db.Query(ctx, listMessagesUpTo,
 		arg.SessionID,
 		arg.Limit,
-		arg.BeforeCreated,
-		arg.BeforeID,
+		arg.EndCreated,
+		arg.EndID,
 	)
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/e1berd/drift/app/internal/db"
+	"github.com/e1berd/drift/app/internal/typeid"
 )
 
 // Project is the API view of a project (a directory under the workspace root).
@@ -68,7 +69,7 @@ func sessionDTO(s db.Session) Session {
 
 func messageDTO(m db.Message) Message {
 	return Message{
-		ID: uuidString(m.ID), SessionID: uuidString(m.SessionID), Role: m.Role, Kind: m.Kind,
+		ID: typeid.MessageID(m.ID), SessionID: uuidString(m.SessionID), Role: m.Role, Kind: m.Kind,
 		Body: m.Body, CreateTime: m.CreatedAt.Time,
 	}
 }

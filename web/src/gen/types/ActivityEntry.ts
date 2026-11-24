@@ -3,6 +3,8 @@
 * Do not edit manually.
 */
 
+import type { MessageId } from './MessageId'
+
 export const activityEntryKindEnum = {
   branch: 'branch',
   worktree: 'worktree',
@@ -24,9 +26,11 @@ export type ActivityEntry = {
   kind: ActivityEntryKindEnumKey;
   /**
    * @description The tool call message that created it.
+   * @pattern ^msg_[0-7][0-9a-hjkmnp-tv-z]{25}$
+   * @example msg_01h455vb4pex5vsknk084sn02q
    * @type string
    */
-  messageId: string;
+  messageId: MessageId;
   /**
    * @description Branch name; worktree path relative to the parent of the session folder, under ~ or absolute; file path as the agent wrote it, relative to the session folder or absolute.
    * @type string
