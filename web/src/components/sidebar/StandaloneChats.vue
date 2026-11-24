@@ -21,8 +21,7 @@ const showDraft = computed(() => drafts.has(STANDALONE_DRAFT_KEY) && !viewingNew
 
 <template>
     <section :aria-label="t('nav.chats')">
-        <div class="px-3 pt-3 pb-1 text-muted">{{ t('nav.chats') }}</div>
-        <div v-auto-animate class="flex flex-col gap-px px-2">
+        <div v-auto-animate class="flex flex-col gap-px px-2 py-2">
             <DraftItem
                 v-if="showDraft"
                 :key="STANDALONE_DRAFT_KEY"

@@ -115,7 +115,7 @@ describe('App', () => {
         expect(requestedPaths()).toContain('/.ory/kratos/public/sessions/whoami')
         expect(requestedPaths()).toContain('/api/projects')
         expect(requestedPaths()).toContain('/api/drafts')
-        expect(requestedPaths()).toContain('/api/sessions')
+        expect(requestedPaths()).not.toContain('/api/sessions')
         expect(wrapper.text()).toContain('v1.0.0')
         wrapper.unmount()
     })

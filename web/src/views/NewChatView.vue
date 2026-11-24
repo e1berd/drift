@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
-    SegmentedControl,
-    SegmentedControlIndicator,
-    SegmentedControlItem,
-} from '@ui-sdk/vue/segmented-control'
-import {
     Select,
     SelectContent,
     SelectItem,
@@ -18,7 +13,7 @@ import { toast } from '@ui-sdk/vue/toast'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import ScrollPane from '@/components/ScrollPane.vue'
-import AgentLogo from '@/components/AgentLogo.vue'
+import AgentPicker from '@/components/AgentPicker.vue'
 import BrandMark from '@/components/BrandMark.vue'
 import TopBar from '@/components/TopBar.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
@@ -137,20 +132,12 @@ async function send({ text, attachments }: SentPrompt) {
                 </h1>
                 <p class="m-0 text-center text-muted">{{ t('empty.lead') }}</p>
 
-                <SegmentedControl
+                <AgentPicker
                     v-if="agents.available.value.length"
-                    v-model:value="agentValue"
-                    :aria-label="t('composer.model')"
-                >
-                    <SegmentedControlIndicator />
-                    <SegmentedControlItem
-                        v-for="item in agents.available.value"
-                        :key="item.id"
-                        :value="item.id"
-                    >
-                        <AgentLogo :agent="item.id" decorative />{{ item.name }}
-                    </SegmentedControlItem>
-                </SegmentedControl>
+                    v-model="agentValue"
+                    :agents="agents.available.value"
+                    :label="t('composer.model')"
+                />
             </div>
 
             <div class="contents" @focusin="composerFocused = true" @focusout="onComposerFocusOut">

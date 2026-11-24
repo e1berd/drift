@@ -11,7 +11,7 @@ import BrandMark from '@/components/BrandMark.vue'
 import DeliveryVersion from '@/components/delivery/DeliveryVersion.vue'
 import SessionSearchResults from '@/components/sidebar/SessionSearchResults.vue'
 import SidebarFooter from '@/components/sidebar/SidebarFooter.vue'
-import WorkspaceNav from '@/components/sidebar/WorkspaceNav.vue'
+import SidebarTabs from '@/components/sidebar/SidebarTabs.vue'
 import { useDebounced } from '@/composables/useDebounced'
 import { useShell } from '@/composables/useShell'
 
@@ -60,12 +60,10 @@ function startNewChat() {
             />
         </div>
 
-        <ScrollPane class="min-h-0 flex-1">
-            <div v-auto-animate>
-                <SessionSearchResults v-if="searching" key="search" :text="searchText" />
-                <WorkspaceNav v-else key="browse" />
-            </div>
+        <ScrollPane v-if="searching" class="min-h-0 flex-1">
+            <SessionSearchResults :text="searchText" />
         </ScrollPane>
+        <SidebarTabs v-else />
 
         <SidebarFooter />
     </div>
