@@ -42,6 +42,24 @@ func TestKimiStreamTurnsMessagesIntoTranscript(t *testing.T) {
 	}
 }
 
+func TestKimiFailureShowsCauseBeforeLogPath(t *testing.T) {
+	const cause = `error: failed to run prompt: Model "old/model" is not configured in config.toml.`
+	const logPath = "See log: /tmp/kimi/logs/kimi-code.log"
+	for _, tt := range []struct {
+		output string
+		want   string
+	}{
+		{cause + "\n\n" + logPath + "\n", cause},
+		{logPath + "\n", logPath},
+		{"ordinary stderr\n", "ordinary stderr"},
+		{" \n", "exit status 1"},
+	} {
+		if got := failureMessage(tt.output, "exit status 1"); got != tt.want {
+			t.Errorf("failureMessage(%q) = %q, want %q", tt.output, got, tt.want)
+		}
+	}
+}
+
 func TestKimiArgs(t *testing.T) {
 	req := runRequest("kimi-code/k3.1-pro", "acceptEdits")
 	req.Text = "hi"
@@ -59,6 +77,17 @@ func TestKimiArgs(t *testing.T) {
 	}
 	if args = kimiArgs(runRequest("default", "default"), ""); len(args) != 4 {
 		t.Errorf("default model must pass no flag: %q", args)
+	}
+}
+
+func TestKimiProviderAliasUsesConfiguredDefault(t *testing.T) {
+	req := runRequest("kimi-code", "auto")
+	req.Text = "hi"
+	if got := strings.Join(kimiArgs(req, ""), " "); got != "-p hi --output-format stream-json" {
+		t.Errorf("new session args %q", got)
+	}
+	if got := strings.Join(kimiArgs(req, "k1"), " "); got != "-p hi --output-format stream-json -S k1" {
+		t.Errorf("resumed session args %q", got)
 	}
 }
 

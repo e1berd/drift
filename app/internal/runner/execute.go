@@ -111,7 +111,7 @@ func (r *Runner) execute(ctx context.Context, req workspace.RunRequest) {
 		t.note(noteStopped, "")
 	case waitErr != nil && !stream.done():
 		t.closeTools(toolError)
-		t.note(noteFailed, lastLine(stderr.String(), waitErr.Error()))
+		t.note(noteFailed, failureMessage(stderr.String(), waitErr.Error()))
 	default:
 		t.closeTools(toolDone)
 	}
@@ -142,12 +142,21 @@ func signalGroup(pid int, signal syscall.Signal) error {
 	return err
 }
 
-func lastLine(output, fallback string) string {
-	lines := strings.Split(strings.TrimSpace(output), "\n")
-	if line := strings.TrimSpace(lines[len(lines)-1]); line != "" {
-		return line
+func failureMessage(output, fallback string) string {
+	output = strings.TrimSpace(output)
+	if output == "" {
+		return fallback
 	}
-	return fallback
+	lines := strings.Split(output, "\n")
+	last := strings.TrimSpace(lines[len(lines)-1])
+	if strings.HasPrefix(last, "See log: ") {
+		for i := len(lines) - 2; i >= 0; i-- {
+			if line := strings.TrimSpace(lines[i]); line != "" {
+				return line
+			}
+		}
+	}
+	return last
 }
 
 type tailBuffer struct {

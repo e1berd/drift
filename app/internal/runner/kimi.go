@@ -11,7 +11,9 @@ import (
 // --prompt and approves everything in prompt mode, so the session mode is not passed.
 func kimiArgs(req workspace.RunRequest, agentSessionID string) []string {
 	args := []string{"-p", req.Text, "--output-format", "stream-json"}
-	if req.Model != "" && req.Model != "default" {
+	switch req.Model {
+	case "", "default", "kimi-code":
+	default:
 		args = append(args, "-m", req.Model)
 	}
 	if agentSessionID != "" {
