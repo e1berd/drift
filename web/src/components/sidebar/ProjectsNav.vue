@@ -6,7 +6,6 @@ import { useI18n } from 'vue-i18n'
 
 import NewProjectForm from '@/components/sidebar/NewProjectForm.vue'
 import ProjectItem from '@/components/sidebar/ProjectItem.vue'
-import StandaloneChats from '@/components/sidebar/StandaloneChats.vue'
 import { useStickyProjects } from '@/composables/useStickyProjects'
 import { useProjects } from '@/shared/queries'
 
@@ -18,17 +17,9 @@ const { pinStyle } = useStickyProjects(useTemplateRef<HTMLElement>('projectList'
 
 <template>
     <div>
-        <StandaloneChats />
-
-        <div class="flex items-center justify-between px-3 pt-3 pb-1 text-muted">
-            <span>{{ t('nav.projects') }}</span>
-            <Button
-                :aria-label="t('nav.newProject')"
-                v-tooltip="t('nav.newProject')"
-                :aria-expanded="creating"
-                @click="creating = !creating"
-            >
-                <PhPlus />
+        <div class="px-3 pt-2">
+            <Button class="w-full" :aria-expanded="creating" @click="creating = !creating">
+                <PhPlus />{{ t('nav.newProject') }}
             </Button>
         </div>
 
@@ -38,7 +29,7 @@ const { pinStyle } = useStickyProjects(useTemplateRef<HTMLElement>('projectList'
             </div>
         </div>
 
-        <nav class="px-2 pb-2" :aria-label="t('nav.projects')">
+        <nav class="px-2 pt-2 pb-2" :aria-label="t('nav.projects')">
             <div v-if="isPending" class="flex flex-col gap-1 pt-1">
                 <div v-for="row in 3" :key="row" class="skeleton h-8" />
             </div>

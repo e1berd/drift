@@ -8,6 +8,7 @@ import type { Session } from '@/gen'
 
 import SessionItem from '@/components/sidebar/SessionItem.vue'
 import { useInfiniteSentinel } from '@/composables/useInfiniteSentinel'
+import { useSidebarTab } from '@/composables/useSidebarTab'
 import { errorMessage } from '@/shared/errors'
 import { useProjects, useSessionSearch } from '@/shared/queries'
 
@@ -29,6 +30,7 @@ const {
     isFetchingNextPage,
     fetchNextPage,
 } = useSessionSearch(() => props.text)
+const { revealSessionPlace } = useSidebarTab()
 
 const projectNames = computed(
     () => new Map(projects.value.map((project) => [project.id, project.name])),
@@ -78,7 +80,11 @@ useInfiniteSentinel(sentinel, () => {
                     <PhChatsCircle v-else class="shrink-0" />
                     <span class="truncate">{{ groupTitle(group) }}</span>
                 </div>
-                <div v-auto-animate class="flex flex-col gap-px">
+                <div
+                    v-auto-animate
+                    class="flex flex-col gap-px"
+                    @click="revealSessionPlace(group.projectId)"
+                >
                     <SessionItem
                         v-for="session in group.sessions"
                         :key="session.id"
