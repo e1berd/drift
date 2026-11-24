@@ -10,7 +10,6 @@ import {
 } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
 import { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from '@ui-sdk/vue/tabs'
-import { toast } from '@ui-sdk/vue/toast'
 import { useRoute, useRouter } from 'vue-router'
 
 import RunSpinner from '@/components/RunSpinner.vue'
@@ -22,17 +21,11 @@ import SwitchFamilyDialog from '@/components/composer/SwitchFamilyDialog.vue'
 import PanePlaceholder from '@/components/PanePlaceholder.vue'
 import SessionChatLayout from '@/components/infobar/SessionChatLayout.vue'
 import { useInfobar } from '@drift/vue/composables/useInfobar'
-import { useComposerSettings } from '@drift/vue/composables/useComposerSettings'
 import { draftKey } from '@drift/vue/composables/useDrafts'
-import { useEventStream } from '@drift/vue/composables/useEventStream'
-import { useCreateMessage, useStopSession, useUpdateSession } from '@drift/vue/api'
-import type { SentPrompt } from '@drift/sdk/attachments'
-import { errorMessage } from '@drift/sdk/errors'
 import { AGENTS } from '@drift/sdk/agents'
-import type { AgentId } from '@drift/sdk/agents'
+import type { AgentChoice } from '@drift/vue/chat/useNewChat'
 import { useI18n } from 'vue-i18n'
-import { provideSessionMessages } from '@drift/vue/composables/useMessageWindow'
-import { useProjects, useSession } from '@drift/vue/queries'
+import { useSessionChat } from '@drift/vue/chat/useSessionChat'
 
 const FilesPane = defineAsyncComponent(() => import('@/components/files/FilesPane.vue'))
 const GitPane = defineAsyncComponent(() => import('@/components/git/GitPane.vue'))
@@ -65,73 +58,31 @@ const tab = computed({
     },
 })
 
-const session = useSession(sessionId)
-const { projects } = useProjects()
-const project = computed(() =>
-    projects.value.find((item) => item.id === session.data.value?.projectId),
-)
-const sessionMessages = provideSessionMessages(sessionId)
-const messages = sessionMessages.messages
-
-const agent = computed(() => session.data.value?.agent ?? 'claude')
-const running = computed(() => session.data.value?.status === 'running')
-const { activities } = useEventStream()
-const activity = computed(() => activities.value.get(sessionId.value))
-const waitingForReset = computed(() =>
-    messages.value.some(
-        (message) => message.kind === 'limit' && message.body.status === 'scheduled',
-    ),
-)
-const placeholder = computed(() => {
-    const name = AGENTS[agent.value].name
-    if (waitingForReset.value) return t('composer.placeholder.afterReset', { agent: name })
-    if (running.value) return t('composer.placeholder.queue', { agent: name })
-    return t('composer.placeholder.reply', { agent: name })
-})
-const runningTool = computed(() => {
-    if (sessionMessages.state.value.hasNewer) return undefined
-    const last = messages.value.at(-1)
-    return last?.kind === 'tool' && last.body.status === 'running' ? last.body.name : undefined
-})
-const history = computed(() =>
-    messages.value.flatMap((message) =>
-        message.role === 'user' && message.body.text ? [message.body.text] : [],
-    ),
+const {
+    session,
+    project,
+    messages,
+    agent,
+    running,
+    activity,
+    replyState,
+    runningTool,
+    history,
+    busy,
+    stopping,
+    switchAgent: applyAgentSwitch,
+    send,
+    stop,
+} = useSessionChat(sessionId)
+const placeholder = computed(() =>
+    t(`composer.placeholder.${replyState.value}`, { agent: AGENTS[agent.value].name }),
 )
 
-const post = useCreateMessage({
-    mutation: { onError: (error) => toast.error(errorMessage(error)) },
-})
-
-const settings = useComposerSettings()
 const switchDialog = useTemplateRef<InstanceType<typeof SwitchFamilyDialog>>('switchDialog')
-const update = useUpdateSession({
-    mutation: { onError: (error) => toast.error(errorMessage(error)) },
-})
 
-async function switchAgent({ agent: next, model }: { agent: AgentId; model: string }) {
-    if (!(await switchDialog.value?.ask(next))) return
-    settings.setModel(next, model, sessionId.value)
-    update.mutate({ path: { sessionId: sessionId.value }, body: { agent: next } })
+async function switchAgent(choice: AgentChoice) {
+    if (await switchDialog.value?.ask(choice.agent)) applyAgentSwitch(choice)
 }
-
-async function send({ text, attachments }: SentPrompt) {
-    const attachmentIds = attachments.map((attachment) => attachment.id)
-    if (!text && !attachmentIds.length) return
-    await post.mutateAsync({
-        path: { sessionId: sessionId.value },
-        body: {
-            text,
-            attachmentIds,
-            model: settings.modelFor(agent.value, sessionId.value),
-            mode: settings.modeFor(agent.value),
-        },
-    })
-}
-
-const stop = useStopSession({
-    mutation: { onError: (error) => toast.error(errorMessage(error)) },
-})
 </script>
 
 <template>
@@ -195,12 +146,12 @@ const stop = useStopSession({
                         :session-id="sessionId"
                         :history="history"
                         :placeholder="placeholder"
-                        :busy="post.isPending.value || update.isPending.value"
+                        :busy="busy"
                         :running="running"
-                        :stopping="stop.isPending.value"
+                        :stopping="stopping"
                         autofocus
                         :submit="send"
-                        @stop="stop.mutate({ path: { sessionId } })"
+                        @stop="stop"
                         @switch-agent="switchAgent"
                     />
                     <SwitchFamilyDialog ref="switchDialog" />

@@ -12,13 +12,10 @@ import ModelSelect from '@/components/composer/ModelSelect.vue'
 import PromptEditor from '@/components/composer/PromptEditor.vue'
 import UsageIndicator from '@/components/composer/usage/UsageIndicator.vue'
 import ImagePreview from '@/components/composer/ImagePreview.vue'
-import { useComposerUploads } from '@drift/vue/composables/useComposerUploads'
-import { discardSentDraft, useDraft } from '@drift/vue/composables/useDrafts'
-import { useAgents } from '@drift/vue/composables/useAgents'
+import { usePromptComposer } from '@drift/vue/chat/usePromptComposer'
 import type { AgentId } from '@drift/sdk/agents'
 import { AGENTS } from '@drift/sdk/agents'
 import type { SentPrompt } from '@drift/sdk/attachments'
-import { reportError } from '@drift/sdk/errors'
 import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
@@ -50,81 +47,23 @@ const emit = defineEmits<{
     stop: []
 }>()
 const { t } = useI18n()
-const agents = useAgents()
-const unavailable = computed(() => agents.ready.value && !agents.isConnected(props.agent))
-
-const draft = useDraft(() => props.draftKey)
-const uploads = useComposerUploads(() => props.draftKey)
+const composer = usePromptComposer({
+    draftKey: () => props.draftKey,
+    agent: () => props.agent,
+    submit: (prompt) => props.submit(prompt),
+    history: () => props.history,
+    busy: () => props.busy,
+})
+const { draft, uploads, historyIndex, unavailable, canSend, send, back, forward } = composer
+const onInput = composer.type
 const noFiles: File[] = []
-const historyIndex = ref(-1)
-const sending = ref(false)
 const preview = ref<{ url: string; name: string } | null>(null)
 const editor = useTemplateRef<InstanceType<typeof PromptEditor>>('editor')
 
-const canSend = computed(
-    () =>
-        !unavailable.value &&
-        !props.busy &&
-        !sending.value &&
-        !uploads.uploading.value &&
-        (!!draft.text.value.trim() || uploads.ready.value.length > 0),
-)
 const sendTitle = computed(() => {
     if (uploads.uploading.value) return t('composer.waitForUploads')
     return props.running ? t('composer.queue') : t('composer.send')
 })
-
-function setText(value: string) {
-    draft.set(value)
-    draft.external.value++
-}
-
-function clearSentDraft(key: string, text: string) {
-    if (key !== props.draftKey) discardSentDraft(key, text)
-    else if (draft.text.value.trim() === text) draft.clear()
-}
-
-async function send() {
-    if (!canSend.value) return
-    const key = props.draftKey
-    const prompt = { text: draft.text.value.trim(), attachments: uploads.takeReady() }
-    sending.value = true
-    try {
-        await props.submit(prompt)
-        historyIndex.value = -1
-        clearSentDraft(key, prompt.text)
-    } catch (error) {
-        uploads.returnUnsent(key, prompt.attachments)
-        reportError(error)
-    } finally {
-        sending.value = false
-    }
-}
-
-function back() {
-    if (!props.history.length) return
-    const index =
-        historyIndex.value === -1 ? props.history.length - 1 : Math.max(0, historyIndex.value - 1)
-    historyIndex.value = index
-    setText(props.history.at(index) ?? '')
-}
-
-function forward() {
-    if (historyIndex.value === -1) return
-    const index = historyIndex.value + 1
-    if (index >= props.history.length) {
-        historyIndex.value = -1
-        setText('')
-        return
-    }
-    historyIndex.value = index
-    setText(props.history.at(index) ?? '')
-}
-
-function onInput(value: string) {
-    historyIndex.value = -1
-    draft.set(value)
-}
 
 watch(
     [() => props.draftKey, unavailable],

@@ -215,6 +215,49 @@ importers:
         specifier: ^8.2.1
         version: 8.2.1(vite@8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
 
+  apps/vuetify:
+    dependencies:
+      '@drift/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@drift/vue':
+        specifier: workspace:*
+        version: link:../../packages/vue
+      '@mdi/js':
+        specifier: 7.4.47
+        version: 7.4.47
+      '@tanstack/vue-query':
+        specifier: 'catalog:'
+        version: 5.108.0(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+      '@tiptap/vue-3':
+        specifier: 'catalog:'
+        version: 3.34.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0)(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+      vue:
+        specifier: rc
+        version: 3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)
+      vue-i18n:
+        specifier: 'catalog:'
+        version: 11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+      vue-router:
+        specifier: 'catalog:'
+        version: 5.5.1(esbuild@0.25.12)(rolldown@1.2.19)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+      vuetify:
+        specifier: 4.3.4
+        version: 4.3.4(@floating-ui/dom@1.8.0)(@vue/devtools-api@8.2.1)(vite-plugin-vuetify@2.1.3)(vue-i18n@11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+    devDependencies:
+      '@intlify/unplugin-vue-i18n':
+        specifier: ^11.2.8
+        version: 11.2.8(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1))(vue-i18n@11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+      '@vitejs/plugin-vue':
+        specifier: ^6.0.8
+        version: 6.0.11(vite@8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+      vite:
+        specifier: ^8.2.2
+        version: 8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1)
+      vite-plugin-vuetify:
+        specifier: 2.1.3
+        version: 2.1.3(vite@8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))(vuetify@4.3.4)
+
   packages/sdk:
     dependencies:
       '@lobehub/icons-static-svg':
@@ -1050,6 +1093,9 @@ packages:
 
   '@marijn/find-cluster-break@1.0.4':
     resolution: {integrity: sha512-Wy0V7+SGUjnF9/TkiM1hKVDPj7jKXduPNboMVtHTA8dySMURWqfg/JZ9E2Sq8JgSJmkl7k7Qe9FLeMSrSraWmQ==}
+
+  '@mdi/js@7.4.47':
+    resolution: {integrity: sha512-KPnNOtm5i2pMabqZxpUz7iQf+mfrYZyKCZ8QNz85czgEt7cuHcGorWfdzUMWYA0SD+a6Hn4FmJ+YhzzzjkTZrQ==}
 
   '@napi-rs/keyring-darwin-arm64@2.1.2':
     resolution: {integrity: sha512-vsInUWUzWS6/WzR/TFNwmdtmwKWjnnR8TOpvZ/pjjxDAkJB/waz37PWzp2b8AFcw1aCcq2aQ7k2vvbLQy8pTrw==}
@@ -2128,6 +2174,48 @@ packages:
       typescript:
         optional: true
       vue:
+        optional: true
+
+  '@vuetify/loader-shared@2.1.2':
+    resolution: {integrity: sha512-X+1jBLmXHkpQEnC0vyOb4rtX2QSkBiFhaFXz8yhQqN2A4vQ6k2nChxN4Ol7VAY5KoqMdFoRMnmNdp/1qYXDQig==}
+    peerDependencies:
+      vue: ^3.0.0
+      vuetify: '>=3'
+
+  '@vuetify/v0@1.4.0':
+    resolution: {integrity: sha512-Kwk1RAYkCY7r+30iFi+UtSRLkI75qF1uhmPPA33fcHHbafkXUWb+FV3RkASSAVb8ZusLkk2vY3ZqWPy0iaYADg==}
+    peerDependencies:
+      '@adobe/leonardo-contrast-colors': '>=1.0.0'
+      '@ant-design/colors': '>=7.0.0'
+      '@flagsmith/flagsmith': '>=11.0.0'
+      '@floating-ui/dom': '>=1.8.0'
+      '@js-temporal/polyfill': '>=0.5.0'
+      '@material/material-color-utilities': '>=0.3.0'
+      '@vue/devtools-api': '>=7.0.0'
+      launchdarkly-js-client-sdk: ^3.0.0
+      posthog-js: ^1.0.0
+      vue: '>=3.5.0 || >=3.6.0-0'
+      vue-i18n: '>=10.0.0'
+    peerDependenciesMeta:
+      '@adobe/leonardo-contrast-colors':
+        optional: true
+      '@ant-design/colors':
+        optional: true
+      '@flagsmith/flagsmith':
+        optional: true
+      '@floating-ui/dom':
+        optional: true
+      '@js-temporal/polyfill':
+        optional: true
+      '@material/material-color-utilities':
+        optional: true
+      '@vue/devtools-api':
+        optional: true
+      launchdarkly-js-client-sdk:
+        optional: true
+      posthog-js:
+        optional: true
+      vue-i18n:
         optional: true
 
   '@xterm/addon-fit@0.11.0':
@@ -3362,6 +3450,10 @@ packages:
       webpack:
         optional: true
 
+  upath@2.0.1:
+    resolution: {integrity: sha512-1uEe95xksV1O0CYKXo8vQvN1JEbtJp7lb7C5U9HMsIp6IVwntkH/oNUzyVNQSd4S1sYk2FpSSW44FqMc8qee5w==}
+    engines: {node: '>=4'}
+
   update-browserslist-db@1.4.0:
     resolution: {integrity: sha512-WPJuOnjI9FWDct4fB+ej4Mz8opLaw5CDcZ2t44tFZ0vIQVYWzBhWR3mkixuUj/A7+vY4V9+ApOZ2YYLwdgq46w==}
     hasBin: true
@@ -3417,6 +3509,14 @@ packages:
     resolution: {integrity: sha512-OpyITJLgZNibxlrik1EmRtvXHDjLRxNPsWkGFTERZs2LgMEdG4W0WoFt5GIgp3a3jRou+eJR8U1zOBk/XQgEbw==}
     peerDependencies:
       vite: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
+
+  vite-plugin-vuetify@2.1.3:
+    resolution: {integrity: sha512-Q4SC/4TqbNvaZIFb9YsfBqkGlYHbJJJ6uU3CnRBZqLUF3s5eCMVZAaV4GkTbehIH/bhSj42lMXztOwc71u6rVw==}
+    engines: {node: ^18.0.0 || >=20.0.0}
+    peerDependencies:
+      vite: '>=5'
+      vue: ^3.0.0
+      vuetify: '>=3'
 
   vite@8.3.8:
     resolution: {integrity: sha512-LzOn3h9rG/0vhLdXrV4yJ4QFA9eEoqCl+Yx+kGJd7aB9w6nfNgVHKSYwLPZUHrz4ZGa+t+kXjV9itvcHDLQouA==}
@@ -3568,6 +3668,21 @@ packages:
       typescript: '*'
     peerDependenciesMeta:
       typescript:
+        optional: true
+
+  vuetify@4.3.4:
+    resolution: {integrity: sha512-7x32y/ZIUuKhcfTxgVaQ/oweISGHeVaZCauut/MsUmOKwG/nLEUiSvZcbQy+9j2D2MK3zprBXstK1QELCRqWsQ==}
+    peerDependencies:
+      typescript: '>=4.7'
+      vite-plugin-vuetify: '>=2.1.0'
+      vue: ^3.5.0 || ^3.6.0-0
+      webpack-plugin-vuetify: '>=3.1.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+      vite-plugin-vuetify:
+        optional: true
+      webpack-plugin-vuetify:
         optional: true
 
   w3c-keyname@2.2.8:
@@ -4594,6 +4709,8 @@ snapshots:
 
   '@marijn/find-cluster-break@1.0.4': {}
 
+  '@mdi/js@7.4.47': {}
+
   '@napi-rs/keyring-darwin-arm64@2.1.2':
     optional: true
 
@@ -5512,6 +5629,20 @@ snapshots:
       vue: 3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)
     optionalDependencies:
       typescript: typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2
+
+  '@vuetify/loader-shared@2.1.2(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))(vuetify@4.3.4)':
+    dependencies:
+      upath: 2.0.1
+      vue: 3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)
+      vuetify: 4.3.4(@floating-ui/dom@1.8.0)(@vue/devtools-api@8.2.1)(vite-plugin-vuetify@2.1.3)(vue-i18n@11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+
+  '@vuetify/v0@1.4.0(@floating-ui/dom@1.8.0)(@vue/devtools-api@8.2.1)(vue-i18n@11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))':
+    dependencies:
+      vue: 3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)
+    optionalDependencies:
+      '@floating-ui/dom': 1.8.0
+      '@vue/devtools-api': 8.2.1
+      vue-i18n: 11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
 
   '@xterm/addon-fit@0.11.0': {}
 
@@ -6643,6 +6774,8 @@ snapshots:
       rolldown: 1.2.19
       vite: 8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1)
 
+  upath@2.0.1: {}
+
   update-browserslist-db@1.4.0(browserslist@4.29.6):
     dependencies:
       browserslist: 4.29.6
@@ -6711,6 +6844,17 @@ snapshots:
       kolorist: 1.8.0
       magic-string: 0.30.21
       vite: 8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1)
+    transitivePeerDependencies:
+      - supports-color
+
+  vite-plugin-vuetify@2.1.3(vite@8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))(vuetify@4.3.4):
+    dependencies:
+      '@vuetify/loader-shared': 2.1.2(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))(vuetify@4.3.4)
+      debug: 4.4.3
+      upath: 2.0.1
+      vite: 8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1)
+      vue: 3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)
+      vuetify: 4.3.4(@floating-ui/dom@1.8.0)(@vue/devtools-api@8.2.1)(vite-plugin-vuetify@2.1.3)(vue-i18n@11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
     transitivePeerDependencies:
       - supports-color
 
@@ -6832,6 +6976,25 @@ snapshots:
       '@vue/shared': 3.6.0-rc.16
     optionalDependencies:
       typescript: typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2
+
+  vuetify@4.3.4(@floating-ui/dom@1.8.0)(@vue/devtools-api@8.2.1)(vite-plugin-vuetify@2.1.3)(vue-i18n@11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)):
+    dependencies:
+      '@vuetify/v0': 1.4.0(@floating-ui/dom@1.8.0)(@vue/devtools-api@8.2.1)(vue-i18n@11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+      typescript: typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2
+      vue: 3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)
+    optionalDependencies:
+      vite-plugin-vuetify: 2.1.3(vite@8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))(vuetify@4.3.4)
+    transitivePeerDependencies:
+      - '@adobe/leonardo-contrast-colors'
+      - '@ant-design/colors'
+      - '@flagsmith/flagsmith'
+      - '@floating-ui/dom'
+      - '@js-temporal/polyfill'
+      - '@material/material-color-utilities'
+      - '@vue/devtools-api'
+      - launchdarkly-js-client-sdk
+      - posthog-js
+      - vue-i18n
 
   w3c-keyname@2.2.8: {}
 

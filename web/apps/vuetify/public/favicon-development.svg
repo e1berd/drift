@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #fbbf24 }
+      .badge { fill: #fafafa; stroke: #18181b }
+    }
+  </style>
+  <rect class="tile" fill="#f97316" width="32" height="32" rx="8"/>
+  <path stroke="#18181b" fill="none" stroke-width="2.75" stroke-linecap="round" d="M8 12.5C10.67 9.5 13.33 9.5 16 12.5S21.33 15.5 24 12.5M8 19.5C10.67 16.5 13.33 16.5 16 19.5S21.33 22.5 24 19.5"/>
+  <circle class="badge" fill="#18181b" stroke="#fafafa" stroke-width="2" cx="26" cy="26" r="5"/>
+</svg>

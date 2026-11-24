@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useTemplateRef, watch } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import {
     createScrollAreaController,
     ScrollArea,
@@ -16,41 +16,22 @@ import RunSpinner from '@/components/RunSpinner.vue'
 import JumpToLatest from '@/components/chat/JumpToLatest.vue'
 import LastPromptBar from '@/components/chat/LastPromptBar.vue'
 import MessageItem from '@/components/chat/MessageItem.vue'
-import { useChatScroll } from '@drift/vue/composables/useChatScroll'
-import { useInfiniteSentinel } from '@drift/vue/composables/useInfiniteSentinel'
-import { useSessionMessages } from '@drift/vue/composables/useMessageWindow'
+import { useChatThread } from '@drift/vue/chat/useChatThread'
 
 defineProps<{ agent: AgentId }>()
 const { t } = useI18n()
-const session = useSessionMessages()
-const state = session.state
-
 const top = useTemplateRef<HTMLElement>('top')
 const bottom = useTemplateRef<HTMLElement>('bottom')
 const viewport = computed(
     () => top.value?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]') ?? null,
 )
 const scrollArea = createScrollAreaController()
-const { atBottom, unread, scrollToEnd, olderHeld, stickToEnd } = useChatScroll(
+const { session, state, atBottom, unread, scrollToEnd, stickToEnd } = useChatThread(
     viewport,
-    session,
+    top,
+    bottom,
     scrollArea,
 )
-
-function loadOlderUnlessHeld() {
-    if (!olderHeld.value) void session.loadOlder()
-}
-
-useInfiniteSentinel(top, loadOlderUnlessHeld)
-useInfiniteSentinel(bottom, () => void session.loadNewer())
-watch(olderHeld, (held) => {
-    if (!held && top.value && viewport.value && isNearTop(top.value, viewport.value))
-        loadOlderUnlessHeld()
-})
-
-function isNearTop(sentinel: HTMLElement, scroller: HTMLElement) {
-    return sentinel.getBoundingClientRect().bottom >= scroller.getBoundingClientRect().top - 120
-}
 </script>
 
 <template>

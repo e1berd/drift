@@ -5,6 +5,7 @@ COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
 COPY web/packages/sdk/package.json packages/sdk/
 COPY web/packages/vue/package.json packages/vue/
 COPY web/apps/default/package.json apps/default/
+COPY web/apps/vuetify/package.json apps/vuetify/
 # Кеш store переживает пересборки, а меньше параллельных загрузок и больше
 # ретраев спасают от ETIMEDOUT на нестабильной сети.
 RUN --mount=type=cache,id=drift-pnpm,target=/pnpm/store \

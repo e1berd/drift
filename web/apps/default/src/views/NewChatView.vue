@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import {
     Select,
     SelectContent,
@@ -9,7 +9,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@ui-sdk/vue/select'
-import { toast } from '@ui-sdk/vue/toast'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import ScrollPane from '@/components/ScrollPane.vue'
@@ -17,25 +16,18 @@ import AgentPicker from '@/components/AgentPicker.vue'
 import BrandMark from '@/components/BrandMark.vue'
 import TopBar from '@/components/TopBar.vue'
 import PromptComposer from '@/components/composer/PromptComposer.vue'
-import { useComposerSettings } from '@drift/vue/composables/useComposerSettings'
 import { useMediaQuery } from '@drift/vue/composables/useMediaQuery'
 import { draftKey } from '@drift/vue/composables/useDrafts'
-import { useAgents } from '@drift/vue/composables/useAgents'
-import { useCreateSession, useCreateStandaloneSession } from '@drift/vue/api'
-import type { CreateSessionResponse } from '@drift/vue/api'
-import type { SentPrompt } from '@drift/sdk/attachments'
-import { errorMessage } from '@drift/sdk/errors'
 import { AGENTS } from '@drift/sdk/agents'
 import type { AgentId } from '@drift/sdk/agents'
 import { useI18n } from 'vue-i18n'
 import { useProjects } from '@drift/vue/queries'
+import { useNewChat } from '@drift/vue/chat/useNewChat'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { projects } = useProjects()
-const agents = useAgents()
-const settings = useComposerSettings()
 const narrow = useMediaQuery('(max-width: 760px)')
 const composerFocused = ref(false)
 const zen = computed(() => narrow.value && composerFocused.value)
@@ -45,7 +37,6 @@ function onComposerFocusOut(event: FocusEvent) {
     if (!wrapper.contains(event.relatedTarget as Node | null)) composerFocused.value = false
 }
 
-const agent = ref<AgentId>(agents.connected.value.at(0) ?? 'claude')
 const NO_PROJECT = 'none'
 
 const projectId = computed(() =>
@@ -64,52 +55,14 @@ const projectItems = computed(() => [
     { value: NO_PROJECT, label: t('composer.noProject') },
     ...projects.value.map((project) => ({ value: project.id, label: project.name })),
 ])
+const { agent, agents, creating, selectAgent, switchAgent, send } = useNewChat(
+    projectId,
+    (session) => router.push({ name: 'session', params: { sessionId: session.id } }),
+)
 const agentValue = computed({
     get: () => agent.value,
-    set: (value: string | null) => {
-        if (value && agents.isConnected(value as AgentId)) agent.value = value as AgentId
-    },
+    set: (value: string | null) => value && selectAgent(value as AgentId),
 })
-
-watch(agents.connected, (list) => {
-    const first = list.at(0)
-    if (!list.includes(agent.value) && first) agent.value = first
-})
-
-const created = {
-    mutation: {
-        onSuccess: ({ session }: CreateSessionResponse) => {
-            settings.setModel(session.agent, settings.modelFor(session.agent), session.id)
-            return router.push({ name: 'session', params: { sessionId: session.id } })
-        },
-        onError: (error: unknown) => toast.error(errorMessage(error)),
-    },
-}
-const createInProject = useCreateSession(created)
-const createStandalone = useCreateStandaloneSession(created)
-const creating = computed(() => createInProject.isPending.value || createStandalone.isPending.value)
-
-function switchAgent(choice: { agent: AgentId; model: string }) {
-    settings.setModel(choice.agent, choice.model)
-    agent.value = choice.agent
-}
-
-async function send({ text, attachments }: SentPrompt) {
-    if (!agents.isConnected(agent.value)) throw new Error(`agent ${agent.value} is not connected`)
-    const attachmentIds = attachments.map((attachment) => attachment.id)
-    if (!text && !attachmentIds.length) return
-    const body = {
-        agent: agent.value,
-        text,
-        title: text ? undefined : attachments.at(0)?.name.slice(0, 200),
-        attachmentIds,
-        model: settings.modelFor(agent.value),
-        mode: settings.modeFor(agent.value),
-    }
-    if (projectId.value)
-        await createInProject.mutateAsync({ path: { projectId: projectId.value }, body })
-    else await createStandalone.mutateAsync({ body })
-}
 </script>
 
 <template>
