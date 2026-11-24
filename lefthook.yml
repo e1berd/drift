@@ -5,7 +5,9 @@ pre-commit:
       root: web/
       glob: '*.{ts,vue,css,json,yaml,yml,html}'
       exclude:
-        - 'web/src/gen/**'
+        - 'web/packages/sdk/src/api/types/**'
+        - 'web/packages/sdk/src/api/clients/**'
+        - 'web/packages/vue/src/api/queries/**'
         - 'web/pnpm-lock.yaml'
       run: npx --no oxfmt {staged_files}
       stage_fixed: true
@@ -13,5 +15,7 @@ pre-commit:
       root: web/
       glob: '*.{ts,vue}'
       exclude:
-        - 'web/src/gen/**'
+        - 'web/packages/sdk/src/api/types/**'
+        - 'web/packages/sdk/src/api/clients/**'
+        - 'web/packages/vue/src/api/queries/**'
       run: npx --no oxlint {staged_files}

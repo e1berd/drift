@@ -1,0 +1,15 @@
+{
+  "name": "@drift/sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./api": "./src/api/index.ts",
+    "./messages": "./src/messages/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "date-fns": "^4.4.0",
+    "markdown-it": "15.0.3"
+  }
+}

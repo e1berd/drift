@@ -40,18 +40,39 @@
     "prefer-object-has-own": "error",
     "unicorn/prefer-structured-clone": "error"
   },
-  "ignorePatterns": ["src/gen/**", "dist/**"],
+  "ignorePatterns": [
+    "packages/sdk/src/api/types/**",
+    "packages/sdk/src/api/clients/**",
+    "packages/vue/src/api/queries/**",
+    "**/dist/**"
+  ],
   "overrides": [
     {
-      "files": ["src/sdk/**"],
+      "files": ["packages/sdk/**"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
               {
-                "group": ["vue", "vue-*", "@vue/*", "@ui-sdk/*", "@tanstack/*", "@/*"],
-                "message": "src/sdk stays framework-agnostic so any Drift interface can reuse it."
+                "regex": "^(vue|vue-.*|@vue/.*|@ui-sdk/.*|@tanstack/.*|@/.*|@drift/vue(/.*)?)$",
+                "message": "@drift/sdk stays framework-agnostic so any Drift interface can reuse it."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/vue/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^(@ui-sdk/.*|@phosphor-icons/.*|@/.*)$",
+                "message": "@drift/vue holds no look: every Drift front end on Vue reuses it with its own UI kit."
               }
             ]
           }

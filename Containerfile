@@ -2,6 +2,9 @@ FROM docker.io/library/node:24.22.3-slim AS web
 WORKDIR /src/web
 RUN npm install -g pnpm@10.34.9
 COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml ./
+COPY web/packages/sdk/package.json packages/sdk/
+COPY web/packages/vue/package.json packages/vue/
+COPY web/apps/default/package.json apps/default/
 # Кеш store переживает пересборки, а меньше параллельных загрузок и больше
 # ретраев спасают от ETIMEDOUT на нестабильной сети.
 RUN --mount=type=cache,id=drift-pnpm,target=/pnpm/store \
