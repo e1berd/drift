@@ -14,10 +14,7 @@ import { Checkbox, CheckboxIndicator } from '@ui-sdk/vue/checkbox'
 import { useI18n } from 'vue-i18n'
 
 import type { ActivityEntry } from '@drift/vue/api'
-
-export interface RemoveChoice {
-    deleteBranch: boolean
-}
+import type { RemoveChoice } from '@drift/vue/composables/useActivityRemoval'
 
 const { t } = useI18n()
 const confirm = createConfirm<ActivityEntry>()

@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n'
 import type { GitFileChange } from '@drift/vue/api'
 
 import { statusLetter } from '@drift/sdk/git/parseDiff'
-import { useSessionGit } from '@/composables/useSessionGit'
+import { useSessionGit } from '@drift/vue/composables/useSessionGit'
 
 const props = defineProps<{ title: string; changes: GitFileChange[]; staged: boolean }>()
 const emit = defineEmits<{ discard: [change: GitFileChange] }>()

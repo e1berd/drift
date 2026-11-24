@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 
 import ScrollPane from '@/components/ScrollPane.vue'
 import { parseDiff } from '@drift/sdk/git/parseDiff'
-import { useSessionGit } from '@/composables/useSessionGit'
+import { useSessionGit } from '@drift/vue/composables/useSessionGit'
 import { useGetGitDiff } from '@drift/vue/api'
 import { errorMessage } from '@drift/sdk/errors'
 

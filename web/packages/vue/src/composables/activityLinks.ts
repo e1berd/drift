@@ -1,5 +1,5 @@
-import type { GitSummary } from '@drift/vue/api'
-import type { InfobarLink } from '@drift/vue/composables/useInfobarLinks'
+import type { GitSummary } from '../api'
+import type { InfobarLink } from './useInfobarLinks'
 
 export function activityLinks(summary: GitSummary | undefined): InfobarLink[] {
     return (summary?.activity ?? []).map((entry) => ({

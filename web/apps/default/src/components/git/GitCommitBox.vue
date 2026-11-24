@@ -5,7 +5,7 @@ import { Button } from '@ui-sdk/vue/button'
 import { Textarea } from '@ui-sdk/vue/textarea'
 import { useI18n } from 'vue-i18n'
 
-import { useSessionGit } from '@/composables/useSessionGit'
+import { useSessionGit } from '@drift/vue/composables/useSessionGit'
 import { reportError } from '@drift/sdk/errors'
 
 const { t } = useI18n()

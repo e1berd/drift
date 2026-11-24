@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { PhFloppyDisk } from '@phosphor-icons/vue'
 import { Button } from '@ui-sdk/vue/button'
-import { toast } from '@ui-sdk/vue/toast'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useI18n } from 'vue-i18n'
 
@@ -11,7 +10,7 @@ import type { FileContent } from '@drift/vue/api'
 import CodeView from '@/components/files/CodeView.vue'
 import { useSessionFiles } from '@drift/vue/composables/useSessionFiles'
 import { readSessionFileQueryKey, useReadSessionFile, useUpdateSessionFile } from '@drift/vue/api'
-import { errorMessage } from '@drift/sdk/errors'
+import { useErrorNotice } from '@drift/vue/notifier'
 
 const props = defineProps<{ sessionId: string }>()
 const { t } = useI18n()
@@ -45,7 +44,7 @@ const save = useUpdateSessionFile({
             )
             if (drafts.get(saved.path) === saved.content) drafts.delete(saved.path)
         },
-        onError: (error) => toast.error(errorMessage(error)),
+        onError: useErrorNotice(),
     },
 })
 

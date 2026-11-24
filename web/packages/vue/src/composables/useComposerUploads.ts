@@ -1,23 +1,24 @@
 import { computed, shallowRef, toValue, watch, watchEffect } from 'vue'
 import { RestrictionError } from '@uppy/core'
-import { toast } from '@ui-sdk/vue/toast'
-import { formatFileSize } from '@ui-sdk/vue/file-input'
 import { useI18n } from 'vue-i18n'
 
 import type { MaybeRefOrGetter } from 'vue'
 
-import { useGetSettings } from '@drift/vue/api'
+import { useGetSettings } from '../api'
 import type { ReadyAttachment } from '@drift/sdk/attachments'
 import { ATTACHMENT_MAX_COUNT } from '@drift/sdk/attachments'
 import { reportError } from '@drift/sdk/errors'
-import type { DraftUploads, PendingUpload } from '@drift/vue/uploads/draftUploads'
-import { applyMaxUploadBytes, draftUploads } from '@drift/vue/uploads/draftUploads'
+import type { DraftUploads, PendingUpload } from '../uploads/draftUploads'
+import { applyMaxUploadBytes, draftUploads } from '../uploads/draftUploads'
 import { isRefusedForGood, uploadFailureStatus } from '@drift/sdk/uploads/failures'
 import { forgetPreview } from '@drift/sdk/uploads/previews'
+import { formatFileSize } from '@drift/sdk/fileSize'
+import { useNotifier } from '../notifier'
 
 /** Files of a composer draft: added ones upload at once, with progress, pause and resume. */
 export function useComposerUploads(draftKey: MaybeRefOrGetter<string>) {
     const { t } = useI18n()
+    const notifier = useNotifier()
     const settings = useGetSettings({ query: { staleTime: 60_000 } })
     const maxUploadBytes = computed(() => settings.data.value?.maxUploadBytes ?? null)
     watchEffect(() => {
@@ -57,17 +58,18 @@ export function useComposerUploads(draftKey: MaybeRefOrGetter<string>) {
     function announceFailure(name: string, error: Error) {
         const status = uploadFailureStatus(error)
         if (status === null) reportError(error)
-        if (status === 413) toast.error(t('uploads.tooLarge', { name, max: maxSizeLabel() }))
-        else if (status === 507) toast.error(t('uploads.noSpace', { name }))
-        else toast.error(t('uploads.failed', { name }), { description: error.message })
+        if (status === 413)
+            notifier.error(t('drift.uploads.tooLarge', { name, max: maxSizeLabel() }))
+        else if (status === 507) notifier.error(t('drift.uploads.noSpace', { name }))
+        else notifier.error(t('drift.uploads.failed', { name }), { description: error.message })
     }
 
     function announceRestriction(file: PendingUpload | undefined, error: Error) {
         const name = file?.name ?? ''
-        if (file?.size === 0) toast.info(t('uploads.empty', { name }))
+        if (file?.size === 0) notifier.info(t('drift.uploads.empty', { name }))
         else if (maxUploadBytes.value && (file?.size ?? 0) > maxUploadBytes.value)
-            toast.info(t('uploads.tooLarge', { name, max: maxSizeLabel() }))
-        else toast.info(error.message)
+            notifier.info(t('drift.uploads.tooLarge', { name, max: maxSizeLabel() }))
+        else notifier.info(error.message)
     }
 
     function maxSizeLabel(): string {
@@ -78,7 +80,7 @@ export function useComposerUploads(draftKey: MaybeRefOrGetter<string>) {
         const room = Math.max(0, ATTACHMENT_MAX_COUNT - ready.value.length - pending.value.length)
         const skipped = files.slice(room)
         if (skipped.length)
-            toast.info(t('uploads.tooMany', { max: ATTACHMENT_MAX_COUNT }), {
+            notifier.info(t('drift.uploads.tooMany', { max: ATTACHMENT_MAX_COUNT }), {
                 description: skipped.map((file) => file.name).join(', '),
             })
         for (const file of files.slice(0, room)) addOne(file)

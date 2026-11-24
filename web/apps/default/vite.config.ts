@@ -11,7 +11,10 @@ export default defineConfig({
         tailwindcss(),
         vue(),
         VueI18nPlugin({
-            include: [fileURLToPath(new URL('./src/locales/**', import.meta.url))],
+            include: [
+                fileURLToPath(new URL('./src/locales/**', import.meta.url)),
+                fileURLToPath(new URL('../../packages/vue/src/locales/**', import.meta.url)),
+            ],
         }),
         vueDevTools(),
     ],

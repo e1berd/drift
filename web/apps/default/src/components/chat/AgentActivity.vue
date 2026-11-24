@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import AgentLogo from '@/components/AgentLogo.vue'
 import MarkdownText from '@/components/chat/MarkdownText.vue'
 import type { SessionActivity } from '@drift/vue/api'
-import type { AgentId } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
 
 const props = defineProps<{
     agent: AgentId

@@ -7,7 +7,7 @@ import type { GitFileChange } from '@drift/vue/api'
 
 import GitDiscardDialog from '@/components/git/GitDiscardDialog.vue'
 import GitFileList from '@/components/git/GitFileList.vue'
-import { useSessionGit } from '@/composables/useSessionGit'
+import { useSessionGit } from '@drift/vue/composables/useSessionGit'
 import { reportError } from '@drift/sdk/errors'
 
 const { t } = useI18n()

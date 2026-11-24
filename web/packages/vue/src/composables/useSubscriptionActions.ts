@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/vue-query'
-import { toast } from '@ui-sdk/vue/toast'
+import { useErrorNotice } from '../notifier'
 
 import {
     listSubscriptionsQueryKey,
@@ -8,15 +8,15 @@ import {
     useCreateSubscription,
     useDeleteSubscription,
     useStartSubscriptionLogin,
-} from '@drift/vue/api'
-import { errorMessage } from '@drift/sdk/errors'
+} from '../api'
 
-/** Mutations on subscriptions that refresh the list and toast failures. */
+/** Mutations on subscriptions that refresh the list and show failures. */
 export function useSubscriptionActions() {
+    const showError = useErrorNotice()
     const qc = useQueryClient()
     const mutation = {
         onSuccess: () => qc.invalidateQueries({ queryKey: listSubscriptionsQueryKey() }),
-        onError: (error: unknown) => toast.error(errorMessage(error)),
+        onError: showError,
     }
     return {
         create: useCreateSubscription({ mutation }),

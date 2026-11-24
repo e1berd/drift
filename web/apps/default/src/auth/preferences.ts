@@ -1,12 +1,9 @@
 // Language and theme switchers of the server-rendered auth pages (#language-switch and
 // #theme-switch in app/internal/auth/templates/layout.html).
-import {
-    applyColorScheme,
-    colorScheme,
-    locales,
-    saveLocale,
-    type Locale,
-} from '@/shared/preferences'
+import { applyColorScheme, colorScheme } from '@/shared/preferences'
+import { locales, saveLocale } from '@drift/sdk/locale'
+
+import type { Locale } from '@drift/sdk/locale'
 
 type ValueChange = CustomEvent<{ value: string | null }>
 

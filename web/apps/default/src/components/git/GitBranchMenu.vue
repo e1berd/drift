@@ -13,7 +13,7 @@ import { useI18n } from 'vue-i18n'
 
 import ScrollPane from '@/components/ScrollPane.vue'
 import GitNewBranchDialog from '@/components/git/GitNewBranchDialog.vue'
-import { useSessionGit } from '@/composables/useSessionGit'
+import { useSessionGit } from '@drift/vue/composables/useSessionGit'
 import { useListGitBranches } from '@drift/vue/api'
 import { reportError } from '@drift/sdk/errors'
 

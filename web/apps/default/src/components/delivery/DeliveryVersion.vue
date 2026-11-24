@@ -4,7 +4,7 @@ import { PhArrowCircleUp } from '@phosphor-icons/vue'
 import { useI18n } from 'vue-i18n'
 
 import DeliveryVersionsDialog from '@/components/delivery/DeliveryVersionsDialog.vue'
-import { useDelivery } from '@/composables/useDelivery'
+import { useDelivery } from '@drift/vue/composables/useDelivery'
 
 const { t } = useI18n()
 const { delivery, latest, remindNow } = useDelivery()

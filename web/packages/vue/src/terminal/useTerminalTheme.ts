@@ -2,15 +2,13 @@ import { onScopeDispose, watch } from 'vue'
 
 import type { ITheme, Terminal } from '@xterm/xterm'
 
-import { useMediaQuery } from '@drift/vue/composables/useMediaQuery'
+import { useMediaQuery } from '../composables/useMediaQuery'
 
-const THEME_TOKENS = {
-    background: 'var(--ui-background)',
-    foreground: 'var(--ui-foreground)',
-    cursor: 'var(--ui-foreground)',
-    cursorAccent: 'var(--ui-background)',
-    selectionBackground: 'color-mix(in oklab, var(--ui-primary) 28%, transparent)',
-} satisfies ITheme
+export interface TerminalLook {
+    colors: ITheme
+    fontFamily: (host: HTMLElement) => string
+    schemeAttributes: string[]
+}
 
 function toRgba(cssColor: string): string {
     const context = document.createElement('canvas').getContext('2d', { willReadFrequently: true })
@@ -30,28 +28,32 @@ function resolveColor(host: HTMLElement, value: string): string {
     return toRgba(computed)
 }
 
-function themeFor(host: HTMLElement): ITheme {
+function themeFor(host: HTMLElement, colors: ITheme): ITheme {
     return Object.fromEntries(
-        Object.entries(THEME_TOKENS).map(([name, value]) => [name, resolveColor(host, value)]),
+        Object.entries(colors).map(([name, value]) => [name, resolveColor(host, String(value))]),
     )
 }
 
 /**
- * xterm draws on a canvas and cannot read CSS variables, so the ui-sdk tokens are resolved to
- * concrete colors and re-resolved whenever the light/dark scheme changes.
+ * xterm draws on a canvas and cannot read CSS variables, so the interface's color tokens are
+ * resolved to concrete colors and re-resolved whenever the light/dark scheme changes.
  */
-export function useTerminalTheme(terminal: Terminal, host: () => HTMLElement | null) {
+export function useTerminalTheme(
+    terminal: Terminal,
+    host: () => HTMLElement | null,
+    look: TerminalLook,
+) {
     function apply() {
         const element = host()
         if (!element) return
-        terminal.options.theme = themeFor(element)
-        terminal.options.fontFamily = getComputedStyle(element).getPropertyValue('--ui-font-mono')
+        terminal.options.theme = themeFor(element, look.colors)
+        terminal.options.fontFamily = look.fontFamily(element)
     }
 
     const prefersDark = useMediaQuery('(prefers-color-scheme: dark)')
     watch(prefersDark, apply)
     const schemeObserver = new MutationObserver(apply)
-    schemeObserver.observe(document.documentElement, { attributeFilter: ['data-color-scheme'] })
+    schemeObserver.observe(document.documentElement, { attributeFilter: look.schemeAttributes })
     onScopeDispose(() => schemeObserver.disconnect())
 
     return { apply }

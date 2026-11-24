@@ -1,17 +1,16 @@
 import { toValue } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { toast } from '@ui-sdk/vue/toast'
+import { useErrorNotice } from '../notifier'
 
 import type { MaybeRefOrGetter } from 'vue'
-import type { ActivityEntry, GitSummary } from '@drift/vue/api'
-import type { RemoveChoice } from '@/components/infobar/RemoveEntryDialog.vue'
+import type { ActivityEntry, GitSummary } from '../api'
 
-import {
-    getGitSummaryQueryKey,
-    useRemoveActivityFile,
-    useRemoveActivityWorktree,
-} from '@drift/vue/api'
-import { errorMessage, reportError } from '@drift/sdk/errors'
+import { getGitSummaryQueryKey, useRemoveActivityFile, useRemoveActivityWorktree } from '../api'
+import { reportError } from '@drift/sdk/errors'
+
+export interface RemoveChoice {
+    deleteBranch: boolean
+}
 
 type AskRemoval = (entry: ActivityEntry) => Promise<RemoveChoice | null>
 
@@ -21,6 +20,7 @@ export function useActivityRemoval(
     ask: () => AskRemoval | undefined,
 ) {
     const qc = useQueryClient()
+    const showError = useErrorNotice()
     const mutation = {
         mutation: {
             onSuccess: (summary: GitSummary) =>
@@ -28,7 +28,7 @@ export function useActivityRemoval(
                     getGitSummaryQueryKey({ path: { sessionId: toValue(sessionId) } }),
                     summary,
                 ),
-            onError: (error: unknown) => toast.error(errorMessage(error)),
+            onError: showError,
         },
     }
     const removeFile = useRemoveActivityFile(mutation)

@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { onBeforeUnmount, watch } from 'vue'
-import { Extension, type JSONContent } from '@tiptap/core'
-import { Placeholder } from '@tiptap/extensions'
-import StarterKit from '@tiptap/starter-kit'
-import { EditorContent, useEditor } from '@tiptap/vue-3'
+import { EditorContent } from '@tiptap/vue-3'
 
 import ScrollPane from '@/components/ScrollPane.vue'
-import { PastedText } from '@/components/composer/pasted-text/pastedText'
+import PastedTextNodeView from '@/components/composer/pasted-text/PastedTextNodeView.vue'
+import { usePromptEditor } from '@drift/vue/editor/usePromptEditor'
 
 const props = defineProps<{
     modelValue: string
@@ -24,104 +21,21 @@ const emit = defineEmits<{
     files: [files: File[]]
 }>()
 
-function toDoc(text: string): JSONContent {
-    return {
-        type: 'doc',
-        content: text.split('\n').map((line) => ({
-            type: 'paragraph',
-            content: line ? [{ type: 'text', text: line }] : [],
-        })),
-    }
-}
-
-function emitFiles(list: FileList | null | undefined): boolean {
-    const files = [...(list ?? [])]
-    if (!files.length) return false
-    emit('files', files)
-    return true
-}
-
-const Keys = Extension.create({
-    name: 'driftKeys',
-    addKeyboardShortcuts() {
-        return {
-            Enter: () => {
-                emit('submit')
-                return true
-            },
-            'Mod-Enter': () => {
-                emit('submit')
-                return true
-            },
-            ArrowUp: ({ editor }) => {
-                if (!editor.isEmpty) return false
-                emit('historyBack')
-                return true
-            },
-            Escape: () => {
-                emit('escape')
-                return false
-            },
-        }
-    },
+const { editor, focus } = usePromptEditor({
+    text: () => props.modelValue,
+    revision: () => props.revision,
+    placeholder: () => props.placeholder,
+    label: props.label,
+    disabled: () => props.disabled,
+    pastedTextView: PastedTextNodeView,
+    onChange: (text) => emit('update:modelValue', text),
+    onSubmit: () => emit('submit'),
+    onHistoryBack: () => emit('historyBack'),
+    onEscape: () => emit('escape'),
+    onFiles: (files) => emit('files', files),
 })
 
-const editor = useEditor({
-    content: toDoc(props.modelValue),
-    editable: !props.disabled,
-    extensions: [
-        StarterKit.configure({
-            heading: false,
-            blockquote: false,
-            bulletList: false,
-            orderedList: false,
-            listItem: false,
-            listKeymap: false,
-            horizontalRule: false,
-            codeBlock: false,
-            link: false,
-            underline: false,
-        }),
-        Placeholder.configure({ placeholder: () => props.placeholder }),
-        PastedText,
-        Keys,
-    ],
-    editorProps: {
-        handlePaste: (_view, event) => emitFiles(event.clipboardData?.files),
-        handleDrop: (_view, event) => emitFiles(event.dataTransfer?.files),
-        attributes: {
-            class: 'prompt',
-            'aria-label': props.label,
-            'aria-multiline': 'true',
-            role: 'textbox',
-        },
-    },
-    onUpdate: ({ editor: e }) => emit('update:modelValue', e.getText({ blockSeparator: '\n' })),
-})
-
-watch(
-    () => props.revision,
-    () => {
-        const e = editor.value
-        if (!e || e.getText({ blockSeparator: '\n' }) === props.modelValue) return
-        e.commands.setContent(toDoc(props.modelValue), { emitUpdate: false })
-        e.commands.focus('end')
-    },
-)
-
-watch(
-    () => props.placeholder,
-    () => editor.value?.view.dispatch(editor.value.state.tr),
-)
-
-watch(
-    () => props.disabled,
-    (disabled) => editor.value?.setEditable(!disabled, false),
-)
-
-defineExpose({ focus: () => editor.value?.commands.focus('end') })
-
-onBeforeUnmount(() => editor.value?.destroy())
+defineExpose({ focus })
 </script>
 
 <template>

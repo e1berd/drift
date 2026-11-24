@@ -5,6 +5,8 @@ import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 
 import App from '../App.vue'
 import { setupI18n } from '../i18n'
+import { toastNotifier } from '../shared/notifier'
+import { createNotifierPlugin } from '@drift/vue/notifier'
 
 function requestURL(input: RequestInfo | URL): URL {
     if (input instanceof Request) return new URL(input.url)
@@ -88,6 +90,7 @@ async function mountApp() {
             plugins: [
                 router,
                 setupI18n('en'),
+                createNotifierPlugin(toastNotifier),
                 [VueQueryPlugin, { queryClient: new QueryClient() }],
             ],
             directives: { autoAnimate: {} },

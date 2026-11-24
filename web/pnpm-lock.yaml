@@ -6,12 +6,54 @@ settings:
 
 catalogs:
   default:
+    '@codemirror/language':
+      specifier: ^6.13.1
+      version: 6.13.1
+    '@codemirror/language-data':
+      specifier: 6.5.2
+      version: 6.5.2
+    '@codemirror/state':
+      specifier: 6.7.6
+      version: 6.7.6
+    '@codemirror/view':
+      specifier: 6.43.15
+      version: 6.43.15
     '@tanstack/vue-query':
       specifier: 5.108.0
       version: 5.108.0
+    '@tiptap/core':
+      specifier: 3.34.0
+      version: 3.34.0
+    '@tiptap/extensions':
+      specifier: 3.34.0
+      version: 3.34.0
+    '@tiptap/pm':
+      specifier: 3.34.0
+      version: 3.34.0
+    '@tiptap/starter-kit':
+      specifier: 3.34.0
+      version: 3.34.0
+    '@tiptap/vue-3':
+      specifier: 3.34.0
+      version: 3.34.0
     '@uppy/core':
       specifier: 6.3.2
       version: 6.3.2
+    '@xterm/addon-fit':
+      specifier: 0.11.0
+      version: 0.11.0
+    '@xterm/addon-web-links':
+      specifier: 0.12.0
+      version: 0.12.0
+    '@xterm/xterm':
+      specifier: 6.0.0
+      version: 6.0.0
+    codemirror:
+      specifier: 6.0.2
+      version: 6.0.2
+    vue-i18n:
+      specifier: ^11.4.20
+      version: 11.4.20
     vue-router:
       specifier: ^5.3.1
       version: 5.5.1
@@ -94,16 +136,10 @@ importers:
   apps/default:
     dependencies:
       '@codemirror/language':
-        specifier: ^6.13.1
+        specifier: 'catalog:'
         version: 6.13.1
-      '@codemirror/language-data':
-        specifier: 6.5.2
-        version: 6.5.2
-      '@codemirror/state':
-        specifier: 6.7.6
-        version: 6.7.6
       '@codemirror/view':
-        specifier: 6.43.15
+        specifier: 'catalog:'
         version: 6.43.15
       '@drift/sdk':
         specifier: workspace:*
@@ -117,29 +153,14 @@ importers:
       '@lezer/highlight':
         specifier: ^1.2.5
         version: 1.2.5
-      '@lobehub/icons-static-svg':
-        specifier: 1.103.0
-        version: 1.103.0
       '@phosphor-icons/vue':
         specifier: 2.2.1
         version: 2.2.1(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
       '@tanstack/vue-query':
         specifier: 'catalog:'
         version: 5.108.0(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
-      '@tiptap/core':
-        specifier: 3.34.0
-        version: 3.34.0(@tiptap/pm@3.34.0)
-      '@tiptap/extensions':
-        specifier: 3.34.0
-        version: 3.34.0(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0)
-      '@tiptap/pm':
-        specifier: 3.34.0
-        version: 3.34.0
-      '@tiptap/starter-kit':
-        specifier: 3.34.0
-        version: 3.34.0
       '@tiptap/vue-3':
-        specifier: 3.34.0
+        specifier: 'catalog:'
         version: 3.34.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0)(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
       '@ui-sdk/core':
         specifier: 0.1.0-beta.5
@@ -153,18 +174,9 @@ importers:
       '@uppy/core':
         specifier: 'catalog:'
         version: 6.3.2
-      '@xterm/addon-fit':
-        specifier: 0.11.0
-        version: 0.11.0
-      '@xterm/addon-web-links':
-        specifier: 0.12.0
-        version: 0.12.0
       '@xterm/xterm':
-        specifier: 6.0.0
+        specifier: 'catalog:'
         version: 6.0.0
-      codemirror:
-        specifier: 6.0.2
-        version: 6.0.2
       htmx.org:
         specifier: 2.0.11
         version: 2.0.11
@@ -175,7 +187,7 @@ importers:
         specifier: rc
         version: 3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)
       vue-i18n:
-        specifier: ^11.4.20
+        specifier: 'catalog:'
         version: 11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
       vue-router:
         specifier: 'catalog:'
@@ -205,6 +217,9 @@ importers:
 
   packages/sdk:
     dependencies:
+      '@lobehub/icons-static-svg':
+        specifier: 1.103.0
+        version: 1.103.0
       date-fns:
         specifier: ^4.4.0
         version: 4.4.0
@@ -214,12 +229,39 @@ importers:
 
   packages/vue:
     dependencies:
+      '@codemirror/language':
+        specifier: 'catalog:'
+        version: 6.13.1
+      '@codemirror/language-data':
+        specifier: 'catalog:'
+        version: 6.5.2
+      '@codemirror/state':
+        specifier: 'catalog:'
+        version: 6.7.6
+      '@codemirror/view':
+        specifier: 'catalog:'
+        version: 6.43.15
       '@drift/sdk':
         specifier: workspace:*
         version: link:../sdk
       '@tanstack/vue-query':
         specifier: 'catalog:'
         version: 5.108.0(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
+      '@tiptap/core':
+        specifier: 'catalog:'
+        version: 3.34.0(@tiptap/pm@3.34.0)
+      '@tiptap/extensions':
+        specifier: 'catalog:'
+        version: 3.34.0(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0)
+      '@tiptap/pm':
+        specifier: 'catalog:'
+        version: 3.34.0
+      '@tiptap/starter-kit':
+        specifier: 'catalog:'
+        version: 3.34.0
+      '@tiptap/vue-3':
+        specifier: 'catalog:'
+        version: 3.34.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0)(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
       '@uppy/core':
         specifier: 'catalog:'
         version: 6.3.2
@@ -229,9 +271,24 @@ importers:
       '@uppy/tus':
         specifier: 6.0.1
         version: 6.0.1(@uppy/core@6.3.2)
+      '@xterm/addon-fit':
+        specifier: 'catalog:'
+        version: 0.11.0
+      '@xterm/addon-web-links':
+        specifier: 'catalog:'
+        version: 0.12.0
+      '@xterm/xterm':
+        specifier: 'catalog:'
+        version: 6.0.0
+      codemirror:
+        specifier: 'catalog:'
+        version: 6.0.2
       vue:
         specifier: rc
         version: 3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2)
+      vue-i18n:
+        specifier: 'catalog:'
+        version: 11.4.20(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))
       vue-router:
         specifier: 'catalog:'
         version: 5.5.1(esbuild@0.25.12)(rolldown@1.2.19)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.25.12)(jiti@2.7.0)(yaml@2.9.1))(vue@3.6.0-rc.16(typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2))

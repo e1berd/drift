@@ -9,6 +9,7 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
+    "@lobehub/icons-static-svg": "1.103.0",
     "date-fns": "^4.4.0",
     "markdown-it": "15.0.3"
   }

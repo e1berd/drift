@@ -11,10 +11,11 @@ import {
 import { useI18n } from 'vue-i18n'
 
 import type { ColorSchemeValue } from '@ui-sdk/core'
-import type { Locale } from '@/shared/preferences'
+import type { Locale } from '@drift/sdk/locale'
 
-import { useLocale } from '@/composables/useLocale'
-import { colorScheme, locales, sidebarSide } from '@/shared/preferences'
+import { useLocale } from '@drift/vue/composables/useLocale'
+import { colorScheme, sidebarSide } from '@/shared/preferences'
+import { locales } from '@drift/sdk/locale'
 
 const { t } = useI18n()
 const side = usePreference(sidebarSide)

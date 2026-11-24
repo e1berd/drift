@@ -10,11 +10,11 @@ import {
 } from '@ui-sdk/vue/segmented-control'
 import { useI18n } from 'vue-i18n'
 
-import type { AgentId } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
 
 import AgentLogo from '@/components/AgentLogo.vue'
-import { useSubscriptionActions } from '@/composables/useSubscriptionActions'
-import { AGENTS } from '@/shared/agents'
+import { useSubscriptionActions } from '@drift/vue/composables/useSubscriptionActions'
+import { AGENTS } from '@drift/sdk/agents'
 
 const emit = defineEmits<{ done: [] }>()
 const { t } = useI18n()

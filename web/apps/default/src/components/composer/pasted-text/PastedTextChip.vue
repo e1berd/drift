@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n'
 
 import ScrollPane from '@/components/ScrollPane.vue'
 
-import { countLines } from './pastedText'
+import { countLines } from '@drift/vue/editor/pastedText'
 
 const props = defineProps<{ text: string; removable: boolean }>()
 const emit = defineEmits<{ remove: [] }>()

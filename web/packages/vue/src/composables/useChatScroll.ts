@@ -1,12 +1,13 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
-import { createScrollAreaController } from '@ui-sdk/vue/scroll-area'
 
 import type { Ref } from 'vue'
 
-import type { Message } from '@drift/vue/api'
-import type { SessionMessages } from '@drift/vue/composables/useMessageWindow'
+import type { Message } from '../api'
+import type { SessionMessages } from './useMessageWindow'
 
 import { captureScrollAnchor } from '@drift/sdk/messages'
+import { elementScrollController } from '../scrollController'
+import type { ScrollController } from '../scrollController'
 
 const BOTTOM_TOLERANCE_PX = 24
 const USER_SCROLL_EVENTS = ['wheel', 'touchmove', 'keydown', 'pointerdown'] as const
@@ -44,8 +45,8 @@ export function messageElement(viewport: HTMLElement | null, messageId: string) 
 export function useChatScroll(
     viewport: Readonly<Ref<HTMLElement | null>>,
     session: SessionMessages,
+    controller: ScrollController = elementScrollController(viewport),
 ) {
-    const controller = createScrollAreaController()
     const atBottom = ref(true)
     const unread = ref(0)
     const olderHeld = ref(false)
@@ -156,7 +157,6 @@ export function useChatScroll(
     }
 
     return {
-        controller,
         atBottom: computed(() => atBottom.value),
         unread: computed(() => unread.value + session.state.value.missed),
         scrollToEnd,

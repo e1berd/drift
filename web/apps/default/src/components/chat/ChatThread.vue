@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useTemplateRef, watch } from 'vue'
 import {
+    createScrollAreaController,
     ScrollArea,
     ScrollAreaContent,
     ScrollAreaScrollbar,
@@ -9,13 +10,13 @@ import {
 } from '@ui-sdk/vue/scroll-area'
 import { useI18n } from 'vue-i18n'
 
-import type { AgentId } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
 
 import RunSpinner from '@/components/RunSpinner.vue'
 import JumpToLatest from '@/components/chat/JumpToLatest.vue'
 import LastPromptBar from '@/components/chat/LastPromptBar.vue'
 import MessageItem from '@/components/chat/MessageItem.vue'
-import { useChatScroll } from '@/composables/useChatScroll'
+import { useChatScroll } from '@drift/vue/composables/useChatScroll'
 import { useInfiniteSentinel } from '@drift/vue/composables/useInfiniteSentinel'
 import { useSessionMessages } from '@drift/vue/composables/useMessageWindow'
 
@@ -29,9 +30,11 @@ const bottom = useTemplateRef<HTMLElement>('bottom')
 const viewport = computed(
     () => top.value?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]') ?? null,
 )
-const { controller, atBottom, unread, scrollToEnd, olderHeld, stickToEnd } = useChatScroll(
+const scrollArea = createScrollAreaController()
+const { atBottom, unread, scrollToEnd, olderHeld, stickToEnd } = useChatScroll(
     viewport,
     session,
+    scrollArea,
 )
 
 function loadOlderUnlessHeld() {
@@ -53,7 +56,7 @@ function isNearTop(sentinel: HTMLElement, scroller: HTMLElement) {
 <template>
     <ScrollArea
         :stick-to-end="stickToEnd"
-        :controller="controller"
+        :controller="scrollArea"
         class="scroll-pane chat-log min-h-0 flex-1"
     >
         <ScrollAreaViewport role="log" :aria-label="t('tabs.chat')">

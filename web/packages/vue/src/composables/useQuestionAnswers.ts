@@ -1,12 +1,11 @@
 import { computed, ref, toValue, watch } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
-import { toast } from '@ui-sdk/vue/toast'
 
-import { useAnswerQuestion } from '@drift/vue/api'
-import type { Answer, Message } from '@drift/vue/api'
-import { useComposerSettings } from '@/composables/useComposerSettings'
-import type { AgentId } from '@/shared/agents'
-import { errorMessage } from '@drift/sdk/errors'
+import { useAnswerQuestion } from '../api'
+import type { Answer, Message } from '../api'
+import { useComposerSettings } from './useComposerSettings'
+import type { AgentId } from '@drift/sdk/agents'
+import { useErrorNotice } from '../notifier'
 
 function emptyAnswers(message: Message): Answer[] {
     return (message.body.questions ?? []).map(() => ({ selected: [], custom: '' }))
@@ -34,7 +33,7 @@ export function useQuestionAnswers(
 
     const complete = computed(() => answers.value.length > 0 && answers.value.every(isAnswered))
     const mutation = useAnswerQuestion({
-        mutation: { onError: (error) => toast.error(errorMessage(error)) },
+        mutation: { onError: useErrorNotice() },
     })
 
     function submit() {

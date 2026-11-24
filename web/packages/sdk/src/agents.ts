@@ -3,19 +3,9 @@ import codexLogo from '@lobehub/icons-static-svg/icons/codex-color.svg?url'
 import antigravityLogo from '@lobehub/icons-static-svg/icons/antigravity-color.svg?url'
 import kimiLogo from '@lobehub/icons-static-svg/icons/kimi-color.svg?url'
 
-import mimoLogo from '@/assets/mimo-color.svg?url'
+import mimoLogo from './assets/mimo-color.svg?url'
 
-import type { Component } from 'vue'
-import {
-    PhClipboardText,
-    PhHammer,
-    PhHandPalm,
-    PhLightning,
-    PhPencilSimpleLine,
-    PhWarningOctagon,
-} from '@phosphor-icons/vue'
-
-import type { AgentIdKey } from '@drift/vue/api'
+import type { AgentIdKey } from './api'
 
 export type AgentId = AgentIdKey
 
@@ -37,12 +27,15 @@ export interface AgentMeta {
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'auto' | 'plan' | 'bypassPermissions'
 
+/** Which picture a mode wears; each interface maps it to an icon of its own set. */
+export type ModeGlyph = 'ask' | 'edits' | 'auto' | 'plan' | 'bypass' | 'build'
+
 export interface PermissionModeMeta {
     id: PermissionMode
     label: string
     short: string
     hint: string
-    icon: Component
+    glyph: ModeGlyph
 }
 
 const ASK_MODE: PermissionModeMeta = {
@@ -50,7 +43,7 @@ const ASK_MODE: PermissionModeMeta = {
     label: 'Ask permissions',
     short: 'Ask',
     hint: 'modes.default',
-    icon: PhHandPalm,
+    glyph: 'ask',
 }
 
 const ACCEPT_EDITS_MODE: PermissionModeMeta = {
@@ -58,7 +51,7 @@ const ACCEPT_EDITS_MODE: PermissionModeMeta = {
     label: 'Accept edits',
     short: 'Edits',
     hint: 'modes.acceptEdits',
-    icon: PhPencilSimpleLine,
+    glyph: 'edits',
 }
 
 const AUTO_MODE: PermissionModeMeta = {
@@ -66,7 +59,7 @@ const AUTO_MODE: PermissionModeMeta = {
     label: 'Auto mode',
     short: 'Auto',
     hint: 'modes.auto',
-    icon: PhLightning,
+    glyph: 'auto',
 }
 
 const PLAN_MODE: PermissionModeMeta = {
@@ -74,7 +67,7 @@ const PLAN_MODE: PermissionModeMeta = {
     label: 'Plan mode',
     short: 'Plan',
     hint: 'modes.plan',
-    icon: PhClipboardText,
+    glyph: 'plan',
 }
 
 const BYPASS_MODE: PermissionModeMeta = {
@@ -82,7 +75,7 @@ const BYPASS_MODE: PermissionModeMeta = {
     label: 'Bypass permissions',
     short: 'Bypass',
     hint: 'modes.bypass',
-    icon: PhWarningOctagon,
+    glyph: 'bypass',
 }
 
 /** Permission modes named as in Claude Code; colours live in `styles/tokens.css` as `--mode-<id>`. */
@@ -91,7 +84,7 @@ const PERMISSION_MODES = [ASK_MODE, ACCEPT_EDITS_MODE, AUTO_MODE, PLAN_MODE, BYP
 const KIMI_PROMPT_MODE: PermissionModeMeta = { ...AUTO_MODE, hint: 'modes.kimiPrompt' }
 
 const MIMO_MODES: PermissionModeMeta[] = [
-    { id: 'auto', label: 'Build', short: 'Build', hint: 'modes.mimoBuild', icon: PhHammer },
+    { id: 'auto', label: 'Build', short: 'Build', hint: 'modes.mimoBuild', glyph: 'build' },
     { ...PLAN_MODE, label: 'Plan' },
 ]
 

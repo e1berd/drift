@@ -1,11 +1,11 @@
 import { computed, toValue } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
 
-import type { AgentId } from '@/shared/agents'
+import type { AgentId } from '@drift/sdk/agents'
 
-import { useAgents } from '@/composables/useAgents'
-import { useComposerSettings } from '@/composables/useComposerSettings'
-import { useGetSubscriptionUsage } from '@drift/vue/api'
+import { useAgents } from './useAgents'
+import { useComposerSettings } from './useComposerSettings'
+import { useGetSubscriptionUsage } from '../api'
 import { headlineWindows } from '@drift/sdk/usage'
 
 const USAGE_REFRESH_MS = 60_000
